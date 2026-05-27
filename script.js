@@ -9,12 +9,12 @@ window.addEventListener('scroll', () => {
     const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
-    const mapContainer = document.getElementById('map-container'); // 🍏 抓取地圖容器
+    const mapContainer = document.getElementById('map-container');
 
-    // 🍏 初始防線：在進度還沒超過 300vh (progress <= 3) 之前，地圖強制完全隱形
+    // 初始防線：在進度還沒超過 300vh (progress <= 3) 之前，地圖強制完全隱形
     if (progress <= 3) {
         mapContainer.style.opacity = 0;
-        mapContainer.style.pointerEvents = 'none'; // 防誤觸
+        mapContainer.style.pointerEvents = 'none';
     }
 
     // 第一幕：0vh ➔ 100vh（首頁文字與黑霧自然淡出）
@@ -38,7 +38,7 @@ window.addEventListener('scroll', () => {
         locationHint.style.opacity = 1;
         bgPhoto.style.opacity = 1;
     } 
-    // 第四幕：300vh ➔ 400vh（進入 400vh 到 500vh 的區間，地圖與公路相片正式進行最完美的自然溶接）
+    // 第四幕：300vh ➔ 400vh（地圖與公路相片正式進行最完美的自然溶接）
     else if (progress > 3) {
         const stage4Progress = progress - 3; // 區間完美對應 0 到 1
 
@@ -49,10 +49,10 @@ window.addEventListener('scroll', () => {
         locationHint.style.opacity = 1 - stage4Progress;
         bgPhoto.style.opacity = 1 - stage4Progress;
 
-        // 🍏 地圖此時才允許登場！隨著滾輪推進自然淡入 (0 ➔ 1)
+        // 地圖登場隨滾輪推進自然淡入 (0 ➔ 1)
         mapContainer.style.opacity = stage4Progress;
         if (stage4Progress > 0.9) {
-            mapContainer.style.pointerEvents = 'auto'; // 快淡入完成時才允許點擊互動
+            mapContainer.style.pointerEvents = 'auto';
         }
     }
 });

@@ -1,7 +1,7 @@
 /* 全域設定：將總高度提升至 500vh 創造五幕大空間 */
 body {
     margin: 0;
-    height: 500vh; /* 🍏 核心修改：由 400vh 提升至 500vh */
+    height: 500vh; 
     background-color: #ffffff;
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
@@ -89,21 +89,27 @@ body {
     opacity: 0.8;
 }
 
-/* 落款小字 */
+/* 🍏 修正：「這是哪裡」落款小字樣式（改用全螢幕底部貼齊 ＋ 電影級黑霧漸層） */
 #location-hint {
     position: fixed;
-    bottom: 40px; 
-    left: 50%;
-    transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.85); 
+    bottom: 0; /* 🍏 貼齊最底部以利底色霧面渲染 */
+    left: 0;
+    width: 100vw; /* 🍏 撐開滿版寬度 */
+    padding-bottom: 40px; /* 🍏 保持原本文字與螢幕底部的優雅呼吸距離 */
+    padding-top: 80px; /* 🍏 往上延伸黑霧的羽化緩衝範圍，讓漸層極致自然 */
+    text-align: center; /* 🍏 讓文字在滿版容器中精準水平居中 */
+    
+    color: rgba(255, 255, 255, 0.9); /* 🍏 提高到 0.9 亮度，更為顯眼 */
     font-family: 'Noto Serif TC', serif;
     font-size: 0.85rem;
     letter-spacing: 0.35em; 
     font-weight: 300;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); 
     z-index: 4;
     opacity: 0; 
     will-change: opacity;
+
+    /* 🍏 核心優化：由底部的 0.5 濃稠度向上溫潤羽化至完全透明，完美抗衡落日強光 */
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
 }
 
 /* 第五幕：日本全地圖容器 */
