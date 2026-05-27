@@ -1,7 +1,7 @@
-/* 全域設定：還原為自由、線性滑動的傳統網頁模型 */
+/* 全域設定：將總高度提升至 400vh 創造四幕大空間 */
 body {
     margin: 0;
-    height: 300vh; /* 提供 3 倍螢幕高度供 JS 計算視差 */
+    height: 400vh; /* 🍏 核心修改：由 300vh 提升至 400vh */
     background-color: #ffffff;
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
@@ -16,7 +16,7 @@ body {
     pointer-events: none;
 }
 
-/* 第一幕 & 第二幕：背景與遮色片 */
+/* 第一、二、三幕：背景與遮色片固定 */
 #bg-photo {
     position: fixed;
     top: 0;
@@ -42,7 +42,7 @@ body {
     will-change: opacity;
 }
 
-/* 主標題優化：置中偏上、採用高端文青思源宋體 */
+/* 主標題：置中偏上 */
 #main-title {
     position: fixed;
     top: 38%; 
@@ -60,7 +60,7 @@ body {
     will-change: transform, opacity;
 }
 
-/* 🍏 修正：兩側點擊區完全透明，拔除多餘黑霧，保有全圖大氣感 */
+/* 兩側點擊區 */
 .side-click-zone {
     position: fixed;
     top: 0;
@@ -68,34 +68,28 @@ body {
     width: 100px;
     z-index: 5;
     cursor: pointer;
-    background: transparent; /* 🍏 變成純透明 */
+    background: transparent;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.left-zone {
-    left: 0;
-}
+.left-zone { left: 0; }
+.right-zone { right: 0; }
 
-.right-zone {
-    right: 0;
-}
-
-/* 🍏 箭頭本身預設全透明，滑鼠靠近時才優雅淡入 */
 .arrow {
     color: white;
     font-size: 1.5rem;
     font-weight: 300;
     opacity: 0;
-    transition: opacity 0.4s ease; /* 緩動淡入 */
+    transition: opacity 0.4s ease;
 }
 
 .side-click-zone:hover .arrow {
-    opacity: 0.8; /* 滑鼠移入時顯現 */
+    opacity: 0.8;
 }
 
-/* 「這是哪裡」優化：極致日系空氣感編排 */
+/* 落款小字 */
 #location-hint {
     position: fixed;
     bottom: 40px; 
@@ -112,7 +106,7 @@ body {
     will-change: opacity;
 }
 
-/* 第三幕：日本全地圖容器 */
+/* 第四幕：日本全地圖容器 */
 #map-container {
     position: fixed;
     top: 0;
@@ -170,7 +164,7 @@ body {
     pointer-events: auto;
 }
 
-/* 毛玻璃 Tooltip 標籤 */
+/* 毛玻璃 Tooltip */
 #tooltip {
     position: fixed;
     padding: 8px 14px;
@@ -189,7 +183,7 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* 右側 Ricoh GR 精選面板 */
+/* 右側面板 */
 #right-panel {
     position: fixed;
     right: -420px; 
