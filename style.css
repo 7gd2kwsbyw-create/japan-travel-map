@@ -1,23 +1,26 @@
-/* 全域設定 */
-body {
+/* 全域設定：將視窗本體轉化為 Apple 風吸附容器 */
+html, body {
     margin: 0;
-    /* 設定網頁總高度為螢幕的 3 倍，創造三個階段的滾動空間 */
-    height: 300vh; 
-    background-color: #ffffff;
-    font-family: 'Noto Sans TC', sans-serif;
+    padding: 0;
+    height: 100vh;
+    overflow-y: scroll;
     overflow-x: hidden;
-    
-    /* 🍏 Apple 風滾動吸附核心設定 */
+    /* 🍏 啟用強制垂直滾動吸附與平滑動畫 */
     scroll-snap-type: y mandatory;
     scroll-behavior: smooth;
+    font-family: 'Noto Sans TC', sans-serif;
+    background-color: #ffffff;
 }
 
-#scroll-spacer {
-    height: 100%;
-    width: 100%;
+/* 🍏 隱形吸附火車月台：負責拉住瀏覽器的滾輪進度 */
+.snap-section {
+    width: 100vw;
+    height: 100vh;
+    scroll-snap-align: start;
+    pointer-events: none; /* 穿透過去，不阻擋滑鼠點擊底層地圖 */
 }
 
-/* 第一幕 & 第二幕：背景與遮色片 */
+/* 第一幕 & 第二幕：背景與遮色片（全部固定死在螢幕上不隨滾輪移位） */
 #bg-photo {
     position: fixed;
     top: 0;
@@ -28,11 +31,7 @@ body {
     background-size: cover;
     background-position: center;
     z-index: 2;
-    /* 使用 will-change 啟動顯示卡硬體加速 */
     will-change: opacity; 
-    
-    /* 🍏 讓第一幕在視窗頂端精準自動吸附定位 */
-    scroll-snap-align: start;
 }
 
 #dark-overlay {
@@ -122,20 +121,16 @@ body {
     width: 100vw;
     height: 100vh;
     background: #fdfdfd;
-    z-index: 1; /* 初始藏在公路相片下方 */
+    z-index: 1; 
     display: flex;
     align-items: center;
     justify-content: center;
-    
-    /* 🍏 讓第三幕在視窗頂端精準自動吸附定位 */
-    scroll-snap-align: start;
 }
 
 /* 地圖 SVG 樣式 */
 #japan-map {
     width: 80vw;
     height: 80vh;
-    /* 點擊放大時的優雅鋼性緩動曲線 */
     transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1); 
 }
 
@@ -157,12 +152,10 @@ body {
     fill: #cfcfcf;
 }
 
-/* 點擊島根縣後的放大聚焦狀態 */
 .zoomed-shimane {
     transform: scale(3.5) translate(10%, -15%);
 }
 
-/* 景點小圓點 */
 .spot-dot {
     fill: #ffffff;
     stroke: #888888;
@@ -178,7 +171,7 @@ body {
     pointer-events: auto;
 }
 
-/* 第四幕：毛玻璃 Tooltip 標籤 */
+/* 毛玻璃 Tooltip 標籤 */
 #tooltip {
     position: fixed;
     padding: 8px 14px;
@@ -197,10 +190,10 @@ body {
     box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
-/* 右側 Ricoh GR 實景照片精選面板 */
+/* 右側 Ricoh GR 精選面板 */
 #right-panel {
     position: fixed;
-    right: -420px; /* 初始隱藏在畫面右側外 */
+    right: -420px; 
     top: 0;
     width: 380px;
     height: 100vh;
@@ -209,7 +202,7 @@ body {
     -webkit-backdrop-filter: blur(12px);
     z-index: 6;
     transition: right 1s cubic-bezier(0.25, 1, 0.3, 1);
-    overflow-y: auto; /* 可獨立上下滾動 */
+    overflow-y: auto; 
     padding: 30px;
     box-sizing: border-box;
     box-shadow: -10px 0 30px rgba(0,0,0,0.03);
