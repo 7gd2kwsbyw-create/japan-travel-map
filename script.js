@@ -2,15 +2,22 @@ window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     
-    // 🍏 將總滾動進度上限擴充改為 0 到 4 之間 (代表 500vh 的總長度)
+    // 總滾動進度 0 到 4 (代表 500vh 的五幕空間)
     const progress = Math.min(scrollY / windowHeight, 4);
 
     const mainTitle = document.getElementById('main-title');
     const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
+    const mapContainer = document.getElementById('map-container'); // 🍏 抓取地圖容器
 
-    // 🍏 第一幕：0vh ➔ 100vh（首頁文字與黑霧自然淡出）
+    // 🍏 初始防線：在進度還沒超過 300vh (progress <= 3) 之前，地圖強制完全隱形
+    if (progress <= 3) {
+        mapContainer.style.opacity = 0;
+        mapContainer.style.pointerEvents = 'none'; // 防誤觸
+    }
+
+    // 第一幕：0vh ➔ 100vh（首頁文字與黑霧自然淡出）
     if (progress <= 1) {
         mainTitle.style.opacity = 1 - progress;
         mainTitle.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
@@ -23,24 +30,29 @@ window.addEventListener('scroll', () => {
         }
         bgPhoto.style.opacity = 1;
     } 
-    // 🍏 第二幕 & 第三幕：100vh ➔ 300vh（擴展核心！在此整整兩個螢幕高的高度內，照片完全定格留白）
+    // 第二幕 & 第三幕：100vh ➔ 300vh（純相片與文字 100% 凍結定格，極致純淨的公路凝視）
     else if (progress > 1 && progress <= 3) {
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
         
-        // 長久的自駕公路凝視，享受絲滑安穩的極簡視覺
         locationHint.style.opacity = 1;
         bgPhoto.style.opacity = 1;
     } 
-    // 🍏 第四幕：300vh ➔ 400vh++（照片與字體順應滾輪，進行自然絲滑的 1 到 0 全線性慢溶接）
+    // 第四幕：300vh ➔ 400vh（進入 400vh 到 500vh 的區間，地圖與公路相片正式進行最完美的自然溶接）
     else if (progress > 3) {
-        const stage4Progress = progress - 3; // 區間精準對應 0 到 1
+        const stage4Progress = progress - 3; // 區間完美對應 0 到 1
 
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
 
-        // 自然、大氣地漸隱淡出，優雅交棒給地圖幕
+        // 公路背景與小字自然淡出 (1 ➔ 0)
         locationHint.style.opacity = 1 - stage4Progress;
         bgPhoto.style.opacity = 1 - stage4Progress;
+
+        // 🍏 地圖此時才允許登場！隨著滾輪推進自然淡入 (0 ➔ 1)
+        mapContainer.style.opacity = stage4Progress;
+        if (stage4Progress > 0.9) {
+            mapContainer.style.pointerEvents = 'auto'; // 快淡入完成時才允許點擊互動
+        }
     }
 });
