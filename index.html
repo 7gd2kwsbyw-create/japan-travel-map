@@ -7,14 +7,16 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&family=Noto+Sans+TC:wght@300&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&family=Noto+Sans+TC:wght@300;400&display=swap" rel="stylesheet">
 </head>
 <body>
+
+    <div id="scroll-spacer"></div>
+
     <div id="bg-photo"></div>
     <div id="dark-overlay"></div>
-
     <h1 id="main-title">日本自駕漫遊</h1>
-    
+
     <div class="side-click-zone left-zone">
         <span class="arrow">〈</span>
     </div>
@@ -26,24 +28,20 @@
 
     <div id="map-container">
         <svg viewBox="0 0 1000 1000" id="japan-map">
-            <path d="M700,200 L800,300 L600,500 L300,700 L200,600 Z" class="land" />
-            <path d="M300,600 L380,550 L420,600 L350,650 Z" id="shimane" class="prefecture" />
+            <path d="M700,200 L800,300 L600,500 L300,700" class="land" />
+            <path d="M300,600 L380,550 L420,600 L350,650" id="shimane" class="prefecture" />
             
-            <circle cx="360" cy="590" r="8" class="spot-dot" data-name="玉造溫泉" />
-            <circle cx="390" cy="570" r="8" class="spot-dot" data-name="松江城" />
-            <circle cx="340" cy="620" r="8" class="spot-dot" data-name="出雲大社" />
+            <circle cx="360" cy="590" r="8" class="spot-dot" data-spot="出雲大社"></circle>
+            <circle cx="390" cy="570" r="8" class="spot-dot" data-spot="松江城"></circle>
+            <circle cx="340" cy="620" r="8" class="spot-dot" data-spot="石見銀山"></circle>
         </svg>
     </div>
 
     <div id="tooltip"></div>
 
     <div id="right-panel">
-        <img src="gr-photo.jpg" alt="Ricoh GR3 實景相片" class="gr-card">
-        <img src="gr-photo.jpg" alt="Ricoh GR4 實景相片" class="gr-card">
-        <img src="gr-photo.jpg" alt="Ricoh GR 實景相片" class="gr-card">
+        <img src="gr-photo.jpg" class="gr-card" alt="Ricoh GR 實景">
     </div>
-
-    <div id="scroll-spacer"></div>
 
     <script src="script.js"></script>
 </body>
