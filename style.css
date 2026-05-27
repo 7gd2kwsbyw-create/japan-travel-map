@@ -42,25 +42,25 @@ body {
     will-change: opacity;
 }
 
-/* 🍏 2.1 主標題優化：置中偏上、採用高端文青思源宋體 */
+/* 主標題優化：置中偏上、採用高端文青思源宋體 */
 #main-title {
     position: fixed;
-    top: 38%; /* 🍏 從 50% 往上提升至 38%，達到黃金比例編排 */
+    top: 38%; 
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-family: 'Noto Serif TC', serif; /* 🍏 更換為現代經典文青明體 */
+    font-family: 'Noto Serif TC', serif; 
     font-weight: 300;
     font-size: 3.2rem;
-    letter-spacing: 0.2em; /* 🍏 微幅加大字距，呼吸感更強 */
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 🍏 隱形的高級光影，增加立體辨識度 */
+    letter-spacing: 0.2em; 
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
     z-index: 4;
     white-space: nowrap;
     pointer-events: none;
     will-change: transform, opacity;
 }
 
-/* 隱形點擊區與電影級黑霧漸層 */
+/* 🍏 修正：兩側點擊區完全透明，拔除多餘黑霧，保有全圖大氣感 */
 .side-click-zone {
     position: fixed;
     top: 0;
@@ -68,8 +68,7 @@ body {
     width: 100px;
     z-index: 5;
     cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.6s ease;
+    background: transparent; /* 🍏 變成純透明 */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -77,39 +76,39 @@ body {
 
 .left-zone {
     left: 0;
-    background: linear-gradient(to right, rgba(0,0,0,0.4), transparent);
 }
 
 .right-zone {
     right: 0;
-    background: linear-gradient(to left, rgba(0,0,0,0.4), transparent);
 }
 
-.side-click-zone:hover {
-    opacity: 1;
-}
-
+/* 🍏 箭頭本身預設全透明，滑鼠靠近時才優雅淡入 */
 .arrow {
     color: white;
     font-size: 1.5rem;
     font-weight: 300;
-    opacity: 0.8;
+    opacity: 0;
+    transition: opacity 0.4s ease; /* 緩動淡入 */
 }
 
-/* 🍏 1.2 「這是哪裡」優化：極致日系空氣感編排 */
+.side-click-zone:hover .arrow {
+    opacity: 0.8; /* 滑鼠移入時顯現 */
+}
+
+/* 「這是哪裡」優化：極致日系空氣感編排 */
 #location-hint {
     position: fixed;
-    bottom: 40px; /* 🍏 稍微往上拉，留出呼吸底邊 */
+    bottom: 40px; 
     left: 50%;
     transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.75); /* 🍏 質感半透白 */
+    color: rgba(255, 255, 255, 0.85); 
     font-family: 'Noto Serif TC', serif;
     font-size: 0.85rem;
-    letter-spacing: 0.35em; /* 🍏 大幅撐開字距，展現高級設計感 */
+    letter-spacing: 0.35em; 
     font-weight: 300;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* 🍏 防破圖黑霧陰影 */
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6); 
     z-index: 4;
-    opacity: 0; /* 🍏 初始完全隱形，由 JS 控制在第二幕淡入 */
+    opacity: 0; 
     will-change: opacity;
 }
 
