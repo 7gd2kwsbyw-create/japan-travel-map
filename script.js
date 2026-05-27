@@ -12,14 +12,10 @@ window.addEventListener('scroll', () => {
 
     // 階段一：從第一幕滑到第二幕 (0vh ➔ 100vh)
     if (progress <= 1) {
-        // 主標題淡出
         mainTitle.style.opacity = 1 - progress;
         mainTitle.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
-
-        // 電影遮色片退去，露出純淨公路
         darkOverlay.style.opacity = 0.6 * (1 - progress);
 
-        // 「這是哪裡」文字淡入
         if (progress > 0.3) {
             locationHint.style.opacity = Math.min((progress - 0.3) * 1.5, 1);
         } else {
@@ -32,20 +28,18 @@ window.addEventListener('scroll', () => {
     else if (progress > 1 && progress <= 2) {
         const stage2Progress = progress - 1; // 轉化為 0 到 1 的區間
 
-        // 確保第一幕元素乾淨消失
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
 
-        // 🍏 核心優化：拉長第二幕的停留時間
-        // 我們讓 stage2Progress 在 0.4（相當於滾動了 40% 的緩衝距離）之前，
-        // 公路背景（bgPhoto）與「這是哪裡」（locationHint）都死死維持 100% 顯色，完全不動！
-        if (stage2Progress < 0.4) {
+        // 🍏 核心修改：將 0.4 改為 0.8
+        // 讓第二幕在過渡進度 80% 之前，全部死死維持 100% 顯色
+        if (stage2Progress < 0.8) {
             locationHint.style.opacity = 1;
             bgPhoto.style.opacity = 1;
         } 
-        // 🍏 超過 0.4 之後，才在剩下的 60% 距離內快速且優雅地淡出，交棒給底層地圖
+        // 🍏 超過 80% 之後，在剩下最後的 20%（0.2）距離內以極快的速度溶接淡出
         else {
-            const fadeProgress = (stage2Progress - 0.4) / 0.6; // 重新標準化為 0~1 的淡出進度
+            const fadeProgress = (stage2Progress - 0.8) / 0.2; // 🍏 分母同步改為 0.2 進行等比映射
             locationHint.style.opacity = 1 - fadeProgress;
             bgPhoto.style.opacity = 1 - fadeProgress;
         }
