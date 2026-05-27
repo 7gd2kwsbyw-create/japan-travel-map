@@ -42,22 +42,57 @@ body {
     will-change: opacity;
 }
 
-/* 主標題：置中偏上 */
-#main-title {
+/* 主標題容器定位 */
+#main-title-container {
     position: fixed;
     top: 38%; 
     left: 50%;
     transform: translate(-50%, -50%);
+    z-index: 4;
+    pointer-events: auto; /* 🍏 允許滑鼠觸碰以觸發 Hover 效果 */
+}
+
+/* 主標題樣式 */
+#main-title {
+    margin: 0;
     color: white;
     font-family: 'Noto Serif TC', serif; 
     font-weight: 300;
     font-size: 3.2rem;
     letter-spacing: 0.2em; 
     text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
-    z-index: 4;
     white-space: nowrap;
-    pointer-events: none;
+    cursor: default; /* 🍏 提示讀者這不是普通連結，是純展示 */
+    transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     will-change: transform, opacity;
+}
+
+/* 🍏 核心新增：當滑鼠懸停在標題上時，標題文字微微變淡並上移，為下方的期待字留出空間 */
+#main-title:hover {
+    filter: drop-shadow(0 0 8px rgba(255,255,255,0.2));
+    transform: translateY(-10px);
+}
+
+/* 🍏 核心新增：利用 CSS 讀取 attr，優雅浮現「文章撰寫中，敬請期待」 */
+#main-title::after {
+    content: attr(data-status);
+    font-size: 0.9rem;
+    letter-spacing: 0.4em;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-weight: 300;
+    color: rgba(255, 255, 255, 0.6);
+    margin-top: 15px;
+    opacity: 0;
+    transform: translateY(5px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#main-title:hover::after {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 /* 兩側點擊區 */
@@ -89,17 +124,17 @@ body {
     opacity: 0.8;
 }
 
-/* 🍏 修正：「這是哪裡」落款小字樣式（改用全螢幕底部貼齊 ＋ 電影級黑霧漸層） */
+/* 「這是哪裡」落款小字樣式 */
 #location-hint {
     position: fixed;
-    bottom: 0; /* 🍏 貼齊最底部以利底色霧面渲染 */
+    bottom: 0; 
     left: 0;
-    width: 100vw; /* 🍏 撐開滿版寬度 */
-    padding-bottom: 40px; /* 🍏 保持原本文字與螢幕底部的優雅呼吸距離 */
-    padding-top: 80px; /* 🍏 往上延伸黑霧的羽化緩衝範圍，讓漸層極致自然 */
-    text-align: center; /* 🍏 讓文字在滿版容器中精準水平居中 */
+    width: 100vw; 
+    padding-bottom: 40px; 
+    padding-top: 80px; 
+    text-align: center; 
     
-    color: rgba(255, 255, 255, 0.9); /* 🍏 提高到 0.9 亮度，更為顯眼 */
+    color: rgba(255, 255, 255, 0.9); 
     font-family: 'Noto Serif TC', serif;
     font-size: 0.85rem;
     letter-spacing: 0.35em; 
@@ -108,7 +143,6 @@ body {
     opacity: 0; 
     will-change: opacity;
 
-    /* 🍏 核心優化：由底部的 0.5 濃稠度向上溫潤羽化至完全透明，完美抗衡落日強光 */
     background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
 }
 
