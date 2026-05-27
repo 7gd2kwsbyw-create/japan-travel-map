@@ -31,15 +31,15 @@ window.addEventListener('scroll', () => {
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
 
-        // 🍏 核心修改：將 0.4 改為 0.8
-        // 讓第二幕在過渡進度 80% 之前，全部死死維持 100% 顯色
-        if (stage2Progress < 0.8) {
+        // 🍏 核心修改：將 0.8 改為 0.95
+        // 讓第二幕在過渡進度 95% 之前，全部死死維持 100% 顯色，呈現長久的公路凝視感
+        if (stage2Progress < 0.95) {
             locationHint.style.opacity = 1;
             bgPhoto.style.opacity = 1;
         } 
-        // 🍏 超過 80% 之後，在剩下最後的 20%（0.2）距離內以極快的速度溶接淡出
+        // 🍏 超過 95% 之後，在最後極致壓縮的 5%（0.05）距離內瞬間淡出
         else {
-            const fadeProgress = (stage2Progress - 0.8) / 0.2; // 🍏 分母同步改為 0.2 進行等比映射
+            const fadeProgress = (stage2Progress - 0.95) / 0.05; // 🍏 分母同步改為 0.05 進行等比急速映射
             locationHint.style.opacity = 1 - fadeProgress;
             bgPhoto.style.opacity = 1 - fadeProgress;
         }
