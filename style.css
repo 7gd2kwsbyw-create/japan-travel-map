@@ -3,7 +3,7 @@ body {
     margin: 0;
     height: 300vh; /* 提供 3 倍螢幕高度供 JS 計算視差 */
     background-color: #ffffff;
-    font-family: 'Noto Sans TC', sans-serif;
+    font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
 }
 
@@ -42,17 +42,18 @@ body {
     will-change: opacity;
 }
 
-/* 中央主標題 */
+/* 🍏 2.1 主標題優化：置中偏上、採用高端文青思源宋體 */
 #main-title {
     position: fixed;
-    top: 50%;
+    top: 38%; /* 🍏 從 50% 往上提升至 38%，達到黃金比例編排 */
     left: 50%;
     transform: translate(-50%, -50%);
     color: white;
-    font-family: 'Kiwi Maru', serif;
+    font-family: 'Noto Serif TC', serif; /* 🍏 更換為現代經典文青明體 */
     font-weight: 300;
-    font-size: 3rem;
-    letter-spacing: 0.15em;
+    font-size: 3.2rem;
+    letter-spacing: 0.2em; /* 🍏 微幅加大字距，呼吸感更強 */
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); /* 🍏 隱形的高級光影，增加立體辨識度 */
     z-index: 4;
     white-space: nowrap;
     pointer-events: none;
@@ -95,18 +96,21 @@ body {
     opacity: 0.8;
 }
 
-/* 底部落款小字 */
+/* 🍏 1.2 「這是哪裡」優化：極致日系空氣感編排 */
 #location-hint {
     position: fixed;
-    bottom: 24px;
+    bottom: 40px; /* 🍏 稍微往上拉，留出呼吸底邊 */
     left: 50%;
     transform: translateX(-50%);
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.75rem;
-    letter-spacing: 0.1em;
+    color: rgba(255, 255, 255, 0.75); /* 🍏 質感半透白 */
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.35em; /* 🍏 大幅撐開字距，展現高級設計感 */
     font-weight: 300;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); /* 🍏 防破圖黑霧陰影 */
     z-index: 4;
-    transition: color 0.5s ease;
+    opacity: 0; /* 🍏 初始完全隱形，由 JS 控制在第二幕淡入 */
+    will-change: opacity;
 }
 
 /* 第三幕：日本全地圖容器 */
