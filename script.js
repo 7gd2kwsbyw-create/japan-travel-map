@@ -2,21 +2,20 @@ window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     
-    // 將總滾動進度擴充改為 0 到 3 之間 (代表 400vh 的總旅程)
-    const progress = Math.min(scrollY / windowHeight, 3);
+    // 🍏 將總滾動進度上限擴充改為 0 到 4 之間 (代表 500vh 的總長度)
+    const progress = Math.min(scrollY / windowHeight, 4);
 
     const mainTitle = document.getElementById('main-title');
     const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
 
-    // 🍏 第一幕：0vh ➔ 100vh（首頁文字與黑霧淡出）
+    // 🍏 第一幕：0vh ➔ 100vh（首頁文字與黑霧自然淡出）
     if (progress <= 1) {
         mainTitle.style.opacity = 1 - progress;
         mainTitle.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
         darkOverlay.style.opacity = 0.6 * (1 - progress);
 
-        // 文字平滑浮現
         if (progress > 0.3) {
             locationHint.style.opacity = Math.min((progress - 0.3) * 1.5, 1);
         } else {
@@ -24,24 +23,24 @@ window.addEventListener('scroll', () => {
         }
         bgPhoto.style.opacity = 1;
     } 
-    // 🍏 第二幕：100vh ➔ 200vh（純相片與文字 100% 定格留白，極致大氣）
-    else if (progress > 1 && progress <= 2) {
+    // 🍏 第二幕 & 第三幕：100vh ➔ 300vh（擴展核心！在此整整兩個螢幕高的高度內，照片完全定格留白）
+    else if (progress > 1 && progress <= 3) {
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
         
-        // 死死凍結在 100% 顯色狀態，不管怎麼滾都不會移位或變淡
+        // 長久的自駕公路凝視，享受絲滑安穩的極簡視覺
         locationHint.style.opacity = 1;
         bgPhoto.style.opacity = 1;
     } 
-    // 🍏 第三幕 ➔ 第四幕：200vh ➔ 300vh++（照片與字體慢速溶接淡出，將地圖推向前台）
-    else if (progress > 2) {
-        const stage3Progress = progress - 2; // 轉化為 0 到 1 的區間
+    // 🍏 第四幕：300vh ➔ 400vh++（照片與字體順應滾輪，進行自然絲滑的 1 到 0 全線性慢溶接）
+    else if (progress > 3) {
+        const stage4Progress = progress - 3; // 區間精準對應 0 到 1
 
         mainTitle.style.opacity = 0;
         darkOverlay.style.opacity = 0;
 
-        // 相片與小字同步優雅慢溶接淡出，讓第四幕的地圖安穩現身
-        locationHint.style.opacity = 1 - stage3Progress;
-        bgPhoto.style.opacity = 1 - stage3Progress;
+        // 自然、大氣地漸隱淡出，優雅交棒給地圖幕
+        locationHint.style.opacity = 1 - stage4Progress;
+        bgPhoto.style.opacity = 1 - stage4Progress;
     }
 });

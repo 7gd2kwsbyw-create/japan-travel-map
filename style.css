@@ -1,7 +1,7 @@
-/* 全域設定：將總高度提升至 400vh 創造四幕大空間 */
+/* 全域設定：將總高度提升至 500vh 創造五幕大空間 */
 body {
     margin: 0;
-    height: 400vh; /* 🍏 核心修改：由 300vh 提升至 400vh */
+    height: 500vh; /* 🍏 核心修改：由 400vh 提升至 500vh */
     background-color: #ffffff;
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
@@ -16,7 +16,7 @@ body {
     pointer-events: none;
 }
 
-/* 第一、二、三幕：背景與遮色片固定 */
+/* 第一、二、三、四幕：背景與遮色片固定 */
 #bg-photo {
     position: fixed;
     top: 0;
@@ -106,7 +106,7 @@ body {
     will-change: opacity;
 }
 
-/* 第四幕：日本全地圖容器 */
+/* 第五幕：日本全地圖容器 */
 #map-container {
     position: fixed;
     top: 0;
