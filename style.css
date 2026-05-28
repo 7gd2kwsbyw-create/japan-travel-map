@@ -2,7 +2,7 @@
 body {
     margin: 0;
     height: 500vh; 
-    background-color: #ffffff;
+    background-color: #222222; /* 🍏 預設底色改為深色，配合公路電影質感 */
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
 }
@@ -23,11 +23,13 @@ body {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background-image: url('images/korankei/maple_light_road_2.JPG');
     background-size: cover;
     background-position: center;
+    background-repeat: no-repeat;
     z-index: 2;
+    opacity: 1; /* 🍏 初始不透明度直接給 1 */
     will-change: opacity; 
+    transition: background-image 0.4s ease; /* 讓切換看板時的底圖更柔和 */
 }
 
 #dark-overlay {
@@ -49,6 +51,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 4;
+    pointer-events: auto; /* 🍏 確保容器本身不阻擋滑鼠點擊 */
 }
 
 /* 主標題樣式 */
@@ -59,19 +62,15 @@ body {
     font-weight: 300;
     font-size: 3.2rem;
     letter-spacing: 0.2em; 
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3); 
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); 
     white-space: nowrap;
     cursor: pointer; /* 🍏 變成點擊小手 */
     transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     will-change: transform, opacity;
 }
 
 #main-title:hover {
-    filter: drop-shadow(0 0 12px rgba(255,255,255,0.4));
-    transform: scale(1.02); /* 🍏 滑鼠移上去時微微放大，提示可以點擊 */
+    filter: drop-shadow(0 0 12px rgba(255,255,255,0.5));
 }
 
 /* 兩側點擊區 */
@@ -131,11 +130,11 @@ body {
     right: -100vw; 
     width: 100vw;
     height: 100vh;
-    background: rgba(255, 255, 255, 0.95); 
+    background: rgba(255, 255, 255, 0.97); /* 🍏 稍微提高白底飽和度，確保長文閱讀環境極度乾淨 */
     backdrop-filter: blur(20px); 
     -webkit-backdrop-filter: blur(20px);
     z-index: 20; 
-    transition: right 0.6s cubic-bezier(0.25, 1, 0.3, 1); 
+    transition: right 0.5s cubic-bezier(0.25, 1, 0.3, 1); /* 🍏 加快滑出速度，體感更乾脆 */
     box-sizing: border-box;
 }
 

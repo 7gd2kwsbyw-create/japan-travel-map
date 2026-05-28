@@ -1,17 +1,11 @@
-// 🍏 控制動畫與點擊的純邏輯齒輪箱（已修正 ID 對齊與 null 錯誤）
-
 let currentIndex = 0; 
 
 // 更新首頁看板內容的函式
 function updateCarousel(index) {
-    // 安全檢查：確保 articles 資料庫存在且有資料
-    if (typeof articles === 'undefined' || !articles[index]) return;
-    
-    const article = articles[index];
+    const article = articles[index]; 
     const titleEl = document.getElementById('main-title');
     const bgPhotoEl = document.getElementById('bg-photo');
-    // 💡 修正：相容於不同的 HTML 地點標籤 ID（可能是 location-hint 或其他）
-    const locationHintEl = document.getElementById('location-hint') || document.getElementById('location');
+    const locationHintEl = document.getElementById('location-hint');
 
     if (titleEl) titleEl.style.opacity = 0;
     
@@ -21,7 +15,9 @@ function updateCarousel(index) {
             titleEl.style.opacity = 1;
         }
         if (bgPhotoEl) {
+            // 🍏 直接在這裡強制寫入相對路徑，避開 CSS 機制
             bgPhotoEl.style.backgroundImage = `url('${article.image}')`;
+            bgPhotoEl.style.opacity = 1;
         }
         if (locationHintEl) {
             locationHintEl.innerHTML = article.location;
@@ -29,63 +25,54 @@ function updateCarousel(index) {
     }, 200);
 }
 
-// 左右箭頭點擊事件（加上安全防護，避免找不到按鈕時報錯）
-const prevBtn = document.getElementById('prev-btn');
-const nextBtn = document.getElementById('next-btn');
-
-if (prevBtn) {
-    prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        currentIndex = (currentIndex - 1 + articles.length) % articles.length;
-        updateCarousel(currentIndex);
-    });
-}
-
-if (nextBtn) {
-    nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        currentIndex = (currentIndex + 1) % articles.length;
-        updateCarousel(currentIndex);
-    });
-}
-
-// 內化文章點擊展開 / 關閉控制邏輯
-const readerPanel = document.getElementById('article-reader-panel');
-const mainTitle = document.getElementById('main-title');
-
-if (mainTitle && readerPanel) {
-    mainTitle.addEventListener('click', () => {
-        if (typeof articles === 'undefined') return;
-        const article = articles[currentIndex];
-        
-        const readerDate = document.getElementById('reader-date');
-        const readerTitle = document.getElementById('reader-title');
-        const readerBody = document.getElementById('reader-body');
-        
-        if (readerDate) readerDate.textContent = article.date;
-        if (readerTitle) readerTitle.textContent = article.title;
-        if (readerBody) readerBody.innerHTML = article.content;
-        
-        readerPanel.classList.add('open');
-        document.body.style.overflowY = 'hidden'; 
-    });
-}
-
-const closeReaderBtn = document.getElementById('close-reader-btn');
-if (closeReaderBtn && readerPanel) {
-    closeReaderBtn.addEventListener('click', () => {
-        readerPanel.classList.remove('open');
-        document.body.style.overflowY = 'scroll'; 
-    });
-}
-
-// 初始化載入第一篇文章看板
-if (typeof articles !== 'undefined' && articles.length > 0) {
+// 左右箭頭點擊事件
+document.getElementById('prev-btn').addEventListener('click', (e) => {
+    e.stopPropagation(); 
+    currentIndex = (currentIndex - 1 + articles.length) % articles.length;
     updateCarousel(currentIndex);
-}
+});
+
+document.getElementById('next-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    currentIndex = (currentIndex + 1) % articles.length;
+    updateCarousel(currentIndex);
+});
+
+// 🍏 核心打通：點擊文章標題直接滑出閱讀艙
+document.getElementById('main-title').addEventListener('click', () => {
+    const article = articles[currentIndex];
+    
+    // 如果點到備用文章，給予精緻的提示
+    if (article.content.includes("文章儲備中")) {
+        alert("該自駕區域遊記正在籌備中，敬請期待！(๑•̀.̫•́)✧");
+        return;
+    }
+    
+    document.getElementById('reader-date').textContent = article.date;
+    document.getElementById('reader-title').textContent = article.title;
+    document.getElementById('reader-body').innerHTML = article.content;
+    
+    const readerPanel = document.getElementById('article-reader-panel');
+    if (readerPanel) {
+        readerPanel.classList.add('open');
+        document.body.style.overflowY = 'hidden'; // 鎖定底層滾動
+    }
+});
+
+// 關閉按鈕事件
+document.getElementById('close-reader-btn').addEventListener('click', () => {
+    const readerPanel = document.getElementById('article-reader-panel');
+    if (readerPanel) {
+        readerPanel.classList.remove('open');
+        document.body.style.overflowY = 'scroll'; // 恢復底層滾動
+    }
+});
+
+// 初始化：網頁一打開，立刻強制載入第一篇文章內容與背景
+updateCarousel(currentIndex);
 
 
-// 500vh 五幕滾動時差邏輯（全面加上防錯機制，確保即使 ID 沒對上也不會讓整站動畫癱瘓）
+// 500vh 五幕滾動時差邏輯
 window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
@@ -93,12 +80,12 @@ window.addEventListener('scroll', () => {
 
     const mainTitleContainer = document.getElementById('main-title-container');
     const darkOverlay = document.getElementById('dark-overlay');
-    const locationHint = document.getElementById('location-hint') || document.getElementById('location');
+    const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
 
-    if (mapContainer) {
-        if (progress <= 3) {
+    if (progress <= 3) {
+        if (mapContainer) {
             mapContainer.style.opacity = 0;
             mapContainer.style.pointerEvents = 'none';
         }
