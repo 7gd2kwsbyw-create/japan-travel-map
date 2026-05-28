@@ -1,32 +1,14 @@
-// 🍏 1. 文章輪播資料庫（底圖暫時全部共用現有的 gr-photo.jpg，防止未上傳新圖時破圖）
-const articles = [
-    {
-        title: "山陰自駕漫遊：島根、鳥取海岸線之旅",
-        image: "gr-photo.jpg", 
-        location: "📍 島根縣 · 宍道湖落日"
-    },
-    {
-        title: "大江戶晨霧漫步：淺草與隅田川散策",
-        image: "gr-photo.jpg", // 💡 未來有新照片（如 tokyo.jpg）再進來修改檔名即可
-        location: "📍 東京都 · 隅田川畔"
-    },
-    {
-        title: "尾張名古屋城下町：歷史與現代交織",
-        image: "gr-photo.jpg", 
-        location: "📍 愛知縣 · 名古屋城"
-    }
-];
+// 🍏 原本頂端的 articles 資料庫已經完美物理搬移至 articles-data.js
 
 let currentIndex = 0; 
 
-// 更新輪播畫面的函式
+// 更新首頁看板內容的函式
 function updateCarousel(index) {
-    const article = articles[index];
+    const article = articles[index]; // 這裡會自動去 articles-data.js 抓取資料
     const titleEl = document.getElementById('main-title');
     const bgPhotoEl = document.getElementById('bg-photo');
     const locationHintEl = document.getElementById('location-hint');
 
-    // 清晰優雅的切換動態
     titleEl.style.opacity = 0;
     
     setTimeout(() => {
@@ -37,7 +19,7 @@ function updateCarousel(index) {
     }, 200);
 }
 
-// 左右箭頭點擊事件綁定
+// 左右箭頭點擊事件
 document.getElementById('prev-btn').addEventListener('click', (e) => {
     e.stopPropagation(); 
     currentIndex = (currentIndex - 1 + articles.length) % articles.length;
@@ -50,17 +32,36 @@ document.getElementById('next-btn').addEventListener('click', (e) => {
     updateCarousel(currentIndex);
 });
 
-// 初始化載入第一篇文章
+// 內化文章點擊展開 / 關閉控制邏輯
+const readerPanel = document.getElementById('article-reader-panel');
+
+document.getElementById('main-title').addEventListener('click', () => {
+    const article = articles[currentIndex];
+    
+    document.getElementById('reader-date').textContent = article.date;
+    document.getElementById('reader-title').textContent = article.title;
+    document.getElementById('reader-body').innerHTML = article.content;
+    
+    readerPanel.classList.add('open');
+    document.body.style.overflowY = 'hidden'; 
+});
+
+document.getElementById('close-reader-btn').addEventListener('click', () => {
+    readerPanel.classList.remove('open');
+    document.body.style.overflowY = 'scroll'; 
+});
+
+// 初始化載入第一篇文章看板
 updateCarousel(currentIndex);
 
 
-// 2. 500vh 五幕滾動時差邏輯（配合新容器 ID 進行微調）
+// 500vh 五幕滾動時差邏輯
 window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
 
-    const mainTitleContainer = document.getElementById('main-title-container'); // 🍏 修正為控制外層容器
+    const mainTitleContainer = document.getElementById('main-title-container');
     const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
