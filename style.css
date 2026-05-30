@@ -86,7 +86,7 @@ body {
 #open-index-btn:hover { color: rgba(255, 255, 255, 1); transform: scale(1.1); }
 
 /* ==========================================
-   🍏 網格索引艙：全新直向不裁切瀑布流佈局
+   網格索引艙 (真實瀑布流佈局)
    ========================================== */
 #gallery-index-panel {
     position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh;
@@ -102,25 +102,37 @@ body {
 }
 .index-close-btn:hover { color: #fff; }
 
-/* 🍏 核心修正 1：改用 column-count 建立真正的流體相簿，寬度固定、高度隨相片比例自由舒展 */
 .masonry-grid {
-    column-count: 3;
-    column-gap: 24px;
-    max-width: 1400px;
-    margin: 0 auto;
+    column-count: 3; column-gap: 24px; max-width: 1400px; margin: 0 auto;
 }
 
-/* 🍏 核心修正 2：將高度設定為 auto 移除 cover 裁切，強迫釋放完整相片邊界 */
+/* ==========================================
+   🍏 核心修正：加入全隔離獨立核心圖層，阻斷排版閃爍
+   ========================================== */
 .grid-item {
-    width: 100%; height: auto; 
-    display: block;
-    margin-bottom: 24px; /* 使用下邊距替代原本的網格 gap */
-    break-inside: avoid; /* 防止直幅相片在欄位交界處被攔腰截斷切開 */
-    border-radius: 4px; cursor: pointer;
-    opacity: 0.4; transform: scale(0.97);
-    transition: opacity 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%; height: auto; display: block; margin-bottom: 24px;
+    break-inside: avoid; border-radius: 4px; cursor: pointer;
+    
+    /* 🍏 優化 A：初始狀態強制鎖定 3D 空間軸，強迫瀏覽器開闢專屬獨立 GPU 複合圖層 */
+    transform: scale(0.97) translateZ(0);
+    backface-visibility: hidden;
+    
+    /* 🍏 優化 B：顯性宣告未來動態屬性，阻止多欄瀑布流重繪干擾 */
+    will-change: transform, opacity;
+    
+    opacity: 0.4;
+    transition: opacity 0.3s cubic-bezier(0.25, 1, 0.3, 1), 
+                transform 0.3s cubic-bezier(0.25, 1, 0.3, 1), 
+                box-shadow 0.3s cubic-bezier(0.25, 1, 0.3, 1);
 }
-.grid-item:hover { opacity: 1; transform: scale(1); box-shadow: 0 12px 36px rgba(0,0,0,0.9); }
+
+.grid-item:hover {
+    opacity: 1;
+    /* 🍏 優化 C：放大時維持 3D 圖層鎖定，確保漸亮放大絕不掉幀、絕不閃爍 */
+    transform: scale(1) translateZ(0);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.9);
+    z-index: 10;
+}
 
 #map-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fdfdfd; z-index: 6; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; }
 #japan-map { width: 80vw; height: 80vh; }
@@ -130,6 +142,6 @@ body {
 
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }
-    .masonry-grid { column-count: 1; column-gap: 0; } /* 手機端自動退化為單欄完整直落 */
-    .grid-item { opacity: 0.8; transform: scale(1); margin-bottom: 16px; }
+    .masonry-grid { column-count: 1; column-gap: 0; }
+    .grid-item { opacity: 0.8; transform: scale(1) translateZ(0); margin-bottom: 16px; }
 }
