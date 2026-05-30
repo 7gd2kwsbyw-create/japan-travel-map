@@ -102,42 +102,30 @@ body {
 
 .masonry-grid {
     column-count: 3; column-gap: 24px; max-width: 1400px; margin: 0 auto;
-    /* 🍏 新增：在瀑布流底層開啟 3D 視角，穩定整體圖層架構 */
-    -webkit-perspective: 1000px;
-    perspective: 1000px;
 }
 
 /* ==========================================
-   🍏 終極修正：解放外殼，武裝內層
+   🍏 終極防護：拔除所有 Scale 縮放與 3D 加速，以絕對靜止的幾何狀態根除破圖 Bug
    ========================================== */
 .grid-box {
-    display: block; /* 🍏 改為 block，避免 inline-block 在 Safari 引起的頂端裁剪 */
+    display: block;
     width: 100%;
     margin-bottom: 24px;
-    
-    /* 防斷行宣告（含跨瀏覽器相容） */
     break-inside: avoid;
     -webkit-column-break-inside: avoid;
     page-break-inside: avoid;
-    
-    /* 🍏 徹底移除 transform 與 isolation，把排版權限還給瀏覽器，解決「照片消失」 */
 }
 
 .grid-item {
     width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
-    opacity: 0.4;
+    opacity: 0.35; /* 預設深色暗化，營造高級對比 */
     
-    /* 🍏 將 3D 硬體加速直接綁在相片上，並搭配隱藏背面，徹底解決「閃爍」 */
-    transform: scale(0.97) translate3d(0, 0, 0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    
-    transition: opacity 0.35s ease, transform 0.35s ease, box-shadow 0.35s ease;
+    /* 🍏 只有單純的透明度與陰影漸變，絕不改變尺寸，完美迴避瀏覽器重繪臭蟲 */
+    transition: opacity 0.4s ease, box-shadow 0.4s ease;
 }
 
 .grid-box:hover .grid-item {
-    opacity: 1;
-    transform: scale(1) translate3d(0, 0, 0);
+    opacity: 1; /* 滑鼠移入，100% 純粹點亮 */
     box-shadow: 0 12px 36px rgba(0,0,0,0.9);
 }
 
@@ -151,5 +139,5 @@ body {
     #main-title { font-size: 2rem; white-space: normal; }
     .masonry-grid { column-count: 1; column-gap: 0; }
     .grid-box { margin-bottom: 16px; } 
-    .grid-item { opacity: 0.8; transform: scale(1) translate3d(0,0,0); }
+    .grid-item { opacity: 0.8; }
 }
