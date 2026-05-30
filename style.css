@@ -117,16 +117,27 @@ body {
 }
 
 .grid-item {
-    width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
-    opacity: 0.35; /* 預設深色暗化，營造高級對比 */
-    
-    /* 🍏 只有單純的透明度與陰影漸變，絕不改變尺寸，完美迴避瀏覽器重繪臭蟲 */
-    transition: opacity 0.4s ease, box-shadow 0.4s ease;
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 4px;
+    cursor: pointer;
+
+    opacity: 0.4;
+
+    will-change: transform, opacity;
+
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+
+    transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
 }
 
-.grid-box:hover .grid-item {
-    opacity: 1; /* 滑鼠移入，100% 純粹點亮 */
-    box-shadow: 0 12px 36px rgba(0,0,0,0.9);
+.grid-item:hover {
+    opacity: 1;
+    transform: scale(1.03);
 }
 
 #map-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fdfdfd; z-index: 6; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; }
