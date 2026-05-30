@@ -1,8 +1,8 @@
 // ==========================================
-// 1. 照片倉庫 (以香嵐溪為例)
+// 1. 照片倉庫
 // ==========================================
 const photos = [
-    "images/korankei/cross_line.JPG",
+    "images/korankei/cross_line.JPG", // 預留位置，稍後會被您的首圖覆蓋
     "images/korankei/cutting_leaf.JPG",
     "images/korankei/dark_bridge.JPG",
     "images/korankei/forest_road.JPG",
@@ -14,22 +14,33 @@ const photos = [
 ];
 
 let currentIndex = 0;
-let isGalleryMode = false; // 是否進入了純照片展示模式
-let isThrottled = false; // 滾輪節流閥
+let isGalleryMode = false;
+let isThrottled = false;
+
+// 🍏 確保第一張照片絕對是您資料庫裡設定好的首圖
+if (typeof articles !== 'undefined' && articles[0]) {
+    photos[0] = articles[0].image; 
+}
 
 // ==========================================
-// 2. 渲染主畫面相片與序號
+// 2. 渲染主畫面相片與標題
 // ==========================================
 function updateCarousel(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
+    const titleEl = document.getElementById('main-title');
+    const locationHintEl = document.getElementById('location-hint');
     
-    // 淡出淡入背景
     if (bgPhotoEl) {
         bgPhotoEl.style.backgroundImage = `url('${photos[index]}')`;
     }
     
-    // 更新極簡序號 (例如: 01 / 09)
+    // 🍏 只有在第一張圖時，才顯示您的專屬標題與落款
+    if (index === 0 && typeof articles !== 'undefined' && articles[0]) {
+        if (titleEl) titleEl.textContent = articles[0].title;
+        if (locationHintEl) locationHintEl.innerHTML = articles[0].location;
+    }
+    
     if (counterEl) {
         const displayNum = String(index + 1).padStart(2, '0');
         const totalNum = String(photos.length).padStart(2, '0');
@@ -38,35 +49,66 @@ function updateCarousel(index) {
 }
 
 // ==========================================
-// 3. 進入/退出 藝廊模式
+// 3. 網格索引艙 (生成與開關)
+// ==========================================
+function buildIndexGrid() {
+    const gridContainer = document.getElementById('index-grid');
+    if (!gridContainer || gridContainer.children.length > 0) return; 
+    
+    let gridHtml = '';
+    photos.forEach((url, i) => {
+        gridHtml += `<img src="${url}" class="grid-item" data-index="${i}" alt="Gallery Photo">`;
+    });
+    gridContainer.innerHTML = gridHtml;
+    
+    document.querySelectorAll('.grid-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const targetIndex = parseInt(e.target.getAttribute('data-index'));
+            currentIndex = targetIndex;
+            updateCarousel(currentIndex);
+            document.getElementById('gallery-index-panel').classList.remove('open');
+        });
+    });
+}
+
+// ==========================================
+// 4. 點擊標題 ➔ 瞬間進入並開啟展示間
 // ==========================================
 const mainTitle = document.getElementById('main-title');
 if (mainTitle) {
     mainTitle.addEventListener('click', () => {
         isGalleryMode = true;
         
-        // 隱藏標題與遮罩，秀出序號與九宮格按鈕
         document.getElementById('main-title-container').style.opacity = 0;
         document.getElementById('main-title-container').style.pointerEvents = 'none';
         document.getElementById('dark-overlay').style.opacity = 0;
         document.getElementById('gallery-counter').style.opacity = 1;
         document.getElementById('open-index-btn').style.opacity = 1;
-        
-        // 鎖定時差滾動
         document.body.style.overflowY = 'hidden';
+        
+        // 🍏 核心修正：點擊標題後，直接幫讀者滑出右側九宮格展示間！
+        buildIndexGrid();
+        document.getElementById('gallery-index-panel').classList.add('open');
     });
 }
 
+// 開關網格按鈕
+document.getElementById('open-index-btn').addEventListener('click', () => {
+    buildIndexGrid();
+    document.getElementById('gallery-index-panel').classList.add('open');
+});
+
+document.getElementById('close-index-btn').addEventListener('click', () => {
+    document.getElementById('gallery-index-panel').classList.remove('open');
+});
+
 // ==========================================
-// 4. 滾輪/觸控板 高速翻頁 (限藝廊模式)
+// 5. 滾輪/觸控板 高速翻頁 (限藝廊模式)
 // ==========================================
 window.addEventListener('wheel', (e) => {
-    // 只有在進入藝廊，且索引艙沒打開時才觸發
     if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
+    if (isThrottled) return; 
     
-    if (isThrottled) return; // 節流防爆衝
-    
-    // 判斷滾動方向 (向下滑為正，向上滑為負)
     if (e.deltaY > 30) {
         currentIndex = (currentIndex + 1) % photos.length;
         updateCarousel(currentIndex);
@@ -80,10 +122,9 @@ window.addEventListener('wheel', (e) => {
 
 function throttleScroll() {
     isThrottled = true;
-    setTimeout(() => { isThrottled = false; }, 800); // 冷卻時間 0.8 秒，確保過渡動畫播完
+    setTimeout(() => { isThrottled = false; }, 800); 
 }
 
-// 保留箭頭點擊作為輔助
 document.getElementById('prev-btn').addEventListener('click', () => {
     currentIndex = (currentIndex - 1 + photos.length) % photos.length;
     updateCarousel(currentIndex);
@@ -94,45 +135,10 @@ document.getElementById('next-btn').addEventListener('click', () => {
 });
 
 // ==========================================
-// 5. 網格索引艙 (生成與開關)
-// ==========================================
-function buildIndexGrid() {
-    const gridContainer = document.getElementById('index-grid');
-    if (!gridContainer || gridContainer.children.length > 0) return; // 防止重複生成
-    
-    let gridHtml = '';
-    photos.forEach((url, i) => {
-        gridHtml += `<img src="${url}" class="grid-item" data-index="${i}" alt="Gallery Photo">`;
-    });
-    gridContainer.innerHTML = gridHtml;
-    
-    // 綁定網格點擊跳轉事件
-    document.querySelectorAll('.grid-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-            const targetIndex = parseInt(e.target.getAttribute('data-index'));
-            currentIndex = targetIndex;
-            updateCarousel(currentIndex);
-            
-            // 點擊後自動關閉索引艙
-            document.getElementById('gallery-index-panel').classList.remove('open');
-        });
-    });
-}
-
-document.getElementById('open-index-btn').addEventListener('click', () => {
-    buildIndexGrid();
-    document.getElementById('gallery-index-panel').classList.add('open');
-});
-
-document.getElementById('close-index-btn').addEventListener('click', () => {
-    document.getElementById('gallery-index-panel').classList.remove('open');
-});
-
-// ==========================================
-// 6. 500vh 時差滾動邏輯 (保留您先前的優化參數)
+// 6. 500vh 時差滾動邏輯
 // ==========================================
 window.addEventListener('scroll', () => {
-    if (isGalleryMode) return; // 進入藝廊模式後停止計算背景時差
+    if (isGalleryMode) return; 
 
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
@@ -162,5 +168,5 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// 初始化
+// 啟動
 updateCarousel(0);
