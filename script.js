@@ -53,10 +53,8 @@ function openGallery(galleryId) {
 }
 
 // ==========================================
-// 4. 安全事件監聽器綁定 (防禦性設計：元件不存在也絕不崩潰)
+// 4. 安全事件監聽器綁定
 // ==========================================
-
-// 左右箭頭控制
 const prevBtn = document.getElementById('prev-btn');
 if (prevBtn) {
     prevBtn.addEventListener('click', (e) => {
@@ -79,7 +77,6 @@ if (nextBtn) {
     });
 }
 
-// 首頁大標題點擊
 const mainTitle = document.getElementById('main-title');
 if (mainTitle) {
     mainTitle.addEventListener('click', () => {
@@ -89,7 +86,6 @@ if (mainTitle) {
     });
 }
 
-// 地圖點位錨點點擊
 document.querySelectorAll('.spot-dot').forEach(dot => {
     dot.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -102,7 +98,6 @@ document.querySelectorAll('.spot-dot').forEach(dot => {
     });
 });
 
-// 關閉相簿艙按鈕
 const closeReaderBtn = document.getElementById('close-reader-btn');
 if (closeReaderBtn) {
     closeReaderBtn.addEventListener('click', () => {
@@ -115,7 +110,7 @@ if (closeReaderBtn) {
 }
 
 // ==========================================
-// 5. 500vh 時差滾動邏輯 (核心修復：永久鎖死背景不透明度，阻斷地圖疊影)
+// 5. 500vh 時差滾動邏輯 (🍏 已優化過渡速度與流暢感)
 // ==========================================
 window.addEventListener('scroll', () => {
     const readerPanel = document.getElementById('article-reader-panel');
@@ -131,15 +126,13 @@ window.addEventListener('scroll', () => {
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
 
-    // 🍏 只要還沒完全抵達地圖幕，地圖就必須絕對隱藏，且照片完全顯現不准變透明
-    if (progress <= 3) {
+    // 🍏 核心修改 1：只要進度還沒過半（<= 2），地圖絕對隱藏，確保前段純淨
+    if (progress <= 2) {
         if (mapContainer) {
             mapContainer.style.opacity = 0;
             mapContainer.style.pointerEvents = 'none';
         }
-        if (bgPhoto) {
-            bgPhoto.style.opacity = 1; 
-        }
+        if (bgPhoto) bgPhoto.style.opacity = 1;
     }
 
     if (progress <= 1) {
@@ -158,24 +151,25 @@ window.addEventListener('scroll', () => {
             }
         }
     } 
-    else if (progress > 1 && progress <= 3) {
+    else if (progress > 1 && progress <= 2) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (locationHint) locationHint.style.opacity = 1;
     } 
-    else if (progress > 3) {
-        const stage4Progress = progress - 3;
-        if (locationHint) locationHint.style.opacity = 1 - stage4Progress;
+    // 🍏 核心修改 2：將啟動點提早至 progress > 2。
+    // 從 200vh 滾動到 400vh，跨越足足兩倍的距離（200vh）讓地圖柔和登場。
+    else if (progress > 2) {
+        const stage3Progress = (progress - 2) / 2; // 將 2~4 的斜率映射為 0~1
         
-        // 🍏 終極修正：照片不再降低不透明度（維持固定 1）。
-        // 讓帶有實色白底的地圖容器直接淡入蓋在照片上方，達成乾淨、無疊影雜質的高級轉場。
-        if (bgPhoto) {
-            bgPhoto.style.opacity = 1; 
-        }
+        // 🍏 核心修改 3：引入平方緩動（Ease-In），讓地圖浮現的前半段極其輕柔，消滅突兀感
+        const easedProgress = Math.pow(stage3Progress, 2); 
+        
+        if (locationHint) locationHint.style.opacity = 1 - easedProgress;
+        if (bgPhoto) bgPhoto.style.opacity = 1; 
         
         if (mapContainer) {
-            mapContainer.style.opacity = stage4Progress;
-            if (stage4Progress > 0.9) {
+            mapContainer.style.opacity = easedProgress;
+            if (easedProgress > 0.9) {
                 mapContainer.style.pointerEvents = 'auto';
             } else {
                 mapContainer.style.pointerEvents = 'none';
@@ -185,6 +179,6 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// 6. 核心初始化啟動齒輪
+// 6. 核心初始化啟動
 // ==========================================
 updateCarousel(currentIndex);
