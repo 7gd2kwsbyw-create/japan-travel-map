@@ -31,9 +31,10 @@ function updateCarousel(index) {
 }
 
 // ==========================================
-// 3. 側滑藝廊艙控制
+// 3. 側滑相簿藝廊艙控制
 // ==========================================
 function openGallery(galleryId) {
+    if (typeof articles === 'undefined') return;
     const currentAlbum = articles.find(a => a.id === galleryId) || articles[currentIndex];
     
     const readerTitle = document.getElementById('reader-title');
@@ -47,31 +48,46 @@ function openGallery(galleryId) {
     
     if (readerPanel) {
         readerPanel.classList.add('open');
-        document.body.style.overflowY = 'hidden'; // 鎖定背景捲軸
+        document.body.style.overflowY = 'hidden'; 
     }
 }
 
 // ==========================================
-// 4. 事件監聽器綁定
+// 4. 安全事件監聽器綁定 (防禦性設計：元件不存在也絕不崩潰)
 // ==========================================
 
 // 左右箭頭控制
-document.getElementById('prev-btn').addEventListener('click', (e) => {
-    e.stopPropagation(); 
-    currentIndex = (currentIndex - 1 + articles.length) % articles.length;
-    updateCarousel(currentIndex);
-});
+const prevBtn = document.getElementById('prev-btn');
+if (prevBtn) {
+    prevBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); 
+        if (typeof articles !== 'undefined') {
+            currentIndex = (currentIndex - 1 + articles.length) % articles.length;
+            updateCarousel(currentIndex);
+        }
+    });
+}
 
-document.getElementById('next-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    currentIndex = (currentIndex + 1) % articles.length;
-    updateCarousel(currentIndex);
-});
+const nextBtn = document.getElementById('next-btn');
+if (nextBtn) {
+    nextBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (typeof articles !== 'undefined') {
+            currentIndex = (currentIndex + 1) % articles.length;
+            updateCarousel(currentIndex);
+        }
+    });
+}
 
 // 首頁大標題點擊
-document.getElementById('main-title').addEventListener('click', () => {
-    openGallery(articles[currentIndex].id);
-});
+const mainTitle = document.getElementById('main-title');
+if (mainTitle) {
+    mainTitle.addEventListener('click', () => {
+        if (typeof articles !== 'undefined' && articles[currentIndex]) {
+            openGallery(articles[currentIndex].id);
+        }
+    });
+}
 
 // 地圖點位錨點點擊
 document.querySelectorAll('.spot-dot').forEach(dot => {
@@ -86,20 +102,24 @@ document.querySelectorAll('.spot-dot').forEach(dot => {
     });
 });
 
-// 關閉按鈕
-document.getElementById('close-reader-btn').addEventListener('click', () => {
-    const readerPanel = document.getElementById('article-reader-panel');
-    if (readerPanel) {
-        readerPanel.classList.remove('open');
-        document.body.style.overflowY = 'scroll';
-    }
-});
+// 關閉相簿艙按鈕
+const closeReaderBtn = document.getElementById('close-reader-btn');
+if (closeReaderBtn) {
+    closeReaderBtn.addEventListener('click', () => {
+        const readerPanel = document.getElementById('article-reader-panel');
+        if (readerPanel) {
+            readerPanel.classList.remove('open');
+            document.body.style.overflowY = 'scroll';
+        }
+    });
+}
 
 // ==========================================
-// 5. 500vh 時差滾動與背景防疊影嚴格切換邏輯
+// 5. 500vh 時差滾動邏輯 (核心修復：永久鎖死背景不透明度，阻斷地圖疊影)
 // ==========================================
 window.addEventListener('scroll', () => {
-    if (document.getElementById('article-reader-panel').classList.contains('open')) return;
+    const readerPanel = document.getElementById('article-reader-panel');
+    if (readerPanel && readerPanel.classList.contains('open')) return;
 
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
@@ -111,10 +131,14 @@ window.addEventListener('scroll', () => {
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
 
+    // 🍏 只要還沒完全抵達地圖幕，地圖就必須絕對隱藏，且照片完全顯現不准變透明
     if (progress <= 3) {
         if (mapContainer) {
             mapContainer.style.opacity = 0;
             mapContainer.style.pointerEvents = 'none';
+        }
+        if (bgPhoto) {
+            bgPhoto.style.opacity = 1; 
         }
     }
 
@@ -133,20 +157,22 @@ window.addEventListener('scroll', () => {
                 locationHint.style.opacity = 0;
             }
         }
-        if (bgPhoto) {
-            bgPhoto.style.opacity = 1; // 強制固定不透明度，阻斷疊影
-        }
     } 
     else if (progress > 1 && progress <= 3) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (locationHint) locationHint.style.opacity = 1;
-        if (bgPhoto) bgPhoto.style.opacity = 1;
     } 
     else if (progress > 3) {
         const stage4Progress = progress - 3;
         if (locationHint) locationHint.style.opacity = 1 - stage4Progress;
-        if (bgPhoto) bgPhoto.style.opacity = 1 - stage4Progress;
+        
+        // 🍏 終極修正：照片不再降低不透明度（維持固定 1）。
+        // 讓帶有實色白底的地圖容器直接淡入蓋在照片上方，達成乾淨、無疊影雜質的高級轉場。
+        if (bgPhoto) {
+            bgPhoto.style.opacity = 1; 
+        }
+        
         if (mapContainer) {
             mapContainer.style.opacity = stage4Progress;
             if (stage4Progress > 0.9) {
@@ -159,6 +185,6 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// 6. 核心啟動齒輪 (先前不小心被切掉的段落)
+// 6. 核心初始化啟動齒輪
 // ==========================================
 updateCarousel(currentIndex);
