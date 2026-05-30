@@ -1,167 +1,154 @@
 // ==========================================
-// 1. 全域變數
+// 1. 照片倉庫 (以香嵐溪為例)
 // ==========================================
-let currentIndex = 0; 
+const photos = [
+    "images/korankei/cross_line.JPG",
+    "images/korankei/cutting_leaf.JPG",
+    "images/korankei/dark_bridge.JPG",
+    "images/korankei/forest_road.JPG",
+    "images/korankei/maple_lake.JPG",
+    "images/korankei/obajyan.JPG",
+    "images/korankei/river_side.JPG",
+    "images/korankei/stone_road.JPG",
+    "images/korankei/yellow_leaf.JPG"
+];
+
+let currentIndex = 0;
+let isGalleryMode = false; // 是否進入了純照片展示模式
+let isThrottled = false; // 滾輪節流閥
 
 // ==========================================
-// 2. 首頁看板內容與背景圖更新核心
+// 2. 渲染主畫面相片與序號
 // ==========================================
 function updateCarousel(index) {
-    if (typeof articles === 'undefined' || !articles[index]) return;
-    const article = articles[index]; 
-    const titleEl = document.getElementById('main-title');
     const bgPhotoEl = document.getElementById('bg-photo');
-    const locationHintEl = document.getElementById('location-hint');
-
-    if (titleEl) titleEl.style.opacity = 0;
+    const counterEl = document.getElementById('gallery-counter');
     
-    setTimeout(() => {
-        if (titleEl) {
-            titleEl.textContent = article.title;
-            titleEl.style.opacity = 1;
-        }
-        if (bgPhotoEl) {
-            bgPhotoEl.style.backgroundImage = `url('${article.image}')`;
-            bgPhotoEl.style.opacity = 1;
-        }
-        if (locationHintEl) {
-            locationHintEl.innerHTML = article.location;
-        }
-    }, 200);
-}
-
-// ==========================================
-// 3. 側滑相簿藝廊艙控制
-// ==========================================
-function openGallery(galleryId) {
-    if (typeof articles === 'undefined') return;
-    const currentAlbum = articles.find(a => a.id === galleryId) || articles[currentIndex];
+    // 淡出淡入背景
+    if (bgPhotoEl) {
+        bgPhotoEl.style.backgroundImage = `url('${photos[index]}')`;
+    }
     
-    const readerTitle = document.getElementById('reader-title');
-    const readerBody = document.getElementById('reader-body');
-    const readerMeta = document.getElementById('reader-date');
-    const readerPanel = document.getElementById('article-reader-panel');
-
-    if (readerMeta) readerMeta.textContent = currentAlbum.date;
-    if (readerTitle) readerTitle.textContent = currentAlbum.title;
-    if (readerBody) readerBody.innerHTML = currentAlbum.content;
-    
-    if (readerPanel) {
-        readerPanel.classList.add('open');
-        document.body.style.overflowY = 'hidden'; 
+    // 更新極簡序號 (例如: 01 / 09)
+    if (counterEl) {
+        const displayNum = String(index + 1).padStart(2, '0');
+        const totalNum = String(photos.length).padStart(2, '0');
+        counterEl.textContent = `${displayNum} / ${totalNum}`;
     }
 }
 
 // ==========================================
-// 4. 安全事件監聽器綁定
+// 3. 進入/退出 藝廊模式
 // ==========================================
-const prevBtn = document.getElementById('prev-btn');
-if (prevBtn) {
-    prevBtn.addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        if (typeof articles !== 'undefined') {
-            currentIndex = (currentIndex - 1 + articles.length) % articles.length;
-            updateCarousel(currentIndex);
-        }
-    });
-}
-
-const nextBtn = document.getElementById('next-btn');
-if (nextBtn) {
-    nextBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (typeof articles !== 'undefined') {
-            currentIndex = (currentIndex + 1) % articles.length;
-            updateCarousel(currentIndex);
-        }
-    });
-}
-
 const mainTitle = document.getElementById('main-title');
 if (mainTitle) {
     mainTitle.addEventListener('click', () => {
-        if (typeof articles !== 'undefined' && articles[currentIndex]) {
-            openGallery(articles[currentIndex].id);
-        }
+        isGalleryMode = true;
+        
+        // 隱藏標題與遮罩，秀出序號與九宮格按鈕
+        document.getElementById('main-title-container').style.opacity = 0;
+        document.getElementById('main-title-container').style.pointerEvents = 'none';
+        document.getElementById('dark-overlay').style.opacity = 0;
+        document.getElementById('gallery-counter').style.opacity = 1;
+        document.getElementById('open-index-btn').style.opacity = 1;
+        
+        // 鎖定時差滾動
+        document.body.style.overflowY = 'hidden';
     });
 }
 
-document.querySelectorAll('.spot-dot').forEach(dot => {
-    dot.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const spotName = dot.getAttribute('data-spot');
-        if (spotName === "出雲大社" || spotName === "松江城" || spotName === "宍道湖") {
-            openGallery("shimane-album");
-        } else {
-            openGallery("korankei-album");
-        }
-    });
+// ==========================================
+// 4. 滾輪/觸控板 高速翻頁 (限藝廊模式)
+// ==========================================
+window.addEventListener('wheel', (e) => {
+    // 只有在進入藝廊，且索引艙沒打開時才觸發
+    if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
+    
+    if (isThrottled) return; // 節流防爆衝
+    
+    // 判斷滾動方向 (向下滑為正，向上滑為負)
+    if (e.deltaY > 30) {
+        currentIndex = (currentIndex + 1) % photos.length;
+        updateCarousel(currentIndex);
+        throttleScroll();
+    } else if (e.deltaY < -30) {
+        currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+        updateCarousel(currentIndex);
+        throttleScroll();
+    }
 });
 
-const closeReaderBtn = document.getElementById('close-reader-btn');
-if (closeReaderBtn) {
-    closeReaderBtn.addEventListener('click', () => {
-        const readerPanel = document.getElementById('article-reader-panel');
-        if (readerPanel) {
-            readerPanel.classList.remove('open');
-            document.body.style.overflowY = 'scroll';
-        }
+function throttleScroll() {
+    isThrottled = true;
+    setTimeout(() => { isThrottled = false; }, 800); // 冷卻時間 0.8 秒，確保過渡動畫播完
+}
+
+// 保留箭頭點擊作為輔助
+document.getElementById('prev-btn').addEventListener('click', () => {
+    currentIndex = (currentIndex - 1 + photos.length) % photos.length;
+    updateCarousel(currentIndex);
+});
+document.getElementById('next-btn').addEventListener('click', () => {
+    currentIndex = (currentIndex + 1) % photos.length;
+    updateCarousel(currentIndex);
+});
+
+// ==========================================
+// 5. 網格索引艙 (生成與開關)
+// ==========================================
+function buildIndexGrid() {
+    const gridContainer = document.getElementById('index-grid');
+    if (!gridContainer || gridContainer.children.length > 0) return; // 防止重複生成
+    
+    let gridHtml = '';
+    photos.forEach((url, i) => {
+        gridHtml += `<img src="${url}" class="grid-item" data-index="${i}" alt="Gallery Photo">`;
+    });
+    gridContainer.innerHTML = gridHtml;
+    
+    // 綁定網格點擊跳轉事件
+    document.querySelectorAll('.grid-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            const targetIndex = parseInt(e.target.getAttribute('data-index'));
+            currentIndex = targetIndex;
+            updateCarousel(currentIndex);
+            
+            // 點擊後自動關閉索引艙
+            document.getElementById('gallery-index-panel').classList.remove('open');
+        });
     });
 }
 
+document.getElementById('open-index-btn').addEventListener('click', () => {
+    buildIndexGrid();
+    document.getElementById('gallery-index-panel').classList.add('open');
+});
+
+document.getElementById('close-index-btn').addEventListener('click', () => {
+    document.getElementById('gallery-index-panel').classList.remove('open');
+});
+
 // ==========================================
-// 5. 500vh 時差滾動邏輯 (🍏 已優化過渡速度與流暢感)
+// 6. 500vh 時差滾動邏輯 (保留您先前的優化參數)
 // ==========================================
 window.addEventListener('scroll', () => {
-    const readerPanel = document.getElementById('article-reader-panel');
-    if (readerPanel && readerPanel.classList.contains('open')) return;
+    if (isGalleryMode) return; // 進入藝廊模式後停止計算背景時差
 
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
 
-    const mainTitleContainer = document.getElementById('main-title-container');
-    const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
 
-    // 🍏 核心修改 1：只要進度還沒過半（<= 2），地圖絕對隱藏，確保前段純淨
     if (progress <= 2) {
-        if (mapContainer) {
-            mapContainer.style.opacity = 0;
-            mapContainer.style.pointerEvents = 'none';
-        }
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
         if (bgPhoto) bgPhoto.style.opacity = 1;
-    }
-
-    if (progress <= 1) {
-        if (mainTitleContainer) {
-            mainTitleContainer.style.opacity = 1 - progress;
-            mainTitleContainer.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
-            mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
-        }
-        if (darkOverlay) darkOverlay.style.opacity = 0.6 * (1 - progress);
-
-        if (locationHint) {
-            if (progress > 0.3) {
-                locationHint.style.opacity = Math.min((progress - 0.3) * 1.5, 1);
-            } else {
-                locationHint.style.opacity = 0;
-            }
-        }
+        if (locationHint) locationHint.style.opacity = Math.min((progress - 0.3) * 1.5, 1);
     } 
-    else if (progress > 1 && progress <= 2) {
-        if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
-        if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (locationHint) locationHint.style.opacity = 1;
-    } 
-    // 🍏 核心修改 2：將啟動點提早至 progress > 2。
-    // 從 200vh 滾動到 400vh，跨越足足兩倍的距離（200vh）讓地圖柔和登場。
     else if (progress > 2) {
-        const stage3Progress = (progress - 2) / 2; // 將 2~4 的斜率映射為 0~1
-        
-        // 🍏 核心修改 3：引入平方緩動（Ease-In），讓地圖浮現的前半段極其輕柔，消滅突兀感
+        const stage3Progress = (progress - 2) / 2; 
         const easedProgress = Math.pow(stage3Progress, 2); 
         
         if (locationHint) locationHint.style.opacity = 1 - easedProgress;
@@ -169,16 +156,11 @@ window.addEventListener('scroll', () => {
         
         if (mapContainer) {
             mapContainer.style.opacity = easedProgress;
-            if (easedProgress > 0.9) {
-                mapContainer.style.pointerEvents = 'auto';
-            } else {
-                mapContainer.style.pointerEvents = 'none';
-            }
+            if (easedProgress > 0.9) { mapContainer.style.pointerEvents = 'auto'; } 
+            else { mapContainer.style.pointerEvents = 'none'; }
         }
     }
 });
 
-// ==========================================
-// 6. 核心初始化啟動
-// ==========================================
-updateCarousel(currentIndex);
+// 初始化
+updateCarousel(0);

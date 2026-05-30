@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@300;400&family=Noto+Sans+TC:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400&family=Noto+Serif+TC:wght@300;400&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -27,16 +27,28 @@
         <span class="arrow">〉</span>
     </div>
 
+    <div id="gallery-counter"></div>
+
     <div id="location-hint">📍 載入中...</div>
 
-    <div id="article-reader-panel">
-        <div class="reader-close-btn" id="close-reader-btn">✕ CLOSE</div>
-        <div class="reader-content-wrapper">
-            <div class="reader-meta" id="reader-date">2026.11.25</div>
-            <h2 class="reader-title" id="reader-title">文章標題</h2>
-            <div class="reader-body" id="reader-body">
-                </div>
-        </div>
+    <div id="open-index-btn">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+            <rect x="3" y="3" width="4" height="4" fill="currentColor"/>
+            <rect x="10" y="3" width="4" height="4" fill="currentColor"/>
+            <rect x="17" y="3" width="4" height="4" fill="currentColor"/>
+            <rect x="3" y="10" width="4" height="4" fill="currentColor"/>
+            <rect x="10" y="10" width="4" height="4" fill="currentColor"/>
+            <rect x="17" y="10" width="4" height="4" fill="currentColor"/>
+            <rect x="3" y="17" width="4" height="4" fill="currentColor"/>
+            <rect x="10" y="17" width="4" height="4" fill="currentColor"/>
+            <rect x="17" y="17" width="4" height="4" fill="currentColor"/>
+        </svg>
+    </div>
+
+    <div id="gallery-index-panel">
+        <div class="index-close-btn" id="close-index-btn">✕ CLOSE</div>
+        <div class="masonry-grid" id="index-grid">
+            </div>
     </div>
 
     <div id="map-container">
@@ -49,12 +61,6 @@
         </svg>
     </div>
 
-    <div id="tooltip"></div>
-    <div id="right-panel">
-        <img src="gr-photo.jpg" class="gr-card" alt="Ricoh GR 實景">
-    </div>
-
-    <script src="articles-data.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
