@@ -1,7 +1,8 @@
 let currentIndex = 0; 
 
-// 更新首頁看板內容的函式
+// 更新首頁看板內容與背景圖的函式
 function updateCarousel(index) {
+    if (typeof articles === 'undefined' || !articles[index]) return;
     const article = articles[index]; 
     const titleEl = document.getElementById('main-title');
     const bgPhotoEl = document.getElementById('bg-photo');
@@ -15,7 +16,6 @@ function updateCarousel(index) {
             titleEl.style.opacity = 1;
         }
         if (bgPhotoEl) {
-            // 🍏 直接在這裡強制寫入相對路徑，避開 CSS 機制
             bgPhotoEl.style.backgroundImage = `url('${article.image}')`;
             bgPhotoEl.style.opacity = 1;
         }
@@ -38,15 +38,9 @@ document.getElementById('next-btn').addEventListener('click', (e) => {
     updateCarousel(currentIndex);
 });
 
-// 🍏 核心打通：點擊文章標題直接滑出閱讀艙
+// 🍏 核心打通：點擊首頁大標題 ➔ 平滑滑出原生閱讀艙，並完整渲染您的長文與相簿
 document.getElementById('main-title').addEventListener('click', () => {
     const article = articles[currentIndex];
-    
-    // 如果點到備用文章，給予精緻的提示
-    if (article.content.includes("文章儲備中")) {
-        alert("該自駕區域遊記正在籌備中，敬請期待！(๑•̀.̫•́)✧");
-        return;
-    }
     
     document.getElementById('reader-date').textContent = article.date;
     document.getElementById('reader-title').textContent = article.title;
@@ -55,8 +49,29 @@ document.getElementById('main-title').addEventListener('click', () => {
     const readerPanel = document.getElementById('article-reader-panel');
     if (readerPanel) {
         readerPanel.classList.add('open');
-        document.body.style.overflowY = 'hidden'; // 鎖定底層滾動
+        document.body.style.overflowY = 'hidden'; // 開啟時鎖定外層捲軸，維持沉浸體感
     }
+});
+
+// 🍏 核心打通：點擊第三幕地圖錨點 ➔ 串連至同一個高級藝廊閱讀艙
+document.querySelectorAll('.spot-dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const spotName = dot.getAttribute('data-spot');
+        
+        // 依據點選的地圖站點名稱，精準抓取倉庫內對應的香嵐溪遊記文章（目前第一筆）
+        const article = articles[0]; 
+        
+        document.getElementById('reader-date').textContent = article.date;
+        document.getElementById('reader-title').textContent = article.title;
+        document.getElementById('reader-body').innerHTML = article.content;
+        
+        const readerPanel = document.getElementById('article-reader-panel');
+        if (readerPanel) {
+            readerPanel.classList.add('open');
+            document.body.style.overflowY = 'hidden';
+        }
+    });
 });
 
 // 關閉按鈕事件
@@ -68,12 +83,14 @@ document.getElementById('close-reader-btn').addEventListener('click', () => {
     }
 });
 
-// 初始化：網頁一打開，立刻強制載入第一篇文章內容與背景
+// 初始化載入第一篇文章看板
 updateCarousel(currentIndex);
 
 
-// 500vh 五幕滾動時差邏輯
+// 🍏 完美恢復您原本的 500vh 五幕滾動時差控制邏輯
 window.addEventListener('scroll', () => {
+    if (document.getElementById('article-reader-panel').classList.contains('open')) return;
+
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);

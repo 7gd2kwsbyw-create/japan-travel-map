@@ -1,282 +1,276 @@
+/* 🍏 核心引入：全自動切片、防缺字的芫荽手寫體雲端線路 */
 @import url('https://fonts.googleapis.com/css2?family=Iansui:wght@400&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;500&display=swap');
 
-/* ==========================================
-   2. 全域與基礎重設
-   ========================================== */
-*, *::before, *::after {
-    box-sizing: border-box;
-}
-
+/* 全域設定 */
 body {
     margin: 0;
-    padding: 0;
-    font-family: 'Noto Serif TC', serif;
-    background-color: #111;
-    color: #f5f5f5;
+    height: 500vh; 
+    background-color: #ffffff;
+    font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
 }
 
-/* ==========================================
-   3. 時差捲軸骨架 (500vh)
-   ========================================== */
-#scroller-container {
-    position: relative;
+#scroll-spacer {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 500vh; /* 五幕總高度 */
+    height: 100%;
+    pointer-events: none;
 }
 
-.scroller-stage {
+/* 第一、二、三、四幕：背景與遮色片固定 */
+#bg-photo {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100vh;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.8s ease, visibility 0.8s ease;
-    z-index: 1;
-}
-
-.scroller-stage.active {
-    opacity: 1;
-    visibility: visible;
-    z-index: 2;
-}
-
-/* ==========================================
-   4. 第一幕：首頁藝廊看板
-   ========================================== */
-#stage-1 {
-    display: block;
-}
-
-#bg-photo {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
+    width: 100vw;
     height: 100vh;
     background-size: cover;
     background-position: center;
-    transition: background-image 0.6s ease-in-out;
+    z-index: 2;
+    will-change: opacity; 
 }
 
 #dark-overlay {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
+    width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    transition: background 0.5s ease;
-}
-
-/* 核心文青大標題 */
-#title-container {
-    position: absolute;
-    left: 8%;
-    bottom: 15%;
-    max-width: 84%;
+    background: rgba(0, 0, 0, 0.6);
     z-index: 3;
+    pointer-events: none;
+    will-change: opacity;
 }
 
+/* 主標題容器定位 */
+#main-title-container {
+    position: fixed;
+    top: 38%; 
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 4;
+}
+
+/* 主標題樣式（修正：手機版自適應、換上手寫體、移除強迫不換行地雷） */
 #main-title {
     margin: 0;
     color: white;
     font-family: 'Iansui', 'Noto Serif TC', serif; 
     font-weight: 400;
-    font-size: 3.5rem;
-    letter-spacing: 0.12em;
-    line-height: 1.4;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
-    cursor: pointer;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    font-size: 3.2rem;
+    letter-spacing: 0.12em; 
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5); 
+    text-align: center;
+    cursor: pointer; 
+    transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     will-change: transform, opacity;
 }
 
 #main-title:hover {
-    transform: translateY(-4px);
-    opacity: 0.85;
+    filter: drop-shadow(0 0 12px rgba(255,255,255,0.4));
+    transform: scale(1.02); 
 }
 
-#location-hint {
-    margin-top: 15px;
-    font-size: 0.95rem;
-    color: rgba(255, 255, 255, 0.7);
-    letter-spacing: 0.15em;
-}
-
-/* 左右箭頭控制 */
-.nav-btn {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: white;
-    font-size: 2.5rem;
+/* 兩側點擊區 */
+.side-click-zone {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 100px;
+    z-index: 5;
     cursor: pointer;
-    opacity: 0.4;
-    transition: opacity 0.3s ease;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.left-zone { left: 0; }
+.right-zone { right: 0; }
+
+.arrow {
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 300;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.side-click-zone:hover .arrow {
+    opacity: 0.8;
+}
+
+/* 「這是哪裡」落款小字樣式 */
+#location-hint {
+    position: fixed;
+    bottom: 0; 
+    left: 0;
+    width: 100vw; 
+    padding-bottom: 40px; 
+    padding-top: 80px; 
+    text-align: center; 
+    
+    color: rgba(255, 255, 255, 0.9); 
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.35em; 
+    font-weight: 300;
     z-index: 4;
+    opacity: 0; 
+    will-change: opacity;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
 }
 
-.nav-btn:hover {
-    opacity: 1;
-}
-
-#prev-btn { left: 3%; }
-#next-btn { right: 3%; }
-
-/* ==========================================
-   5. 沉浸式相簿藝廊艙 (Overlay Panel)
-   ========================================== */
+/* 全螢幕文章閱讀艙（完美恢復您最愛的高級磨砂玻璃質感與滑出動態） */
 #article-reader-panel {
     position: fixed;
     top: 0;
-    right: -100%;
-    width: 100%;
+    right: -100vw; 
+    width: 100vw;
     height: 100vh;
-    background: rgba(15, 15, 15, 0.98);
-    backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.95); 
+    backdrop-filter: blur(20px); 
     -webkit-backdrop-filter: blur(20px);
-    z-index: 100;
-    overflow-y: auto;
-    transition: right 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    z-index: 20; 
+    transition: right 0.6s cubic-bezier(0.25, 1, 0.3, 1); 
+    box-sizing: border-box;
 }
 
 #article-reader-panel.open {
     right: 0;
 }
 
-.reader-container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 80px 24px;
-}
-
-#close-reader-btn {
-    position: fixed;
-    top: 25px;
-    right: 30px;
-    background: transparent;
-    border: none;
-    color: #999;
-    font-size: 2rem;
-    cursor: pointer;
-    transition: color 0.3s ease;
-    z-index: 101;
-}
-
-#close-reader-btn:hover {
-    color: white;
-}
-
-#reader-title {
-    font-family: 'Iansui', 'Noto Serif TC', serif;
-    font-size: 2.4rem;
-    margin-bottom: 40px;
-    color: #fff;
-    letter-spacing: 0.05em;
-    line-height: 1.4;
-}
-
-/* 預留遊記內文空間樣式 */
-.gallery-preface {
-    font-size: 1.05rem;
-    line-height: 1.8;
-    color: #ccc;
-    margin-bottom: 40px;
-    letter-spacing: 0.08em;
-}
-
-/* 藝廊照片網格 */
-#reader-body {
-    display: block;
-}
-
-.gallery-scrivener-photo {
-    width: 100%;
-    height: auto;
-    margin-bottom: 24px;
-    border-radius: 4px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-    opacity: 0;
-    transform: translateY(20px);
-    animation: fadeInUp 0.8s forwards ease;
-}
-
-@keyframes fadeInUp {
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* ==========================================
-   6. 第三幕：日本自駕地圖
-   ========================================== */
-#stage-3 {
-    background: #161616;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.map-container {
-    position: relative;
-    width: 90%;
-    max-width: 800px;
-}
-
-/* 地圖錨點樣式 */
-.spot-dot {
+.reader-close-btn {
     position: absolute;
-    width: 14px;
-    height: 14px;
-    background: #ff4757;
-    border-radius: 50%;
+    top: 40px;
+    left: 40px;
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    color: #666;
     cursor: pointer;
-    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
-    animation: pulse 2s infinite;
-    transition: transform 0.3s ease;
+    font-weight: 300;
+    transition: color 0.3s ease;
+}
+.reader-close-btn:hover { color: #000; }
+
+.reader-content-wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 120px 40px 80px 40px;
+    height: 100vh;
+    overflow-y: auto; 
+    box-sizing: border-box;
 }
 
-.spot-dot:hover {
-    transform: scale(1.3);
+.reader-meta {
+    font-size: 0.85rem;
+    color: #888;
+    letter-spacing: 0.1em;
+    margin-bottom: 15px;
+    font-weight: 300;
 }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); }
-    70% { box-shadow: 0 0 0 10px rgba(255, 71, 87, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); }
+.reader-title {
+    font-family: 'Iansui', 'Noto Serif TC', serif; /* 🍏 標題同步套用手寫體 */
+    font-size: 2.2rem;
+    font-weight: 400;
+    color: #111;
+    line-height: 1.4;
+    margin: 0 0 40px 0;
 }
 
-/* ==========================================
-   7. RWD 手機版響應式優化
-   ========================================== */
+.reader-body p {
+    font-family: 'Noto Serif TC', serif;
+    font-size: 1.05rem;
+    color: #333;
+    line-height: 2; 
+    letter-spacing: 0.05em;
+    margin-bottom: 30px;
+    text-align: justify;
+}
+
+.reader-body img {
+    width: 100%;
+    border-radius: 4px;
+    margin: 20px 0 40px 0;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+}
+
+/* 第五幕：日本全地圖容器 */
+#map-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #fdfdfd;
+    z-index: 1; 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#japan-map {
+    width: 80vw;
+    height: 80vh;
+    transition: transform 1.2s cubic-bezier(0.25, 1, 0.3, 1); 
+}
+
+.land { fill: #f0f0f0; stroke: #e0e0e0; stroke-width: 2; }
+.prefecture { fill: #e4e4e4; stroke: #d0d0d0; stroke-width: 1; cursor: pointer; transition: fill 0.4s ease; }
+.prefecture:hover { fill: #cfcfcf; }
+.zoomed-shimane { transform: scale(3.5) translate(10%, -15%); }
+.spot-dot { fill: #ffffff; stroke: #888888; stroke-width: 1.5; opacity: 0; transition: opacity 0.8s ease; cursor: pointer; pointer-events: none; }
+.spot-dot.visible { opacity: 1; pointer-events: auto; }
+
+#tooltip {
+    position: fixed;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: #333;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+}
+
+#right-panel {
+    position: fixed;
+    right: -420px; 
+    top: 0;
+    width: 380px;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 6;
+    transition: right 1s cubic-bezier(0.25, 1, 0.3, 1);
+    overflow-y: auto; 
+    padding: 30px;
+    box-sizing: border-box;
+}
+
+#right-panel.active { right: 0; }
+.gr-card { width: 100%; border-radius: 4px; margin-bottom: 24px; display: block; }
+
+/* 🍏 RWD 行動端自適應微調（防止手機比例暴走） */
 @media (max-width: 768px) {
     #main-title {
-        font-size: 2.1rem;
-        letter-spacing: 0.08em;
+        font-size: 2rem !important;
+        line-height: 1.5;
     }
-    
-    #title-container {
-        left: 6%;
-        bottom: 18%;
-        max-width: 88%;
+    .reader-content-wrapper {
+        padding: 80px 20px 40px 20px;
     }
-
-    .nav-btn {
-        font-size: 2rem;
-    }
-
-    #reader-title {
-        font-size: 1.7rem;
-    }
-
-    .reader-container {
-        padding: 60px 16px;
+    .reader-title {
+        font-size: 1.6rem;
     }
 }
