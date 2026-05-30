@@ -105,23 +105,25 @@ body {
 }
 
 /* ==========================================
-   🍏 核心修正：將「物理排版」與「光影縮放」分層格開
+   🍏 核心優化：固化多欄佈局頂端邊界，阻斷重繪
    ========================================== */
 .grid-box {
     display: inline-block;
     width: 100%;
     height: auto;
     margin-bottom: 24px;
-    break-inside: avoid; /* 🍏 外殼死守瀑布流排版，不帶何任 scale 屬性 */
+    break-inside: avoid;
     border-radius: 4px;
     background: transparent;
+
+    /* 🍏 核心修正：將父外殼提早晉升獨立 3D 渲染層並隔絕層疊內容，強制穩定「上中、上右」的欄位邊界 */
+    transform: translateZ(0);
+    isolation: isolate;
 }
 
 .grid-item {
     width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
     opacity: 0.4;
-    
-    /* 🍏 只在內層相片上執行安全縮放，絕不引發外層瀑布流塌陷 */
     transform: scale(0.97);
     will-change: transform, opacity;
     transition: opacity 0.35s cubic-bezier(0.25, 1, 0.3, 1), 
@@ -129,7 +131,6 @@ body {
                 box-shadow 0.35s cubic-bezier(0.25, 1, 0.3, 1);
 }
 
-/* 🍏 當滑鼠移入穩定的外殼時，精確驅動內層相片全亮且優雅放大 */
 .grid-box:hover .grid-item {
     opacity: 1;
     transform: scale(1);
@@ -145,6 +146,6 @@ body {
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }
     .masonry-grid { column-count: 1; column-gap: 0; }
-    .grid-box { margin-bottom: 16px; }
+    .grid-box { margin-bottom: 16px; transform: none; isolation: auto; } /* 行動端解開加速以節省效能 */
     .grid-item { opacity: 0.8; transform: scale(1); }
 }
