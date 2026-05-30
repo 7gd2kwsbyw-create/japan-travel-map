@@ -19,7 +19,7 @@ const albums = [
     },
     {
         title: "寂靜美保關，時間在青石疊上呢喃", 
-        location: "📍 島根縣 ． 美保關青石疊步道",
+        location: "📍 島根縣 ． 美保神社",
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
