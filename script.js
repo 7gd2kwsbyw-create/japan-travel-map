@@ -18,7 +18,7 @@ const albums = [
         ]
     },
     {
-        title: "寂靜美保關，時間在青石疊上呢喃", 
+        title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
