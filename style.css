@@ -1,208 +1,126 @@
-/* ==========================================
-   1. 雲端字型引入 (嚴格置於最頂端)
-   ========================================== */
 @import url('https://fonts.googleapis.com/css2?family=Iansui:wght@400&display=swap');
 
-/* ==========================================
-   2. 全域基礎骨架設定
-   ========================================== */
-*, *::before, *::after {
-    box-sizing: border-box;
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-    margin: 0;
-    padding: 0;
-    height: 500vh; /* 500vh 時差滾動總高度 */
-    background-color: #111111; /* 確保底色絕對是高級暗色，防全白 */
+    margin: 0; padding: 0; height: 500vh;
+    background-color: #080808;
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
+    overscroll-behavior-y: none;
 }
 
-#scroll-spacer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-}
+#scroll-spacer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* ==========================================
-   3. 第一、二、三幕：背景與遮色片固定骨架
-   ========================================== */
 #bg-photo {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-size: cover;
-    background-position: center;
-    z-index: 2;
-    will-change: opacity;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-size: cover; background-position: center;
+    z-index: 2; will-change: opacity, background-image;
+    transition: background-image 0.6s ease-in-out;
 }
 
 #dark-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 3;
-    pointer-events: none;
-    will-change: opacity;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity;
 }
 
-/* ==========================================
-   4. 主標題文字排版 (修正：兼顧不斷行與安全間距)
-   ========================================== */
 #main-title-container {
-    position: fixed;
-    top: 40%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%; /* 給予充足的寬度撐開文字 */
-    max-width: 1200px;
-    z-index: 4;
-    display: flex;
-    justify-content: center;
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center;
+    transition: opacity 0.5s ease;
 }
 
 #main-title {
-    margin: 0;
-    color: white;
-    font-family: 'Iansui', 'Noto Serif TC', serif; 
-    font-weight: 400;
-    font-size: 3.5rem; /* 恢復大氣的 3.5rem */
-    letter-spacing: 0.12em;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
-    text-align: center;
-    cursor: pointer;
-    white-space: nowrap; /* 🍏 網頁端強迫絕對不准斷行 */
-    transition: opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease;
-    will-change: transform, opacity;
+    margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; 
+    font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center;
+    white-space: nowrap; cursor: pointer;
 }
 
-#main-title:hover {
-    filter: drop-shadow(0 0 12px rgba(255,255,255,0.4));
-    transform: scale(1.02);
-}
-
-/* 左右箭頭與落款 */
 .side-click-zone {
-    position: fixed;
-    top: 0;
-    height: 100vh;
-    width: 100px;
-    z-index: 5;
-    cursor: pointer;
-    background: transparent;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5;
+    cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center;
 }
-.left-zone { left: 0; }
-.right-zone { right: 0; }
+.left-zone { left: 0; } .right-zone { right: 0; }
 .arrow { color: white; font-size: 1.5rem; font-weight: 300; opacity: 0; transition: opacity 0.4s ease; }
 .side-click-zone:hover .arrow { opacity: 0.8; }
 
 #location-hint {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    padding-bottom: 40px;
-    padding-top: 80px;
-    text-align: center;
-    color: rgba(255, 255, 255, 0.9);
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.85rem;
-    letter-spacing: 0.35em;
-    font-weight: 300;
-    z-index: 4;
-    opacity: 0;
-    will-change: opacity;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px;
+    text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif;
+    font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 4; opacity: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+    transition: opacity 0.5s ease;
 }
+
+#gallery-counter {
+    position: fixed; top: 40px; left: 40px; z-index: 5;
+    color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif;
+    font-size: 0.9rem; letter-spacing: 0.2em; font-weight: 300;
+    opacity: 0; transition: opacity 0.5s ease;
+}
+
+#open-index-btn {
+    position: fixed; bottom: 40px; right: 40px; z-index: 6;
+    color: rgba(255, 255, 255, 0.5); cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease;
+    opacity: 0;
+}
+#open-index-btn:hover { color: rgba(255, 255, 255, 1); transform: scale(1.1); }
 
 /* ==========================================
-   5. 全螢幕相簿藝廊艙 (修復：預設絕對隱藏在右側)
+   🍏 高級相簿展示間核心佈局
    ========================================== */
-#article-reader-panel {
-    position: fixed;
-    top: 0;
-    right: -100vw; /* 🍏 核心修正：預設藏在外太空，防止其直接平鋪卡死首頁 */
-    width: 100vw;
-    height: 100vh;
-    background: rgba(255, 255, 255, 0.95); /* 高級白底磨砂玻璃 */
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
-    z-index: 100; /* 高於一切的層級 */
-    transition: right 0.5s cubic-bezier(0.25, 1, 0.3, 1);
+#gallery-index-panel {
+    position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh;
+    background: rgba(10, 10, 10, 0.88); /* 高級暗房白交織 */
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    z-index: 100; transition: right 0.5s cubic-bezier(0.25, 1, 0.2, 1);
+    overflow-y: auto; padding: 120px 8%; box-sizing: border-box;
+}
+#gallery-index-panel.open { right: 0; }
+
+.index-close-btn {
+    position: absolute; top: 40px; right: 40px; font-size: 0.8rem; letter-spacing: 0.2em;
+    color: #888; cursor: pointer; font-weight: 300; transition: color 0.3s ease;
+}
+.index-close-btn:hover { color: #fff; }
+
+.masonry-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-auto-rows: 240px;
+    gap: 24px; max-width: 1400px; margin: 0 auto;
 }
 
-#article-reader-panel.open {
-    right: 0; /* 點擊時平滑滑入 */
+/* 🍏 純粹明暗對比互動元件 */
+.grid-item {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: 4px; cursor: pointer;
+    opacity: 0.4; /* 未選取時暗化 */
+    transform: scale(0.97);
+    transition: opacity 0.4s ease, transform 0.4s ease, box-shadow 0.4s ease;
+}
+.grid-item:hover {
+    opacity: 1; /* 100% 亮起 */
+    transform: scale(1);
+    box-shadow: 0 12px 36px rgba(0,0,0,0.9);
 }
 
-.reader-close-btn {
-    position: absolute;
-    top: 40px;
-    left: 40px;
-    font-size: 0.8rem;
-    letter-spacing: 0.2em;
-    color: #666;
-    cursor: pointer;
-    font-weight: 300;
-}
+/* 雜誌錯落格線配置 */
+.grid-item:nth-child(1) { grid-column: span 2; grid-row: span 2; }
+.grid-item:nth-child(4) { grid-row: span 2; }
+.grid-item:nth-child(7) { grid-column: span 2; }
 
-.reader-content-wrapper {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 120px 40px 80px 40px;
-    height: 100vh;
-    overflow-y: auto;
-}
-
-.reader-meta { font-size: 0.85rem; color: #888; margin-bottom: 15px; font-weight: 300; }
-.reader-title { font-family: 'Iansui', 'Noto Serif TC', serif; font-size: 2.2rem; color: #111; margin: 0 0 40px 0; }
-.reader-body p { font-family: 'Noto Serif TC', serif; font-size: 1.05rem; color: #333; line-height: 2; margin-bottom: 30px; text-align: justify; }
-.reader-body img { width: 100%; border-radius: 4px; margin: 20px 0 40px 0; box-shadow: 0 8px 24px rgba(0,0,0,0.06); }
-
-/* ==========================================
-   6. 第五幕：日本全地圖
-   ========================================== */
-#map-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #fdfdfd;
-    z-index: 6;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-}
-
+#map-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fdfdfd; z-index: 6; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; }
 #japan-map { width: 80vw; height: 80vh; }
 .land { fill: #f0f0f0; stroke: #e0e0e0; stroke-width: 2; }
 .prefecture { fill: #e4e4e4; stroke: #d0d0d0; stroke-width: 1; cursor: pointer; }
-.spot-dot { fill: #ffffff; stroke: #888888; stroke-width: 1.5; opacity: 0; cursor: pointer; pointer-events: none; }
-.spot-dot.visible { opacity: 1; pointer-events: auto; }
+.spot-dot { fill: #ffffff; stroke: #888888; stroke-width: 1.5; opacity: 0; pointer-events: none; }
 
-/* ==========================================
-   7. 行動端（手機端）特殊防溢出安全機制
-   ========================================== */
 @media (max-width: 768px) {
-    #main-title {
-        font-size: 2rem;
-        white-space: normal; /* 手機版才允許安全斷行 */
-    }
-    .reader-content-wrapper { padding: 80px 20px 40px 20px; }
-    .reader-title { font-size: 1.6rem; }
+    #main-title { font-size: 2rem; white-space: normal; }
+    .masonry-grid { grid-template-columns: 1fr; grid-auto-rows: 200px; }
+    .grid-item { opacity: 0.8; transform: scale(1); }
+    .grid-item:nth-child(1), .grid-item:nth-child(4), .grid-item:nth-child(7) { grid-column: span 1; grid-row: span 1; }
 }
