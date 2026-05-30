@@ -1,5 +1,5 @@
 // ==========================================
-// 1. 照片倉庫 (🍏 已修正：指定 maple_light_road_2.JPG 為首圖)
+// 1. 照片倉庫 (第一張固定為您的首選大片)
 // ==========================================
 const photos = [
     "images/korankei/maple_light_road_2.JPG", 
@@ -18,7 +18,7 @@ let isGalleryMode = false;
 let isThrottled = false;
 
 // ==========================================
-// 2. 核心渲染模組
+// 2. 核心渲染模組 (加入全黑隱蔽換圖機制，阻斷畸變)
 // ==========================================
 function updateCarousel(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
@@ -26,7 +26,12 @@ function updateCarousel(index) {
     const locationHintEl = document.getElementById('location-hint');
     
     if (bgPhotoEl) {
-        bgPhotoEl.style.backgroundImage = `url('${photos[index]}')`;
+        // 🍏 核心修正 3：先淡出不透明度，在近乎全黑下換圖再淡入，徹底解決直橫比例拉扯變形問題
+        bgPhotoEl.style.opacity = 0;
+        setTimeout(() => {
+            bgPhotoEl.style.backgroundImage = `url('${photos[index]}')`;
+            bgPhotoEl.style.opacity = 1;
+        }, 220);
     }
     
     if (locationHintEl) {
@@ -73,7 +78,7 @@ if (mainTitle) {
     mainTitle.addEventListener('click', () => {
         isGalleryMode = true;
         
-        // 🍏 進入藝廊模式：套用不裁剪的 contain 佈局，顯現退出與九宮格按鈕
+        // 🍏 核心修正 2：點選標題時，直接以此張首圖開頭展開延伸感，不主動滑出九宮格面板
         document.getElementById('bg-photo').classList.add('gallery-layout');
         document.getElementById('main-title-container').style.opacity = 0;
         document.getElementById('main-title-container').style.pointerEvents = 'none';
@@ -89,18 +94,17 @@ if (mainTitle) {
         
         document.body.style.overflowY = 'hidden';
         
-        buildIndexGrid();
-        document.getElementById('gallery-index-panel').classList.add('open');
+        currentIndex = 0;
+        updateCarousel(currentIndex);
     });
 }
 
-// 🍏 新增：點擊右上角退出按鈕，滿血重置回最初始的首頁狀態
+// 退出藝廊返回首頁
 const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtn) {
     closeGalleryBtn.addEventListener('click', () => {
         isGalleryMode = false;
         
-        // 恢復原生時差遮罩與字體定位
         document.getElementById('bg-photo').classList.remove('gallery-layout');
         document.getElementById('main-title-container').style.opacity = 1;
         document.getElementById('main-title-container').style.pointerEvents = 'auto';
@@ -117,7 +121,7 @@ if (closeGalleryBtn) {
     });
 }
 
-// 九宮格面板按鈕控制
+// 九宮格面板按鈕控制 (只有在此處點擊才跑出九宮格)
 document.getElementById('open-index-btn').addEventListener('click', () => {
     buildIndexGrid();
     document.getElementById('gallery-index-panel').classList.add('open');
@@ -160,7 +164,7 @@ document.getElementById('next-btn').addEventListener('click', () => {
 });
 
 // ==========================================
-// 6. 原生 500vh 時差滾動邏輯
+// 6. 原生 500vh 時差滾動邏輯 (🍏 核心修正 1：完美補齊第一、二幕標題與遮罩的淡出指令)
 // ==========================================
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
@@ -169,19 +173,39 @@ window.addEventListener('scroll', () => {
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
 
+    const mainTitleContainer = document.getElementById('main-title-container');
+    const darkOverlay = document.getElementById('dark-overlay');
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
 
-    if (progress <= 2) {
-        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
+    if (progress <= 1) {
+        // 處理第一幕滑動到第二幕的淡出與位移
+        if (mainTitleContainer) {
+            mainTitleContainer.style.opacity = 1 - progress;
+            mainTitleContainer.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
+            mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
+        }
+        if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
+        if (locationHint) locationHint.style.opacity = Math.min(progress * 1.5, 1);
         if (bgPhoto) bgPhoto.style.opacity = 1;
-        if (locationHint) locationHint.style.opacity = Math.min((progress - 0.3) * 1.5, 1);
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
+    else if (progress > 1 && progress <= 2) {
+        // 🍏 核心補齊：進入第二幕時，確保標題與黑色遮罩絕對完全隱藏
+        if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
+        if (darkOverlay) darkOverlay.style.opacity = 0;
+        if (locationHint) locationHint.style.opacity = 1;
+        if (bgPhoto) bgPhoto.style.opacity = 1;
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
+    }
     else if (progress > 2) {
+        // 地圖幕過渡
         const stage3Progress = (progress - 2) / 2; 
         const easedProgress = Math.pow(stage3Progress, 2); 
         
+        if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
+        if (darkOverlay) darkOverlay.style.opacity = 0;
         if (locationHint) locationHint.style.opacity = 1 - easedProgress;
         if (bgPhoto) bgPhoto.style.opacity = 1; 
         

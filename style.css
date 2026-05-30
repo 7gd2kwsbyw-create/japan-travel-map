@@ -4,7 +4,7 @@
 
 body {
     margin: 0; padding: 0; height: 500vh;
-    background-color: #080808; /* 暗房黑，確保照片留黑時完美融合 */
+    background-color: #080808; 
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
     overscroll-behavior-y: none;
@@ -15,11 +15,10 @@ body {
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-size: cover; background-position: center;
-    z-index: 2; will-change: opacity, background-image;
-    transition: background-image 0.6s ease-in-out;
+    z-index: 2; will-change: opacity;
+    transition: opacity 0.25s ease-in-out; /* 🍏 核心修正：移除 background-image 動態，改用純透明度溶鏡消除相片變形 */
 }
 
-/* 🍏 核心修正：進入藝廊模式後，直幅照片全面改為置中包含、不裁剪、兩側完美留黑 */
 #bg-photo.gallery-layout {
     background-size: contain;
     background-repeat: no-repeat;
@@ -29,13 +28,14 @@ body {
 #dark-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.4s ease;
 }
 
 #main-title-container {
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
     width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: opacity, transform;
 }
 
 #main-title {
@@ -58,7 +58,7 @@ body {
     text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif;
     font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 4; opacity: 0;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
-    transition: opacity 0.5s ease;
+    transition: opacity 0.4s ease;
 }
 
 #gallery-counter {
@@ -68,7 +68,6 @@ body {
     opacity: 0; transition: opacity 0.5s ease;
 }
 
-/* 🍏 新增：退出藝廊返回首頁之按鈕樣式 */
 #close-gallery-mode-btn {
     position: fixed; top: 40px; right: 40px; z-index: 5;
     color: rgba(255, 255, 255, 0.5); font-family: 'Noto Serif TC', serif;
