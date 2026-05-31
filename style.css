@@ -56,9 +56,10 @@ body {
 #location-hint {
     position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px;
     text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif;
-    font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 4; opacity: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%);
+    font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 10; opacity: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
     transition: opacity 0.4s ease;
+    pointer-events: none;
 }
 
 #gallery-counter {
@@ -104,47 +105,126 @@ body {
     column-count: 3; column-gap: 24px; max-width: 1400px; margin: 0 auto;
 }
 
-/* ==========================================
-   🍏 終極防護：拔除所有 Scale 縮放與 3D 加速，以絕對靜止的幾何狀態根除破圖 Bug
-   ========================================== */
 .grid-box {
-    display: block;
-    width: 100%;
-    margin-bottom: 24px;
-    break-inside: avoid;
-    -webkit-column-break-inside: avoid;
-    page-break-inside: avoid;
+    display: block; width: 100%; margin-bottom: 24px; break-inside: avoid;
 }
 
 .grid-item {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: 4px;
+    width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
+    opacity: 0.4; will-change: transform, opacity;
+    backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.grid-item:hover { opacity: 1; transform: scale(1.03); }
+
+/* ==========================================
+   第三幕：全新升級 互動日本地圖舞台
+   ========================================== */
+#map-container { 
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+    background: #111111; z-index: 4; 
+    display: flex; align-items: center; justify-content: center; 
+    opacity: 0; pointer-events: none; 
+    transition: opacity 0.6s ease-in-out;
+}
+
+#japan-map { 
+    width: 85vw; height: 85vh; 
+    transition: filter 0.4s ease;
+}
+
+/* 基礎陸地線條 */
+.land { fill: #1a1a1a; stroke: #2a2a2a; stroke-width: 3; }
+
+/* 獨立行政區塊樣式（預設暗色調靜止狀態） */
+.prefecture { 
+    fill: #222222; stroke: #333333; stroke-width: 1.5; 
+    cursor: pointer; 
+    transition: fill 0.35s cubic-bezier(0.25, 1, 0.2, 1), stroke 0.35s ease;
+}
+
+/* 滑鼠移上去時，變色發亮效果 */
+.prefecture-group:hover .prefecture { 
+    fill: #34495e; 
+    stroke: #546e7a;
+}
+
+/* 核心大頭針樣式定義 */
+.map-pin {
+    position: absolute;
     cursor: pointer;
-
-    opacity: 0.4;
-
     will-change: transform, opacity;
-
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-
-    transition:
-        opacity 0.35s ease,
-        transform 0.35s ease;
 }
 
-.grid-item:hover {
+/* 讓圖標尖端精準定位在座標中心點 */
+.pin-shape {
+    transform: translate(-12px, -22px);
+}
+
+/* 景點細部大頭針：預設隱藏，Zoom-in 後才顯示 */
+#spots-layer {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease 0.3s;
+}
+
+.spot-label {
+    fill: #ffffff;
+    font-size: 5px;
+    font-family: 'Noto Sans TC', sans-serif;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.9);
+    pointer-events: none;
+}
+
+/* ==========================================
+   地圖 Zoom-In 狀態控制類別
+   ========================================== */
+#map-zoom-group {
+    transition: transform 0.8s cubic-bezier(0.25, 1, 0.2, 1);
+}
+
+/* 當地圖放大時，隱藏大縣市圖標，顯示細部景點 */
+#japan-map.zoomed .pref-pin {
+    opacity: 0 !important;
+    pointer-events: none;
+}
+
+#japan-map.zoomed #spots-layer {
     opacity: 1;
-    transform: scale(1.03);
+    pointer-events: auto;
 }
 
-#map-container { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #fdfdfd; z-index: 6; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; }
-#japan-map { width: 80vw; height: 80vh; }
-.land { fill: #f0f0f0; stroke: #e0e0e0; stroke-width: 2; }
-.prefecture { fill: #e4e4e4; stroke: #d0d0d0; stroke-width: 1; cursor: pointer; }
-.spot-dot { fill: #ffffff; stroke: #888888; stroke-width: 1.5; opacity: 0; pointer-events: none; }
+/* 回到全圖按鈕 */
+#back-to-map-btn {
+    position: fixed; top: 40px; left: 40px; z-index: 10;
+    color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif;
+    font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300;
+    cursor: pointer; opacity: 0; pointer-events: none;
+    background: rgba(255,255,255,0.05); padding: 10px 20px; border-radius: 20px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: opacity 0.4s ease, color 0.3s ease, background 0.3s ease;
+}
+#back-to-map-btn:hover { color: #fff; background: rgba(255,255,255,0.15); }
+
+/* 滑鼠懸浮首圖預覽卡片說明 */
+#map-preview-card {
+    position: fixed; z-index: 50; width: 180px;
+    background: rgba(20, 20, 20, 0.85); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 8px; pointer-events: none; opacity: 0;
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    transition: opacity 0.25s ease;
+}
+
+#map-preview-img {
+    width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block;
+}
+
+#map-preview-title {
+    color: #fff; font-size: 0.75rem; font-weight: 300; line-height: 1.4;
+    margin-top: 6px; letter-spacing: 0.05em;
+}
 
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }

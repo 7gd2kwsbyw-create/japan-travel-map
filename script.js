@@ -5,6 +5,7 @@ const albums = [
     {
         title: "深秋的香嵐溪，時間靜止在楓紅之中",
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
+        prefId: "pref-aichi", // 對應 HTML 的群組 ID
         photos: [
             "images/korankei/maple_light_road_2.JPG", 
             "images/korankei/cross_line.JPG",
@@ -20,6 +21,7 @@ const albums = [
     {
         title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
+        prefId: "pref-shimane", // 對應 HTML 的群組 ID
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
@@ -41,6 +43,8 @@ let currentAlbumIndex = 0;
 let currentPhotoIndex = 0; 
 let isGalleryMode = false;  
 let isThrottled = false;   
+let isMapZoomed = false; // 地圖是否處於 Zoom-in 狀態
+let pinsDropped = false; // 大頭針動畫是否已執行過
 
 // ==========================================
 // 2. 第一幕：首頁封面與大標題同步切換核心
@@ -53,14 +57,12 @@ function updateAlbumCover() {
     if (bgPhotoEl && !isGalleryMode) {
         bgPhotoEl.style.opacity = 0;
         setTimeout(() => {
-            // 🍏 確保切換相簿時，大背景封面精準對齊該相簿的第一張圖（如美保關的 jinjyadoa.JPG）
             bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
             bgPhotoEl.style.opacity = 1;
         }, 220);
     }
     
     if (titleEl && !isGalleryMode) {
-        // 🍏 核心修正：大標題與相簿封面絕對同步更換，絕不留步
         titleEl.textContent = album.title;
     }
     
@@ -123,20 +125,18 @@ function buildIndexGrid() {
 }
 
 // ==========================================
-// 5. 左右控制箭頭控制核心 (單一監聽器管理)
+// 5. 左右控制箭頭控制核心
 // ==========================================
 const btnPrev = document.getElementById('prev-btn') || document.querySelector('.left-zone');
 const btnNext = document.getElementById('next-btn') || document.querySelector('.right-zone');
 
 if (btnPrev) {
     btnPrev.addEventListener('click', (e) => {
-        e.stopPropagation(); // 阻止冒泡
+        e.stopPropagation();
         if (!isGalleryMode) {
-            // 第一幕首頁：橫向切換相簿專題與大標題
             currentAlbumIndex = (currentAlbumIndex - 1 + albums.length) % albums.length;
             updateAlbumCover();
         } else {
-            // 第三幕藝廊：切換單張照片
             const album = albums[currentAlbumIndex];
             currentPhotoIndex = (currentPhotoIndex - 1 + album.photos.length) % album.photos.length;
             updateGalleryPhoto(currentPhotoIndex);
@@ -146,13 +146,11 @@ if (btnPrev) {
 
 if (btnNext) {
     btnNext.addEventListener('click', (e) => {
-        e.stopPropagation(); // 阻止冒泡
+        e.stopPropagation();
         if (!isGalleryMode) {
-            // 第一幕首頁：橫向切換下一本相簿專題與大標題
             currentAlbumIndex = (currentAlbumIndex + 1) % albums.length;
             updateAlbumCover();
         } else {
-            // 第三幕藝廊：切換單張照片
             const album = albums[currentAlbumIndex];
             currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
             updateGalleryPhoto(currentPhotoIndex);
@@ -163,24 +161,29 @@ if (btnNext) {
 // ==========================================
 // 6. 藝廊模式開關艙狀態控制
 // ==========================================
+function openGalleryDirectly(albumIndex) {
+    currentAlbumIndex = albumIndex;
+    isGalleryMode = true;
+    document.getElementById('bg-photo').classList.add('gallery-layout');
+    document.getElementById('main-title-container').style.opacity = 0;
+    document.getElementById('main-title-container').style.pointerEvents = 'none';
+    document.getElementById('dark-overlay').style.opacity = 0;
+    document.getElementById('gallery-counter').style.opacity = 1;
+    document.getElementById('open-index-btn').style.opacity = 1;
+    
+    const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
+    if (closeGalleryBtn) {
+        closeGalleryBtn.style.opacity = 1;
+        closeGalleryBtn.style.pointerEvents = 'auto';
+    }
+    document.body.style.overflowY = 'hidden'; 
+    updateGalleryPhoto(0); 
+}
+
 const mainTitleEl = document.getElementById('main-title');
 if (mainTitleEl) {
     mainTitleEl.addEventListener('click', () => {
-        isGalleryMode = true;
-        document.getElementById('bg-photo').classList.add('gallery-layout');
-        document.getElementById('main-title-container').style.opacity = 0;
-        document.getElementById('main-title-container').style.pointerEvents = 'none';
-        document.getElementById('dark-overlay').style.opacity = 0;
-        document.getElementById('gallery-counter').style.opacity = 1;
-        document.getElementById('open-index-btn').style.opacity = 1;
-        
-        const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
-        if (closeGalleryBtn) {
-            closeGalleryBtn.style.opacity = 1;
-            closeGalleryBtn.style.pointerEvents = 'auto';
-        }
-        document.body.style.overflowY = 'hidden'; 
-        updateGalleryPhoto(0); 
+        openGalleryDirectly(currentAlbumIndex);
     });
 }
 
@@ -199,6 +202,11 @@ if (closeGalleryBtnEl) {
         closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll'; 
         updateAlbumCover();
+        
+        // 離開藝廊時還原地圖提示
+        if(window.scrollY > window.innerHeight * 2) {
+            document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
+        }
     });
 }
 
@@ -282,20 +290,153 @@ window.addEventListener('scroll', () => {
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
     else if (progress > 2) {
+        // 第三幕：進入地圖舞台
         const stage3Progress = (progress - 2) / 2; 
         const easedProgress = Math.pow(stage3Progress, 2); 
         
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (locationHint) locationHint.style.opacity = 1 - easedProgress;
-        if (bgPhoto) bgPhoto.style.opacity = 1; 
+        
+        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - easedProgress * 2); 
         
         if (mapContainer) {
-            mapContainer.style.opacity = easedProgress;
-            if (easedProgress > 0.9) { mapContainer.style.pointerEvents = 'auto'; } 
-            else { mapContainer.style.pointerEvents = 'none'; }
+            mapContainer.style.opacity = Math.min(easedProgress * 2, 1);
+            if (easedProgress > 0.1) { 
+                mapContainer.style.pointerEvents = 'auto'; 
+                // 當滑到第三幕且未釘下大頭針時，觸發動畫
+                if(!pinsDropped) triggerPinsDropping();
+                if(!isMapZoomed && locationHint) {
+                    locationHint.innerHTML = "📍 點擊行政區探索日本散策";
+                    locationHint.style.opacity = 1;
+                }
+            } else { 
+                mapContainer.style.pointerEvents = 'none'; 
+            }
         }
     }
 });
 
+// ==========================================
+// 9. 日本地圖核心交互控制 (Zoom, Drop Pins, Hover Preview)
+// ==========================================
+
+// 初始化定位大頭針位置
+function initPinPositions() {
+    document.querySelectorAll('.map-pin').forEach(pin => {
+        let cx, cy;
+        if (pin.classList.contains('pref-pin')) {
+            cx = pin.getAttribute('data-x');
+            cy = pin.getAttribute('data-y');
+        } else {
+            cx = pin.getAttribute('cx');
+            cy = pin.getAttribute('cy');
+        }
+        // 將 SVG 座標套用到 transform 平移
+        pin.style.transform = `translate(${cx}px, ${cy}px)`;
+    });
+}
+
+// 緩慢釘上大頭針動畫
+function triggerPinsDropping() {
+    pinsDropped = true;
+    document.querySelectorAll('.pref-pin').forEach((pin, index) => {
+        const cx = pin.getAttribute('data-x');
+        const cy = pin.getAttribute('data-y');
+        
+        // 初始狀態：由上方掉落
+        pin.style.transition = 'none';
+        pin.style.transform = `translate(${cx}px, ${cy - 150}px)`;
+        pin.style.opacity = 0;
+        
+        setTimeout(() => {
+            pin.style.transition = 'transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease';
+            pin.style.transform = `translate(${cx}px, ${cy}px)`;
+            pin.style.opacity = 1;
+        }, index * 150 + 100); // 錯開釘上的時間線
+    });
+}
+
+// 行政區點擊 Zoom-in 處理
+document.querySelectorAll('.prefecture-group').forEach(group => {
+    group.addEventListener('click', (e) => {
+        if (isMapZoomed) return;
+        e.stopPropagation();
+        
+        const prefName = group.getAttribute('data-pref');
+        const prefPin = group.querySelector('.pref-pin');
+        if (!prefPin) return;
+        
+        const targetX = prefPin.getAttribute('data-x');
+        const targetY = prefPin.getAttribute('data-y');
+        
+        // 計算縮放中心點，聚焦至該縣市 (放大 3.5 倍)
+        const zoomGroup = document.getElementById('map-zoom-group');
+        zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
+        zoomGroup.style.transform = `scale(3.5)`;
+        
+        // 切換舞台狀態
+        isMapZoomed = true;
+        document.getElementById('japan-map').classList.add('zoomed');
+        document.getElementById('back-to-map-btn').style.opacity = 1;
+        document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
+        
+        document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請選擇探索景點`;
+    });
+});
+
+// 返回完整地圖全圖
+document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const zoomGroup = document.getElementById('map-zoom-group');
+    zoomGroup.style.transform = `scale(1)`;
+    
+    isMapZoomed = false;
+    document.getElementById('japan-map').classList.remove('zoomed');
+    document.getElementById('back-to-map-btn').style.opacity = 0;
+    document.getElementById('back-to-map-btn').style.pointerEvents = 'none';
+    document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
+    
+    // 隱藏預覽視窗
+    hidePreview();
+});
+
+// 景點大頭針 Hover 與點擊事件控制
+document.querySelectorAll('.spot-pin').forEach(pin => {
+    const albumIndex = parseInt(pin.getAttribute('data-album-index'));
+    const album = albums[albumIndex];
+    
+    // Hover 出現首圖預覽
+    pin.addEventListener('mousemove', (e) => {
+        if (!isMapZoomed) return;
+        const previewCard = document.getElementById('map-preview-card');
+        const previewImg = document.getElementById('map-preview-img');
+        const previewTitle = document.getElementById('map-preview-title');
+        
+        previewImg.src = album.photos[0];
+        previewTitle.textContent = album.title;
+        
+        // 預覽視窗定位在滑鼠游標右下方
+        previewCard.style.left = `${e.clientX + 20}px`;
+        previewCard.style.top = `${e.clientY + 20}px`;
+        previewCard.style.opacity = 1;
+    });
+    
+    pin.addEventListener('mouseleave', () => {
+        hidePreview();
+    });
+    
+    // 點擊大頭針直接切換進入對應相簿藝廊
+    pin.addEventListener('click', (e) => {
+        e.stopPropagation();
+        hidePreview();
+        openGalleryDirectly(albumIndex);
+    });
+});
+
+function hidePreview() {
+    document.getElementById('map-preview-card').style.opacity = 0;
+}
+
+// 執行初始定位
+initPinPositions();
 updateAlbumCover();

@@ -52,12 +52,51 @@
     </div>
 
     <div id="map-container">
+        <div id="back-to-map-btn">✕ BACK TO FULL MAP</div>
+        
+        <div id="map-preview-card">
+            <img src="" id="map-preview-img" alt="Preview">
+            <div id="map-preview-title"></div>
+        </div>
+
         <svg viewBox="0 0 1000 1000" id="japan-map">
-            <path d="M700,200 L800,300 L600,500 L300,700" class="land" />
-            <path d="M300,600 L380,550 L420,600 L350,650" id="shimane" class="prefecture" />
-            <circle cx="360" cy="590" r="8" class="spot-dot" data-spot="出雲大社"></circle>
-            <circle cx="390" cy="570" r="8" class="spot-dot" data-spot="松江城"></circle>
-            <circle cx="340" cy="620" r="8" class="spot-dot" data-spot="石見銀山"></circle>
+            <rect width="1000" height="1000" fill="none"/>
+            
+            <g id="map-zoom-group">
+                
+                <path d="M600,100 L900,400 L500,800 L200,900" class="land" />
+
+                <g id="pref-aichi" class="prefecture-group" data-pref="愛知縣">
+                    <path d="M520,600 L580,580 L600,630 L540,650 Z" class="prefecture" />
+                    <g class="map-pin pref-pin" data-x="560" data-y="610">
+                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
+                        <circle cx="12" cy="11" r="4" fill="#fff"/>
+                    </g>
+                </g>
+
+                <g id="pref-shimane" class="prefecture-group" data-pref="島根縣">
+                    <path d="M300,600 L380,550 L420,600 L350,650 Z" class="prefecture" />
+                    <g class="map-pin pref-pin" data-x="360" data-y="590">
+                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
+                        <circle cx="12" cy="11" r="4" fill="#fff"/>
+                    </g>
+                </g>
+
+                <g id="spots-layer">
+                    <g class="map-pin spot-pin" data-album-index="0" cx="550" cy="615">
+                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                        <circle cx="12" cy="11" r="3" fill="#fff"/>
+                        <text x="15" y="-5" class="spot-label">香嵐溪巴川畔</text>
+                    </g>
+
+                    <g class="map-pin spot-pin" data-album-index="1" cx="390" cy="575">
+                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                        <circle cx="12" cy="11" r="3" fill="#fff"/>
+                        <text x="15" y="-5" class="spot-label">美保神社</text>
+                    </g>
+                </g>
+
+            </g>
         </svg>
     </div>
 
