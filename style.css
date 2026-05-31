@@ -7,7 +7,7 @@
 body {
     margin: 0; 
     padding: 0; 
-    height: 500vh;
+    height: 500vh; /* 維持 500vh 的全域時差滾動舞台 */
     background-color: #080808; 
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
@@ -24,7 +24,7 @@ body {
 }
 
 /* ==========================================
-   第一幕 & 第二幕：首頁大圖與標題
+   第一幕 & 第二幕：首頁大圖與專題大標題
    ========================================== */
 #bg-photo {
     position: fixed; 
@@ -86,7 +86,7 @@ body {
 }
 
 /* ==========================================
-   互動控制元件 (左右箭頭、位置、頁碼)
+   全域互動控制元件 (左右邊緣箭頭、位置提示、藝廊頁碼)
    ========================================== */
 .side-click-zone {
     position: fixed; 
@@ -183,7 +183,7 @@ body {
 }
 
 /* ==========================================
-   第四幕：網格暗房索引艙
+   藝廊模式內部：九宮格暗房索引艙 (網格瀑布流)
    ========================================== */
 #gallery-index-panel {
     position: fixed; 
@@ -251,7 +251,7 @@ body {
 }
 
 /* ==========================================
-   第三幕：全新升級 互動日本地圖舞台
+   第三幕：全新升級 Geolonia 日本互動地圖舞台
    ========================================== */
 #map-container { 
     position: fixed; 
@@ -259,7 +259,7 @@ body {
     left: 0; 
     width: 100vw; 
     height: 100vh; 
-    background: #0d0d0d; /* 極致深黑背景衬托白色日本 */
+    background: #0a0a0a; /* 深邃純黑背景襯托白色陸地 */
     z-index: 4; 
     display: flex; 
     align-items: center; 
@@ -274,69 +274,82 @@ body {
     height: 85vh; 
 }
 
-/* 您原始精細 SVG 檔案的行政區底色與極細白線邊界 */
-.prefecture { 
-    fill: #f2f2f2; 
-    stroke: #b5b5b5; 
-    stroke-width: 0.5px; 
-    cursor: pointer; 
-    transition: fill 0.3s cubic-bezier(0.25, 1, 0.2, 1), stroke 0.3s ease;
+/* 完美對齊您原始精細 SVG 檔案的行政區樣式 */
+.prefectures .prefecture {
+    fill: #181818 !important;   /* 未探索縣市：極簡暗灰 */
+    stroke: #2c2c2c !important; /* 邊界線：細碳黑 */
+    stroke-width: 0.8px !important;
+    cursor: default;
+    transition: fill 0.35s cubic-bezier(0.25, 1, 0.2, 1);
 }
 
-/* 滑鼠移入行政區：溫和高級的洗鍊淺灰色 */
-.prefecture-group:hover .prefecture { 
-    fill: #e0e0e0; 
-    stroke: #888888;
+/* 🎯 核心特規：僅針對我們在 JS 中有安排相簿的選取器發亮（島根、愛知） */
+.prefectures .aichi, 
+.prefectures .shimane {
+    fill: #f5f5f7 !important;   /* 有旅拍照片：極簡洗鍊白 */
+    stroke: #b5b5b5 !important; /* 有照片邊界：質感淡灰 */
+    cursor: pointer !important;
 }
 
-/* 大頭針基礎物理形狀與中心校準 */
+/* 滑鼠移入有安排相簿的行政區：變色並呈現清澈的高級感光澤 */
+.prefectures .aichi:hover, 
+.prefectures .shimane:hover { 
+    fill: #ffffff !important;
+    stroke: #888888 !important;
+}
+
+/* 大頭針（Pins）核心基礎樣式與物理校準 */
 .map-pin {
     position: absolute;
     cursor: pointer;
     will-change: transform, opacity;
 }
 
-/* 確保大頭針的尖端完美鎖死在縣市的 BBox 中心坐標上 */
+/* 將圖標的原點從左上角校準，讓尖端精確鎖死在幾何中心坐標點上 */
 .pin-shape {
     transform: translate(-12px, -22px);
 }
 
-/* 景點大頭針細節層：預設隱藏，Zoom-in 後才顯現 */
+/* 景點綠大頭針細部層：預設完美隱藏，Zoom-in 模式下才顯現 */
 #spots-layer {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.4s ease 0.3s;
 }
 
-/* 景點綠針旁邊的精緻發光字體 */
+/* 綠大頭針旁邊顯示的細緻景點發光字體 */
 .spot-label {
-    fill: #ffffff;
-    font-size: 5px;
+    fill: #ffffff !important;
+    font-size: 3.5px !important; /* 因為地圖 Zoom 後放大很多倍，字體設小才細緻 */
     font-family: 'Noto Sans TC', sans-serif;
     font-weight: 400;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.9);
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
     pointer-events: none;
 }
 
-/* ==========================================
-   地圖內部狀態轉換 (Zoom-In 機制)
-   ========================================== */
-#map-zoom-group {
-    transition: transform 0.8s cubic-bezier(0.25, 1, 0.2, 1);
+/* 降低原本海域裝飾性網格分隔線的亮度，維持視覺聚焦 */
+.boundary-line {
+    opacity: 0.25;
 }
 
-/* 當地圖放大時：隱藏全局縣市大紅針，改吐出細部景點 */
+/* ==========================================
+   地圖動態轉換狀態（Zoom-In 控制機制）
+   ========================================== */
+#map-zoom-group {
+    transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1);
+}
+
+/* 當地圖處於放大狀態時：自動淡出大紅針，並呼喚出景點小綠針 */
 #japan-map.zoomed .pref-pin {
     opacity: 0 !important;
     pointer-events: none;
 }
-
 #japan-map.zoomed #spots-layer {
     opacity: 1;
     pointer-events: auto;
 }
 
-/* 返回全圖按鈕：毛玻璃極簡設計 */
+/* 返回全圖按鈕：高級毛玻璃半透明極簡設計 */
 #back-to-map-btn {
     position: fixed; 
     top: 40px; 
@@ -363,7 +376,7 @@ body {
 }
 
 /* ==========================================
-   滑鼠懸浮 (Hover) 相簿首圖縮小版預覽卡
+   滑鼠懸浮 (Hover) 相簿首圖縮小版預覽卡片說明
    ========================================== */
 #map-preview-card {
     position: fixed; 
@@ -399,7 +412,7 @@ body {
 }
 
 /* ==========================================
-   RWD 響應式斷點防禦
+   RWD 行動裝置斷點防禦
    ========================================== */
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }

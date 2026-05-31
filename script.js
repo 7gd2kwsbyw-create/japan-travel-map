@@ -317,103 +317,142 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// 9. 日本地圖核心交互控制 (完美適應真實 SVG 幾何計算版)
+// 9. 日本地圖核心交互控制 (Geolonia SVG 專用高精準坐標計算版)
 // ==========================================
 
-// 自動根據行政區 path 計算幾何中心點，並定位大頭針
+// 透過相簿設定，將 class 名稱對應到相簿
+const mapConfig = [
+    { selector: '.aichi', name: "愛知縣", spotId: "spot-korankei", albumIdx: 0 },
+    { selector: '.shimane', name: "島根縣", spotId: "spot-miho", albumIdx: 1 }
+];
+
+// 計算並建立大頭針位置
 function initPinPositions() {
-    // 1. 定位縣市級紅針
-    document.querySelectorAll('.prefecture-group').forEach(group => {
-        const path = group.querySelector('.prefecture');
-        const prefPin = group.querySelector('.pref-pin');
+    const pinsLayer = document.getElementById('dynamic-pref-pins-layer');
+    if (!pinsLayer) return;
+    pinsLayer.innerHTML = ''; // 清空防重複執行
+
+    mapConfig.forEach(config => {
+        const targetGroup = document.querySelector(`.prefectures ${config.selector}`);
+        if (!targetGroup) return;
+
+        // 🍏 核心算法：這張 SVG 有自帶 transform translate，必須擷取並加上內部 path 的 BBox
+        let baseX = 0, baseY = 0;
+        const transformAttr = targetGroup.getAttribute('transform');
+        if (transformAttr) {
+            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
+            if (matches) {
+                baseX = parseFloat(matches[1]);
+                baseY = parseFloat(matches[2]);
+            }
+        }
+
+        // 計算該縣市所有 path/polygon 結合後的幾何邊界
+        const paths = targetGroup.querySelectorAll('path, polygon');
+        if (paths.length === 0) return;
         
-        if (path && prefPin) {
-            // 🍏 自動抓取您 SVG 檔案中該行政區的真實邊界與中心點
-            const bbox = path.getBBox();
-            const centerX = bbox.x + bbox.width / 2;
-            const centerY = bbox.y + bbox.height / 2;
-            
-            // 儲存中心座標供 Zoom 使用
-            group.setAttribute('data-center-x', centerX);
-            group.setAttribute('data-center-y', centerY);
-            
-            // 移至該中心點
-            prefPin.style.transform = `translate(${centerX}px, ${centerY}px)`;
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        paths.forEach(p => {
+            const box = p.getBBox();
+            if(box.width === 0 || box.height === 0) return;
+            if (box.x < minX) minX = box.x;
+            if (box.y < minY) minY = box.y;
+            if (box.x + box.width > maxX) maxX = box.x + box.width;
+            if (box.y + box.height > maxY) maxY = box.y + box.height;
+        });
+
+        // 算出絕對幾何中心
+        const centerX = baseX + (minX + maxX) / 2;
+        const centerY = baseY + (minY + maxY) / 2;
+
+        // 綁定資料供 Zoom 縮放使用
+        targetGroup.setAttribute('data-center-x', centerX);
+        targetGroup.setAttribute('data-center-y', centerY);
+        targetGroup.style.cursor = 'pointer';
+
+        // 動態生成紅色行政區大頭針
+        const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        pinG.setAttribute('class', 'map-pin pref-pin');
+        pinG.setAttribute('data-target-selector', config.selector);
+        pinG.innerHTML = `
+            <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
+            <circle cx="12" cy="11" r="4" fill="#fff"/>
+        `;
+        pinG.style.transform = `translate(${centerX}px, ${centerY}px)`;
+        pinsLayer.appendChild(pinG);
+
+        // 同步定位第二層的景點細部綠針
+        const spotPin = document.getElementById(config.spotId);
+        if (spotPin) {
+            // 讓綠針微幅偏移中心點，營造散策精緻感
+            const offsetX = config.albumIdx === 0 ? 15 : -20;
+            const offsetY = config.albumIdx === 0 ? -10 : 15;
+            spotPin.style.transform = `translate(${centerX + offsetX}px, ${centerY + offsetY}px)`;
         }
     });
 
-    // 2. 定位詳細景點綠針 (這裡以島根與愛知中心點做微調偏移，避免重疊)
-    const spotKorankei = document.getElementById('spot-korankei');
-    const prefAichi = document.getElementById('pref-aichi');
-    if (spotKorankei && prefAichi) {
-        const cx = parseFloat(prefAichi.getAttribute('data-center-x')) + 5; // 略微偏移
-        const cy = parseFloat(prefAichi.getAttribute('data-center-y')) + 5;
-        spotKorankei.style.transform = `translate(${cx}px, ${cy}px)`;
-    }
-
-    const spotMiho = document.getElementById('spot-miho');
-    const prefShimane = document.getElementById('pref-shimane');
-    if (spotMiho && prefShimane) {
-        const cx = parseFloat(prefShimane.getAttribute('data-center-x')) - 10;
-        const cy = parseFloat(prefShimane.getAttribute('data-center-y')) - 5;
-        spotMiho.style.transform = `translate(${cx}px, ${cy}px)`;
-    }
+    // 點擊事件監聽連結
+    document.querySelectorAll('.prefecture').forEach(prefPath => {
+        prefPath.addEventListener('click', (e) => {
+            const parentG = prefPath.parentElement;
+            if (parentG && parentG.classList.contains('prefecture')) {
+                triggerZoomIn(parentG);
+            }
+        });
+    });
 }
 
-// 緩慢釘上大頭針動畫
+// 釘上大頭針落下動畫
 function triggerPinsDropping() {
     pinsDropped = true;
     document.querySelectorAll('.pref-pin').forEach((pin, index) => {
-        // 取得 initPinPositions 計算好的真實目標坐標
-        const transformStr = pin.style.transform; 
+        const transformStr = pin.style.transform;
         if (!transformStr) return;
-        
-        const matches = transformStr.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+        const matches = transformStr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/);
         if (!matches) return;
-        
+
         const targetX = parseFloat(matches[1]);
         const targetY = parseFloat(matches[2]);
-        
-        // 初始狀態：從上方 100px 處掉落
+
         pin.style.transition = 'none';
-        pin.style.transform = `translate(${targetX}px, ${targetY - 100}px)`;
+        pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`;
         pin.style.opacity = 0;
-        
+
         setTimeout(() => {
-            pin.style.transition = 'transform 1.0s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease';
+            pin.style.transition = 'transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
             pin.style.transform = `translate(${targetX}px, ${targetY}px)`;
             pin.style.opacity = 1;
-        }, index * 200 + 100); 
+        }, index * 180 + 100);
     });
 }
 
-// 行政區點擊 Zoom-in 處理
-document.querySelectorAll('.prefecture-group').forEach(group => {
-    group.addEventListener('click', (e) => {
-        if (isMapZoomed) return;
-        e.stopPropagation();
-        
-        const prefName = group.getAttribute('data-pref');
-        const targetX = group.getAttribute('data-center-x');
-        const targetY = group.getAttribute('data-center-y');
-        
-        if (!targetX || !targetY) return;
-        
-        // 根據您提供的精細 SVG，聚焦至該縣市中心
-        const zoomGroup = document.getElementById('map-zoom-group');
-        zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
-        zoomGroup.style.transform = `scale(4)`; // 放大 4 倍看細節
-        
-        isMapZoomed = true;
-        document.getElementById('japan-map').classList.add('zoomed');
-        document.getElementById('back-to-map-btn').style.opacity = 1;
-        document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
-        
-        document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請選擇探索景點`;
-    });
-});
+// 點擊行政區 Zoom-in 放大舞台
+function triggerZoomIn(groupElement) {
+    if (isMapZoomed) return;
+    
+    // 檢查該縣市是否有安排相簿，沒有則不給予 Zoom-in
+    const hasAlbum = mapConfig.some(c => groupElement.classList.contains(c.selector.replace('.','')));
+    if (!hasAlbum) return;
 
-// 返回完整地圖全圖
+    const titleEl = groupElement.querySelector('title');
+    const prefName = titleEl ? titleEl.textContent.split(' / ')[0] : "未知縣市";
+    
+    const targetX = groupElement.getAttribute('data-center-x');
+    const targetY = groupElement.getAttribute('data-center-y');
+
+    const zoomGroup = document.getElementById('map-zoom-group');
+    zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
+    zoomGroup.style.transform = `scale(4.5)`; // Geolonia 地圖較為精細，放大 4.5 倍效果最佳
+
+    isMapZoomed = true;
+    document.getElementById('japan-map').classList.add('zoomed');
+    document.getElementById('back-to-map-btn').style.opacity = 1;
+    document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
+
+    document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請點擊綠色大頭針探索遊記`;
+}
+
+// 點擊返回全圖
 document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('map-zoom-group').style.transform = `scale(1)`;
@@ -426,7 +465,7 @@ document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     hidePreview();
 });
 
-// 景點大頭針 Hover 與點擊事件控制
+// 綠針懸浮卡片與點擊開艙
 document.querySelectorAll('.spot-pin').forEach(pin => {
     const albumIndex = parseInt(pin.getAttribute('data-album-index'));
     const album = albums[albumIndex];
@@ -458,7 +497,7 @@ function hidePreview() {
     document.getElementById('map-preview-card').style.opacity = 0;
 }
 
-// 監聽地圖容器渲染完成後再載入坐標，防範寬高未就緒 Bug
+// 確保地圖完全渲染後再初始化座標
 window.addEventListener('load', () => {
     initPinPositions();
 });

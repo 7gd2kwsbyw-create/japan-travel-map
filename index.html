@@ -59,44 +59,53 @@
             <div id="map-preview-title"></div>
         </div>
 
-        <svg viewBox="0 0 1000 1000" id="japan-map">
-            <rect width="1000" height="1000" fill="none"/>
-            
-            <g id="map-zoom-group">
-                
-                <path d="M600,100 L900,400 L500,800 L200,900" class="land" />
-
-                <g id="pref-aichi" class="prefecture-group" data-pref="愛知縣">
-                    <path d="M520,600 L580,580 L600,630 L540,650 Z" class="prefecture" />
-                    <g class="map-pin pref-pin" data-x="560" data-y="610">
-                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
-                        <circle cx="12" cy="11" r="4" fill="#fff"/>
-                    </g>
+        <svg class="geolonia-svg-map" viewBox="0 0 1000 1000" xmlns="http://www.w3.org/2000/svg" id="japan-map">
+          <title>Japanese Prefectures</title>
+          <desc>Created by Geolonia (https://geolonia.com/).</desc>
+          
+          <g id="map-zoom-group" transform="matrix(1.028807, 0, 0, 1.028807, -47.544239, -28.806583)">
+            <g class="prefectures" transform="matrix(1, 0, 0, 1, 6, 18)">
+              
+              <g class="okinawa kyushu-okinawa prefecture" data-code="47" stroke-linejoin="round" fill="#EEEEEE" fill-rule="nonzero" stroke="#000000" stroke-width="1.0" transform="translate(52.000000, 193.000000)">
+                <title>沖縄 / Okinawa</title>
+                <polygon points="4 109 6 110 4 111 0 110"/>
                 </g>
 
-                <g id="pref-shimane" class="prefecture-group" data-pref="島根縣">
-                    <path d="M300,600 L380,550 L420,600 L350,650 Z" class="prefecture" />
-                    <g class="map-pin pref-pin" data-x="360" data-y="590">
-                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
-                        <circle cx="12" cy="11" r="4" fill="#fff"/>
-                    </g>
-                </g>
+              <g class="shimane chugoku prefecture" data-code="32" stroke-linejoin="round" fill="#EEEEEE" fill-rule="nonzero" stroke="#000000" stroke-width="1.0" transform="translate(211.000000, 610.000000)">
+                <title>島根 / Shimane</title>
+                <path d="M2,100 L10,98 L25,84 L35,78 L41,70 L52,65 L55,59 L53,55 L70,51 L76,46 L79,49 L87,48 L84,50 L82,51 L88,59 L87,68 L79,70 L81,73 L77,79 L64,77 L57,85 L51,88 L54,93 L46,95 L41,93 L39,96 L31,94 L25,99 L26,101 L24,107 L19,112 L21,114 L17,116 L18,120 L15,124 L13,122 L7,124 L5,120 L7,115 L2,115 L0,111 L4,106 L2,100 Z"/>
+              </g>
 
-                <g id="spots-layer">
-                    <g class="map-pin spot-pin" data-album-index="0" cx="550" cy="615">
-                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
-                        <circle cx="12" cy="11" r="3" fill="#fff"/>
-                        <text x="15" y="-5" class="spot-label">香嵐溪巴川畔</text>
-                    </g>
+              <g class="aichi chubu prefecture" data-code="23" stroke-linejoin="round" fill="#EEEEEE" fill-rule="nonzero" stroke="#000000" stroke-width="1.0" transform="translate(469.000000, 673.000000)">
+                <title>愛知 / Aichi</title>
+                <polygon points="42 46 18 52 20 47 23 49 31 43 33 46 35 43 34 40 28 37 26 41 18 40 14 37 16 29 12 40 16 45 13 45 9 41 10 36 8 33 8 28 12 21 5 25 0 17 1 11 5 3 15 0 21 8 26 10 33 8 39 12 46 8 47 14 52 11 60 13 50 33 42 38"/>
+              </g>
+              
+              <g class="hokkaido prefecture" data-code="1" ...>...</g>
 
-                    <g class="map-pin spot-pin" data-album-index="1" cx="390" cy="575">
-                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
-                        <circle cx="12" cy="11" r="3" fill="#fff"/>
-                        <text x="15" y="-5" class="spot-label">美保神社</text>
-                    </g>
-                </g>
+              <g id="dynamic-pref-pins-layer"></g>
+
+              <g id="spots-layer">
+                  <g class="map-pin spot-pin" data-album-index="0" id="spot-korankei">
+                      <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                      <circle cx="12" cy="11" r="3" fill="#fff"/>
+                      <text x="16" y="14" class="spot-label">香嵐溪巴川畔</text>
+                  </g>
+
+                  <g class="map-pin spot-pin" data-album-index="1" id="spot-miho">
+                      <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                      <circle cx="12" cy="11" r="3" fill="#fff"/>
+                      <text x="16" y="14" class="spot-label">美保神社</text>
+                  </g>
+              </g>
 
             </g>
+
+            <g class="boundary-line" stroke="#EEEEEE" stroke-width="12" stroke-linejoin="round">
+              <line x1="320.227" y1="361.996" x2="582.351" y2="109.378"/>
+              <line x1="277.337" y1="380.162" x2="46.213" y2="380.162"/>
+            </g>
+          </g>
         </svg>
     </div>
 
