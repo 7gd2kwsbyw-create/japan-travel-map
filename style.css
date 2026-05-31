@@ -5,421 +5,192 @@
 }
 
 body {
-    margin: 0; 
-    padding: 0; 
-    height: 500vh; /* 維持 500vh 的全域時差滾動舞台 */
+    margin: 0; padding: 0; height: 500vh;
     background-color: #080808; 
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
     overflow-x: hidden;
     overscroll-behavior-y: none;
 }
 
-#scroll-spacer { 
-    position: absolute; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100%; 
-    pointer-events: none; 
-}
+#scroll-spacer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* ==========================================
-   第一幕 & 第二幕：首頁大圖與專題大標題
-   ========================================== */
+/* 第一幕 & 第二幕：封面與標題 */
 #bg-photo {
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100vh;
-    background-size: cover; 
-    background-position: center;
-    z-index: 2; 
-    will-change: opacity;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background-size: cover; background-position: center;
+    z-index: 2; will-change: opacity;
     transition: opacity 0.25s ease-in-out; 
+    opacity: 0; /* 預設交由 JS 動態淡入 */
 }
 
 #bg-photo.gallery-layout {
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+    background-size: contain; background-repeat: no-repeat; background-position: center;
 }
 
 #dark-overlay {
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100vh;
-    background: rgba(0, 0, 0, 0.4); 
-    z-index: 3; 
-    pointer-events: none; 
-    will-change: opacity;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity;
     transition: opacity 0.4s ease;
 }
 
 #main-title-container {
-    position: fixed; 
-    top: 40%; 
-    left: 50%; 
-    transform: translate(-50%, -50%);
-    width: 90%; 
-    max-width: 1200px; 
-    z-index: 4; 
-    display: flex; 
-    justify-content: center;
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
+    width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center;
     transition: opacity 0.4s ease, transform 0.4s ease;
-    will-change: opacity, transform;
 }
 
 #main-title {
-    margin: 0; 
-    color: white; 
-    font-family: 'Iansui', 'Noto Serif TC', serif; 
-    font-weight: 400; 
-    font-size: 3.5rem; 
-    letter-spacing: 0.12em;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); 
-    text-align: center;
-    white-space: nowrap; 
-    cursor: pointer;
+    margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; 
+    font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center;
+    white-space: nowrap; cursor: pointer;
 }
 
-/* ==========================================
-   全域互動控制元件 (左右邊緣箭頭、位置提示、藝廊頁碼)
-   ========================================== */
+/* 控制元件 */
 .side-click-zone {
-    position: fixed; 
-    top: 0; 
-    height: 100vh; 
-    width: 100px; 
-    z-index: 5;
-    cursor: pointer; 
-    background: transparent; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center;
+    position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5;
+    cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.4s ease, pointer-events 0.4s ease;
 }
-.left-zone { left: 0; } 
-.right-zone { right: 0; }
+.left-zone { left: 0; } .right-zone { right: 0; }
 
-.arrow { 
-    color: white; 
-    font-size: 1.5rem; 
-    font-weight: 300; 
-    opacity: 0; 
-    transition: opacity 0.4s ease; 
-}
-.side-click-zone:hover .arrow { 
-    opacity: 0.8; 
-}
+.arrow { color: white; font-size: 1.5rem; font-weight: 300; opacity: 0; transition: opacity 0.4s ease; }
+.side-click-zone:hover .arrow { opacity: 0.8; }
 
 #location-hint {
-    position: fixed; 
-    bottom: 0; 
-    left: 0; 
-    width: 100vw; 
-    padding-bottom: 40px; 
-    padding-top: 80px;
-    text-align: center; 
-    color: rgba(255, 255, 255, 0.9); 
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.85rem; 
-    letter-spacing: 0.35em; 
-    font-weight: 300; 
-    z-index: 10; 
-    opacity: 0;
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px;
+    text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif;
+    font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 10; opacity: 0;
     background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
-    transition: opacity 0.4s ease;
-    pointer-events: none;
+    transition: opacity 0.4s ease; pointer-events: none;
 }
 
 #gallery-counter {
-    position: fixed; 
-    top: 40px; 
-    left: 40px; 
-    z-index: 5;
-    color: rgba(255, 255, 255, 0.6); 
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.9rem; 
-    letter-spacing: 0.2em; 
-    font-weight: 300;
-    opacity: 0; 
-    transition: opacity 0.5s ease;
+    position: fixed; top: 40px; left: 40px; z-index: 5;
+    color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif;
+    font-size: 0.9rem; letter-spacing: 0.2em; font-weight: 300;
+    opacity: 0; transition: opacity 0.5s ease;
 }
 
 #close-gallery-mode-btn {
-    position: fixed; 
-    top: 40px; 
-    right: 40px; 
-    z-index: 5;
-    color: rgba(255, 255, 255, 0.5); 
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.8rem; 
-    letter-spacing: 0.2em; 
-    font-weight: 300;
-    cursor: pointer; 
-    opacity: 0; 
-    pointer-events: none;
+    position: fixed; top: 40px; right: 40px; z-index: 5;
+    color: rgba(255, 255, 255, 0.5); font-family: 'Noto Serif TC', serif;
+    font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300;
+    cursor: pointer; opacity: 0; pointer-events: none;
     transition: opacity 0.5s ease, color 0.3s ease;
 }
-#close-gallery-mode-btn:hover { 
-    color: #fff; 
-}
+#close-gallery-mode-btn:hover { color: #fff; }
 
 #open-index-btn {
-    position: fixed; 
-    bottom: 40px; 
-    right: 40px; 
-    z-index: 6;
-    color: rgba(255, 255, 255, 0.5); 
-    cursor: pointer;
-    transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease;
-    opacity: 0;
+    position: fixed; bottom: 40px; right: 40px; z-index: 6;
+    color: rgba(255, 255, 255, 0.5); cursor: pointer;
+    transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease; opacity: 0;
 }
-#open-index-btn:hover { 
-    color: rgba(255, 255, 255, 1); 
-    transform: scale(1.1); 
-}
+#open-index-btn:hover { color: rgba(255, 255, 255, 1); transform: scale(1.1); }
 
-/* ==========================================
-   藝廊模式內部：九宮格暗房索引艙 (網格瀑布流)
-   ========================================== */
+/* 網格索引艙 */
 #gallery-index-panel {
-    position: fixed; 
-    top: 0; 
-    right: -100vw; 
-    width: 100vw; 
-    height: 100vh;
-    background: rgba(10, 10, 10, 0.92); 
-    backdrop-filter: blur(30px); 
-    -webkit-backdrop-filter: blur(30px);
-    z-index: 100; 
-    transition: right 0.5s cubic-bezier(0.25, 1, 0.2, 1);
-    overflow-y: auto; 
-    padding: 120px 6%; 
-    box-sizing: border-box;
+    position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh;
+    background: rgba(10, 10, 10, 0.92); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    z-index: 100; transition: right 0.5s cubic-bezier(0.25, 1, 0.2, 1);
+    overflow-y: auto; padding: 120px 6%; box-sizing: border-box;
 }
-#gallery-index-panel.open { 
-    right: 0; 
-}
+#gallery-index-panel.open { right: 0; }
 
 .index-close-btn {
-    position: absolute; 
-    top: 40px; 
-    right: 40px; 
-    font-size: 0.8rem; 
-    letter-spacing: 0.2em;
-    color: #888; 
-    cursor: pointer; 
-    font-weight: 300; 
-    transition: color 0.3s ease;
+    position: absolute; top: 40px; right: 40px; font-size: 0.8rem; letter-spacing: 0.2em;
+    color: #888; cursor: pointer; font-weight: 300; transition: color 0.3s ease;
 }
-.index-close-btn:hover { 
-    color: #fff; 
-}
+.index-close-btn:hover { color: #fff; }
 
-.masonry-grid {
-    column-count: 3; 
-    column-gap: 24px; 
-    max-width: 1400px; 
-    margin: 0 auto;
-}
-
-.grid-box {
-    display: block; 
-    width: 100%; 
-    margin-bottom: 24px; 
-    break-inside: avoid;
-}
-
+.masonry-grid { column-count: 3; column-gap: 24px; max-width: 1400px; margin: 0 auto; }
+.grid-box { display: block; width: 100%; margin-bottom: 24px; break-inside: avoid; }
 .grid-item {
-    width: 100%; 
-    height: auto; 
-    display: block; 
-    border-radius: 4px; 
-    cursor: pointer;
-    opacity: 0.4; 
-    will-change: transform, opacity;
-    backface-visibility: hidden; 
-    -webkit-backface-visibility: hidden;
-    transition: opacity 0.35s ease, transform 0.35s ease;
+    width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
+    opacity: 0.4; will-change: transform, opacity; transition: opacity 0.35s ease, transform 0.35s ease;
 }
-.grid-item:hover { 
-    opacity: 1; 
-    transform: scale(1.03); 
-}
+.grid-item:hover { opacity: 1; transform: scale(1.03); }
 
-//* ==========================================
-   第三幕：Geolonia 地圖對比度優化版
+/* ==========================================
+   第三幕：Geolonia 地圖黑白光影高對比美學
    ========================================== */
 #map-container { 
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100vw; 
-    height: 100vh; 
-    background: #0d0d11; /* 1. 維持深色底，但微調為帶有高級感的深洗鍊調 */
-    z-index: 4; 
-    display: flex; 
-    align-items: center; 
-    justify-content: center; 
-    opacity: 0; 
-    pointer-events: none; 
-    transition: opacity 0.6s ease-in-out;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
+    background: #0b0b0e; /* 溫和高級的深灰黑底色 */
+    z-index: 4; display: flex; align-items: center; justify-content: center; 
+    opacity: 0; pointer-events: none; transition: opacity 0.6s ease-in-out;
 }
 
-#japan-map { 
-    width: 85vw; 
-    height: 85vh; 
-}
+#japan-map { width: 85vw; height: 85vh; display: block; }
 
-/* 覆蓋原始 SVG 屬性：提高未探索縣市的亮度，拉開對比 */
+/* 🚀 修正重點：全面拉開沒照片行政區的對比度（從原本過深的#181818提升至極具質感的網格中灰） */
 .prefectures .prefecture {
-    fill: #26262b !important;   /* 2. 修正：從 #181818 調亮為中深灰色，地圖輪廓立刻現形！ */
-    stroke: #121215 !important; /* 3. 修正：邊界線改為深色，讓白色地圖線條不會太雜亂 */
-    stroke-width: 0.6px !important;
-    cursor: default;
-    transition: fill 0.35s cubic-bezier(0.25, 1, 0.2, 1);
+    fill: #2e2e35 !important;   /* 沒照片縣市：明顯可辨識的中灰色 */
+    stroke: #16161a !important; /* 分界線：極細深邃黑 */
+    stroke-width: 0.7px !important;
+    transition: fill 0.3s ease;
 }
 
-/* 🎯 保持點亮的縣市（島根、愛知）絕對耀眼 */
+/* 🎯 核心特規：有相簿的行政區（島根、愛知）綻放純淨白光 */
 .prefectures .aichi, 
 .prefectures .shimane {
-    fill: #ffffff !important;   /* 保持純白 */
+    fill: #ffffff !important;   
     stroke: #ffffff !important; 
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4)); /* 額外點綴：微幅發光感 */
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.45)); /* 優雅發光感 */
 }
 
-/* 滑鼠移入有照片的行政區 */
+/* 有照片行政區的 Hover 質感微調 */
 .prefectures .aichi:hover, 
 .prefectures .shimane:hover { 
     fill: #e5e5ea !important;
     stroke: #ffffff !important;
 }
 
-/* 大頭針（Pins）核心基礎樣式與物理校準 */
-.map-pin {
-    position: absolute;
-    cursor: pointer;
-    will-change: transform, opacity;
-}
+/* 大頭針定位樣式 */
+.map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
+.pin-shape { transform: translate(-12px, -22px); }
 
-/* 將圖標的原點從左上角校準，讓尖端精確鎖死在幾何中心坐標點上 */
-.pin-shape {
-    transform: translate(-12px, -22px);
-}
-
-/* 景點綠大頭針細部層：預設完美隱藏，Zoom-in 模式下才顯現 */
-#spots-layer {
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.4s ease 0.3s;
-}
-
-/* 綠大頭針旁邊顯示的細緻景點發光字體 */
+/* 景點綠針層細節 */
+#spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease 0.3s; }
 .spot-label {
-    fill: #ffffff !important;
-    font-size: 3.5px !important; /* 因為地圖 Zoom 後放大很多倍，字體設小才細緻 */
-    font-family: 'Noto Sans TC', sans-serif;
-    font-weight: 400;
+    fill: #ffffff !important; font-size: 3.5px !important; 
+    font-family: 'Noto Sans TC', sans-serif; font-weight: 400;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
-    pointer-events: none;
 }
 
-/* 降低原本海域裝飾性網格分隔線的亮度，維持視覺聚焦 */
-.boundary-line {
-    opacity: 0.25;
-}
+/* 地圖 Zoom-In 狀態控制 */
+#map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
+#japan-map.zoomed .pref-pin { opacity: 0 !important; pointer-events: none; }
+#japan-map.zoomed #spots-layer { opacity: 1; pointer-events: auto; }
 
-/* ==========================================
-   地圖動態轉換狀態（Zoom-In 控制機制）
-   ========================================== */
-#map-zoom-group {
-    transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1);
-}
-
-/* 當地圖處於放大狀態時：自動淡出大紅針，並呼喚出景點小綠針 */
-#japan-map.zoomed .pref-pin {
-    opacity: 0 !important;
-    pointer-events: none;
-}
-#japan-map.zoomed #spots-layer {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-/* 返回全圖按鈕：高級毛玻璃半透明極簡設計 */
+/* 返回按鈕 */
 #back-to-map-btn {
-    position: fixed; 
-    top: 40px; 
-    left: 40px; 
-    z-index: 10;
-    color: rgba(255, 255, 255, 0.6); 
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.8rem; 
-    letter-spacing: 0.2em; 
-    font-weight: 300;
-    cursor: pointer; 
-    opacity: 0; 
-    pointer-events: none;
-    background: rgba(255, 255, 255, 0.05); 
-    padding: 10px 20px; 
-    border-radius: 20px;
-    backdrop-filter: blur(10px); 
-    -webkit-backdrop-filter: blur(10px);
-    transition: opacity 0.4s ease, color 0.3s ease, background 0.3s ease;
+    position: fixed; top: 40px; left: 40px; z-index: 10;
+    color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif;
+    font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300; cursor: pointer; opacity: 0; pointer-events: none;
+    background: rgba(255, 255, 255, 0.05); padding: 10px 20px; border-radius: 20px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    transition: opacity 0.4s ease, color 0.3s ease;
 }
-#back-to-map-btn:hover { 
-    color: #fff; 
-    background: rgba(255, 255, 255, 0.15); 
-}
+#back-to-map-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
 
-/* ==========================================
-   滑鼠懸浮 (Hover) 相簿首圖縮小版預覽卡片說明
-   ========================================== */
+/* 懸浮預覽小卡 */
 #map-preview-card {
-    position: fixed; 
-    z-index: 50; 
-    width: 180px;
-    background: rgba(20, 20, 20, 0.85); 
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 6px; 
-    padding: 8px; 
-    pointer-events: none; 
-    opacity: 0;
-    backdrop-filter: blur(15px); 
-    -webkit-backdrop-filter: blur(15px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    transition: opacity 0.25s ease;
+    position: fixed; z-index: 50; width: 180px;
+    background: rgba(20, 20, 20, 0.88); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 8px; pointer-events: none; opacity: 0;
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); transition: opacity 0.2s ease;
 }
+#map-preview-img { width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block; }
+#map-preview-title { color: #fff; font-size: 0.75rem; font-weight: 300; line-height: 1.4; margin-top: 6px; }
 
-#map-preview-img {
-    width: 100%; 
-    height: 110px; 
-    object-fit: cover; 
-    border-radius: 4px; 
-    display: block;
-}
+/* 隱藏海域裝飾分隔線 */
+.boundary-line { opacity: 0.2; }
 
-#map-preview-title {
-    color: #fff; 
-    font-size: 0.75rem; 
-    font-weight: 300; 
-    line-height: 1.4;
-    margin-top: 6px; 
-    letter-spacing: 0.05em;
-}
-
-/* ==========================================
-   RWD 行動裝置斷點防禦
-   ========================================== */
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }
-    .masonry-grid { column-count: 1; column-gap: 0; }
-    .grid-box { margin-bottom: 16px; } 
-    .grid-item { opacity: 0.8; }
+    .masonry-grid { column-count: 1; }
     #japan-map { width: 95vw; height: 70vh; }
     #map-preview-card { width: 140px; }
-    #map-preview-img { height: 80px; }
 }

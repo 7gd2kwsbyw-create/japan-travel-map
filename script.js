@@ -1,11 +1,9 @@
-// ==========================================
-// 1. 多相簿全動態資料庫
-// ==========================================
 const albums = [
     {
         title: "深秋的香嵐溪，時間靜止在楓紅之中",
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
-        prefId: "pref-aichi", // 對應 HTML 的群組 ID
+        selector: ".aichi",
+        spotId: "spot-korankei",
         photos: [
             "images/korankei/maple_light_road_2.JPG", 
             "images/korankei/cross_line.JPG",
@@ -21,7 +19,8 @@ const albums = [
     {
         title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
-        prefId: "pref-shimane", // 對應 HTML 的群組 ID
+        selector: ".shimane",
+        spotId: "spot-miho",
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
@@ -43,35 +42,26 @@ let currentAlbumIndex = 0;
 let currentPhotoIndex = 0; 
 let isGalleryMode = false;  
 let isThrottled = false;   
-let isMapZoomed = false; // 地圖是否處於 Zoom-in 狀態
-let pinsDropped = false; // 大頭針動畫是否已執行過
+let isMapZoomed = false; 
+let pinsDropped = false; 
 
-// ==========================================
-// 2. 第一幕：首頁封面與大標題同步切換核心
-// ==========================================
+// 第一幕：同步更換封面大圖
 function updateAlbumCover() {
     const bgPhotoEl = document.getElementById('bg-photo');
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl && !isGalleryMode) {
-        bgPhotoEl.style.opacity = 0;
-        setTimeout(() => {
-            bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
-            bgPhotoEl.style.opacity = 1;
-        }, 220);
+        bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
+        bgPhotoEl.style.opacity = 1;
     }
-    
     if (titleEl && !isGalleryMode) {
         titleEl.textContent = album.title;
     }
-    
     currentPhotoIndex = 0; 
 }
 
-// ==========================================
-// 3. 第三幕：藝廊模式內單張相片切換
-// ==========================================
+// 藝廊模式照片切換
 function updateGalleryPhoto(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
@@ -83,21 +73,17 @@ function updateGalleryPhoto(index) {
         setTimeout(() => {
             bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
             bgPhotoEl.style.opacity = 1;
-        }, 220);
+        }, 200);
     }
-    
     if (locationHintEl) {
         locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
     }
-    
     if (counterEl) {
         counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
     }
 }
 
-// ==========================================
-// 4. 網格暗房索引生成
-// ==========================================
+// 建立網格索引
 function buildIndexGrid() {
     const gridContainer = document.getElementById('index-grid');
     if (!gridContainer) return;
@@ -109,26 +95,23 @@ function buildIndexGrid() {
     album.photos.forEach((url, i) => {
         gridHtml += `
             <div class="grid-box">
-                <img src="${url}" class="grid-item" data-index="${i}" alt="GR Photo">
+                <img src="${url}" class="grid-item" data-index="${i}" alt="Photo">
             </div>`;
     });
     gridContainer.innerHTML = gridHtml;
     
     document.querySelectorAll('.grid-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            const targetIndex = parseInt(e.target.getAttribute('data-index'));
-            currentPhotoIndex = targetIndex;
+            currentPhotoIndex = parseInt(e.target.getAttribute('data-index'));
             updateGalleryPhoto(currentPhotoIndex);
             document.getElementById('gallery-index-panel').classList.remove('open');
         });
     });
 }
 
-// ==========================================
-// 5. 左右控制箭頭控制核心
-// ==========================================
-const btnPrev = document.getElementById('prev-btn') || document.querySelector('.left-zone');
-const btnNext = document.getElementById('next-btn') || document.querySelector('.right-zone');
+// 左右控制箭頭
+const btnPrev = document.getElementById('prev-btn');
+const btnNext = document.getElementById('next-btn');
 
 if (btnPrev) {
     btnPrev.addEventListener('click', (e) => {
@@ -158,9 +141,7 @@ if (btnNext) {
     });
 }
 
-// ==========================================
-// 6. 藝廊模式開關艙狀態控制
-// ==========================================
+// 藝廊模式開關艙
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
@@ -182,9 +163,7 @@ function openGalleryDirectly(albumIndex) {
 
 const mainTitleEl = document.getElementById('main-title');
 if (mainTitleEl) {
-    mainTitleEl.addEventListener('click', () => {
-        openGalleryDirectly(currentAlbumIndex);
-    });
+    mainTitleEl.addEventListener('click', () => openGalleryDirectly(currentAlbumIndex));
 }
 
 const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
@@ -197,13 +176,10 @@ if (closeGalleryBtnEl) {
         document.getElementById('dark-overlay').style.opacity = 0.4;
         document.getElementById('gallery-counter').style.opacity = 0;
         document.getElementById('open-index-btn').style.opacity = 0;
-        
         closeGalleryBtnEl.style.opacity = 0;
         closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll'; 
         updateAlbumCover();
-        
-        // 離開藝廊時還原地圖提示
         if(window.scrollY > window.innerHeight * 2) {
             document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
         }
@@ -223,9 +199,7 @@ if (document.getElementById('close-index-btn')) {
     });
 }
 
-// ==========================================
-// 7. 藝廊模式內滑鼠滾輪動態翻頁
-// ==========================================
+// 藝廊滾輪動態翻頁
 window.addEventListener('wheel', (e) => {
     if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
     if (isThrottled) return; 
@@ -247,9 +221,7 @@ function throttleScroll() {
     setTimeout(() => { isThrottled = false; }, 600); 
 }
 
-// ==========================================
-// 8. 全域 500vh 時差滾動監聽
-// ==========================================
+// 全域時差滾動監聽
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
 
@@ -264,6 +236,15 @@ window.addEventListener('scroll', () => {
     const mapContainer = document.getElementById('map-container');
 
     const currentAlbum = albums[currentAlbumIndex];
+
+    // 🍏 修正核心：控制左右切換箭頭在滑出第一幕後徹底消失且停用
+    if (progress < 0.2) {
+        if(btnPrev) { btnPrev.style.opacity = "1"; btnPrev.style.pointerEvents = "auto"; }
+        if(btnNext) { btnNext.style.opacity = "1"; btnNext.style.pointerEvents = "auto"; }
+    } else {
+        if(btnPrev) { btnPrev.style.opacity = "0"; btnPrev.style.pointerEvents = "none"; }
+        if(btnNext) { btnNext.style.opacity = "0"; btnNext.style.pointerEvents = "none"; }
+    }
 
     if (progress <= 1) {
         if (mainTitleContainer) {
@@ -290,20 +271,17 @@ window.addEventListener('scroll', () => {
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
     else if (progress > 2) {
-        // 第三幕：進入地圖舞台
         const stage3Progress = (progress - 2) / 2; 
         const easedProgress = Math.pow(stage3Progress, 2); 
         
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        
         if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - easedProgress * 2); 
         
         if (mapContainer) {
             mapContainer.style.opacity = Math.min(easedProgress * 2, 1);
-            if (easedProgress > 0.1) { 
+            if (easedProgress > 0.05) { 
                 mapContainer.style.pointerEvents = 'auto'; 
-                // 當滑到第三幕且未釘下大頭針時，觸發動畫
                 if(!pinsDropped) triggerPinsDropping();
                 if(!isMapZoomed && locationHint) {
                     locationHint.innerHTML = "📍 點擊行政區探索日本散策";
@@ -316,27 +294,16 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// ==========================================
-// 9. 日本地圖核心交互控制 (Geolonia SVG 專用高精準坐標計算版)
-// ==========================================
-
-// 透過相簿設定，將 class 名稱對應到相簿
-const mapConfig = [
-    { selector: '.aichi', name: "愛知縣", spotId: "spot-korankei", albumIdx: 0 },
-    { selector: '.shimane', name: "島根縣", spotId: "spot-miho", albumIdx: 1 }
-];
-
-// 計算並建立大頭針位置
+// 日本地圖交互算法（安全防禦版）
 function initPinPositions() {
     const pinsLayer = document.getElementById('dynamic-pref-pins-layer');
     if (!pinsLayer) return;
-    pinsLayer.innerHTML = ''; // 清空防重複執行
+    pinsLayer.innerHTML = ''; 
 
-    mapConfig.forEach(config => {
-        const targetGroup = document.querySelector(`.prefectures ${config.selector}`);
+    albums.forEach((album, index) => {
+        const targetGroup = document.querySelector(`.prefectures ${album.selector}`);
         if (!targetGroup) return;
 
-        // 🍏 核心算法：這張 SVG 有自帶 transform translate，必須擷取並加上內部 path 的 BBox
         let baseX = 0, baseY = 0;
         const transformAttr = targetGroup.getAttribute('transform');
         if (transformAttr) {
@@ -347,7 +314,6 @@ function initPinPositions() {
             }
         }
 
-        // 計算該縣市所有 path/polygon 結合後的幾何邊界
         const paths = targetGroup.querySelectorAll('path, polygon');
         if (paths.length === 0) return;
         
@@ -361,19 +327,14 @@ function initPinPositions() {
             if (box.y + box.height > maxY) maxY = box.y + box.height;
         });
 
-        // 算出絕對幾何中心
         const centerX = baseX + (minX + maxX) / 2;
         const centerY = baseY + (minY + maxY) / 2;
 
-        // 綁定資料供 Zoom 縮放使用
         targetGroup.setAttribute('data-center-x', centerX);
         targetGroup.setAttribute('data-center-y', centerY);
-        targetGroup.style.cursor = 'pointer';
 
-        // 動態生成紅色行政區大頭針
         const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         pinG.setAttribute('class', 'map-pin pref-pin');
-        pinG.setAttribute('data-target-selector', config.selector);
         pinG.innerHTML = `
             <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
             <circle cx="12" cy="11" r="4" fill="#fff"/>
@@ -381,18 +342,16 @@ function initPinPositions() {
         pinG.style.transform = `translate(${centerX}px, ${centerY}px)`;
         pinsLayer.appendChild(pinG);
 
-        // 同步定位第二層的景點細部綠針
-        const spotPin = document.getElementById(config.spotId);
+        const spotPin = document.getElementById(album.spotId);
         if (spotPin) {
-            // 讓綠針微幅偏移中心點，營造散策精緻感
-            const offsetX = config.albumIdx === 0 ? 15 : -20;
-            const offsetY = config.albumIdx === 0 ? -10 : 15;
+            const offsetX = index === 0 ? 15 : -20;
+            const offsetY = index === 0 ? -10 : 15;
             spotPin.style.transform = `translate(${centerX + offsetX}px, ${centerY + offsetY}px)`;
         }
     });
 
-    // 點擊事件監聽連結
     document.querySelectorAll('.prefecture').forEach(prefPath => {
+        prefPath.style.cursor = 'pointer';
         prefPath.addEventListener('click', (e) => {
             const parentG = prefPath.parentElement;
             if (parentG && parentG.classList.contains('prefecture')) {
@@ -402,7 +361,6 @@ function initPinPositions() {
     });
 }
 
-// 釘上大頭針落下動畫
 function triggerPinsDropping() {
     pinsDropped = true;
     document.querySelectorAll('.pref-pin').forEach((pin, index) => {
@@ -422,41 +380,35 @@ function triggerPinsDropping() {
             pin.style.transition = 'transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
             pin.style.transform = `translate(${targetX}px, ${targetY}px)`;
             pin.style.opacity = 1;
-        }, index * 180 + 100);
+        }, index * 150 + 50);
     });
 }
 
-// 點擊行政區 Zoom-in 放大舞台
 function triggerZoomIn(groupElement) {
     if (isMapZoomed) return;
-    
-    // 檢查該縣市是否有安排相簿，沒有則不給予 Zoom-in
-    const hasAlbum = mapConfig.some(c => groupElement.classList.contains(c.selector.replace('.','')));
+    const hasAlbum = albums.some(a => groupElement.classList.contains(a.selector.replace('.','')));
     if (!hasAlbum) return;
 
     const titleEl = groupElement.querySelector('title');
-    const prefName = titleEl ? titleEl.textContent.split(' / ')[0] : "未知縣市";
+    const prefName = titleEl ? titleEl.textContent.split(' / ')[0] : "探索區域";
     
     const targetX = groupElement.getAttribute('data-center-x');
     const targetY = groupElement.getAttribute('data-center-y');
 
     const zoomGroup = document.getElementById('map-zoom-group');
     zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
-    zoomGroup.style.transform = `scale(4.5)`; // Geolonia 地圖較為精細，放大 4.5 倍效果最佳
+    zoomGroup.style.transform = `scale(4.5)`;
 
     isMapZoomed = true;
     document.getElementById('japan-map').classList.add('zoomed');
     document.getElementById('back-to-map-btn').style.opacity = 1;
     document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
-
-    document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請點擊綠色大頭針探索遊記`;
+    document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請點擊綠色大頭針進入遊記`;
 }
 
-// 點擊返回全圖
 document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('map-zoom-group').style.transform = `scale(1)`;
-    
     isMapZoomed = false;
     document.getElementById('japan-map').classList.remove('zoomed');
     document.getElementById('back-to-map-btn').style.opacity = 0;
@@ -465,7 +417,6 @@ document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     hidePreview();
 });
 
-// 綠針懸浮卡片與點擊開艙
 document.querySelectorAll('.spot-pin').forEach(pin => {
     const albumIndex = parseInt(pin.getAttribute('data-album-index'));
     const album = albums[albumIndex];
@@ -478,14 +429,12 @@ document.querySelectorAll('.spot-pin').forEach(pin => {
         
         previewImg.src = album.photos[0];
         previewTitle.textContent = album.title;
-        
         previewCard.style.left = `${e.clientX + 20}px`;
         previewCard.style.top = `${e.clientY + 20}px`;
         previewCard.style.opacity = 1;
     });
     
-    pin.addEventListener('mouseleave', () => { hidePreview(); });
-    
+    pin.addEventListener('mouseleave', () => hidePreview());
     pin.addEventListener('click', (e) => {
         e.stopPropagation();
         hidePreview();
@@ -497,7 +446,12 @@ function hidePreview() {
     document.getElementById('map-preview-card').style.opacity = 0;
 }
 
-// 確保地圖完全渲染後再初始化座標
-window.addEventListener('load', () => {
-    initPinPositions();
+// 🍏 初始化核心：立刻預載封面照片，並設定多次安全的坐標校正重試機制
+document.addEventListener('DOMContentLoaded', () => {
+    updateAlbumCover();
+    
+    // 多層安全時間重試，保證在 Vercel 各種網路載入速度下，`getBBox()` 都能抓到真實尺寸
+    setTimeout(initPinPositions, 300);
+    setTimeout(initPinPositions, 1000);
 });
+window.addEventListener('load', initPinPositions);
