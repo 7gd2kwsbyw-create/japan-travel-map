@@ -317,42 +317,73 @@ window.addEventListener('scroll', () => {
 });
 
 // ==========================================
-// 9. 日本地圖核心交互控制 (Zoom, Drop Pins, Hover Preview)
+// 9. 日本地圖核心交互控制 (完美適應真實 SVG 幾何計算版)
 // ==========================================
 
-// 初始化定位大頭針位置
+// 自動根據行政區 path 計算幾何中心點，並定位大頭針
 function initPinPositions() {
-    document.querySelectorAll('.map-pin').forEach(pin => {
-        let cx, cy;
-        if (pin.classList.contains('pref-pin')) {
-            cx = pin.getAttribute('data-x');
-            cy = pin.getAttribute('data-y');
-        } else {
-            cx = pin.getAttribute('cx');
-            cy = pin.getAttribute('cy');
+    // 1. 定位縣市級紅針
+    document.querySelectorAll('.prefecture-group').forEach(group => {
+        const path = group.querySelector('.prefecture');
+        const prefPin = group.querySelector('.pref-pin');
+        
+        if (path && prefPin) {
+            // 🍏 自動抓取您 SVG 檔案中該行政區的真實邊界與中心點
+            const bbox = path.getBBox();
+            const centerX = bbox.x + bbox.width / 2;
+            const centerY = bbox.y + bbox.height / 2;
+            
+            // 儲存中心座標供 Zoom 使用
+            group.setAttribute('data-center-x', centerX);
+            group.setAttribute('data-center-y', centerY);
+            
+            // 移至該中心點
+            prefPin.style.transform = `translate(${centerX}px, ${centerY}px)`;
         }
-        // 將 SVG 座標套用到 transform 平移
-        pin.style.transform = `translate(${cx}px, ${cy}px)`;
     });
+
+    // 2. 定位詳細景點綠針 (這裡以島根與愛知中心點做微調偏移，避免重疊)
+    const spotKorankei = document.getElementById('spot-korankei');
+    const prefAichi = document.getElementById('pref-aichi');
+    if (spotKorankei && prefAichi) {
+        const cx = parseFloat(prefAichi.getAttribute('data-center-x')) + 5; // 略微偏移
+        const cy = parseFloat(prefAichi.getAttribute('data-center-y')) + 5;
+        spotKorankei.style.transform = `translate(${cx}px, ${cy}px)`;
+    }
+
+    const spotMiho = document.getElementById('spot-miho');
+    const prefShimane = document.getElementById('pref-shimane');
+    if (spotMiho && prefShimane) {
+        const cx = parseFloat(prefShimane.getAttribute('data-center-x')) - 10;
+        const cy = parseFloat(prefShimane.getAttribute('data-center-y')) - 5;
+        spotMiho.style.transform = `translate(${cx}px, ${cy}px)`;
+    }
 }
 
 // 緩慢釘上大頭針動畫
 function triggerPinsDropping() {
     pinsDropped = true;
     document.querySelectorAll('.pref-pin').forEach((pin, index) => {
-        const cx = pin.getAttribute('data-x');
-        const cy = pin.getAttribute('data-y');
+        // 取得 initPinPositions 計算好的真實目標坐標
+        const transformStr = pin.style.transform; 
+        if (!transformStr) return;
         
-        // 初始狀態：由上方掉落
+        const matches = transformStr.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+        if (!matches) return;
+        
+        const targetX = parseFloat(matches[1]);
+        const targetY = parseFloat(matches[2]);
+        
+        // 初始狀態：從上方 100px 處掉落
         pin.style.transition = 'none';
-        pin.style.transform = `translate(${cx}px, ${cy - 150}px)`;
+        pin.style.transform = `translate(${targetX}px, ${targetY - 100}px)`;
         pin.style.opacity = 0;
         
         setTimeout(() => {
-            pin.style.transition = 'transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.6s ease';
-            pin.style.transform = `translate(${cx}px, ${cy}px)`;
+            pin.style.transition = 'transform 1.0s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease';
+            pin.style.transform = `translate(${targetX}px, ${targetY}px)`;
             pin.style.opacity = 1;
-        }, index * 150 + 100); // 錯開釘上的時間線
+        }, index * 200 + 100); 
     });
 }
 
@@ -363,18 +394,16 @@ document.querySelectorAll('.prefecture-group').forEach(group => {
         e.stopPropagation();
         
         const prefName = group.getAttribute('data-pref');
-        const prefPin = group.querySelector('.pref-pin');
-        if (!prefPin) return;
+        const targetX = group.getAttribute('data-center-x');
+        const targetY = group.getAttribute('data-center-y');
         
-        const targetX = prefPin.getAttribute('data-x');
-        const targetY = prefPin.getAttribute('data-y');
+        if (!targetX || !targetY) return;
         
-        // 計算縮放中心點，聚焦至該縣市 (放大 3.5 倍)
+        // 根據您提供的精細 SVG，聚焦至該縣市中心
         const zoomGroup = document.getElementById('map-zoom-group');
         zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
-        zoomGroup.style.transform = `scale(3.5)`;
+        zoomGroup.style.transform = `scale(4)`; // 放大 4 倍看細節
         
-        // 切換舞台狀態
         isMapZoomed = true;
         document.getElementById('japan-map').classList.add('zoomed');
         document.getElementById('back-to-map-btn').style.opacity = 1;
@@ -387,16 +416,13 @@ document.querySelectorAll('.prefecture-group').forEach(group => {
 // 返回完整地圖全圖
 document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     e.stopPropagation();
-    const zoomGroup = document.getElementById('map-zoom-group');
-    zoomGroup.style.transform = `scale(1)`;
+    document.getElementById('map-zoom-group').style.transform = `scale(1)`;
     
     isMapZoomed = false;
     document.getElementById('japan-map').classList.remove('zoomed');
     document.getElementById('back-to-map-btn').style.opacity = 0;
     document.getElementById('back-to-map-btn').style.pointerEvents = 'none';
     document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
-    
-    // 隱藏預覽視窗
     hidePreview();
 });
 
@@ -405,7 +431,6 @@ document.querySelectorAll('.spot-pin').forEach(pin => {
     const albumIndex = parseInt(pin.getAttribute('data-album-index'));
     const album = albums[albumIndex];
     
-    // Hover 出現首圖預覽
     pin.addEventListener('mousemove', (e) => {
         if (!isMapZoomed) return;
         const previewCard = document.getElementById('map-preview-card');
@@ -415,17 +440,13 @@ document.querySelectorAll('.spot-pin').forEach(pin => {
         previewImg.src = album.photos[0];
         previewTitle.textContent = album.title;
         
-        // 預覽視窗定位在滑鼠游標右下方
         previewCard.style.left = `${e.clientX + 20}px`;
         previewCard.style.top = `${e.clientY + 20}px`;
         previewCard.style.opacity = 1;
     });
     
-    pin.addEventListener('mouseleave', () => {
-        hidePreview();
-    });
+    pin.addEventListener('mouseleave', () => { hidePreview(); });
     
-    // 點擊大頭針直接切換進入對應相簿藝廊
     pin.addEventListener('click', (e) => {
         e.stopPropagation();
         hidePreview();
@@ -437,6 +458,7 @@ function hidePreview() {
     document.getElementById('map-preview-card').style.opacity = 0;
 }
 
-// 執行初始定位
-initPinPositions();
-updateAlbumCover();
+// 監聽地圖容器渲染完成後再載入坐標，防範寬高未就緒 Bug
+window.addEventListener('load', () => {
+    initPinPositions();
+});
