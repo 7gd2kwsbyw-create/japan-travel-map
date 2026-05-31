@@ -47,14 +47,18 @@ let isThrottled = false;
 let isMapZoomed = false; 
 let pinsDropped = false; 
 
+// 🍏 完美修復：第一幕與首頁切換的絲滑過渡流
 function updateAlbumCover() {
     const bgPhotoEl = document.getElementById('bg-photo');
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl && !isGalleryMode) {
-        bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
-        bgPhotoEl.style.opacity = 1;
+        bgPhotoEl.style.opacity = 0; // 先變透明
+        setTimeout(() => {
+            bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
+            bgPhotoEl.style.opacity = 1; // 換圖後淡入
+        }, 220); // 配合 CSS 0.25s 的轉場
     }
     if (titleEl && !isGalleryMode) {
         titleEl.textContent = album.title;
@@ -62,6 +66,7 @@ function updateAlbumCover() {
     currentPhotoIndex = 0; 
 }
 
+// 藝廊模式照片切換過渡
 function updateGalleryPhoto(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
@@ -73,7 +78,7 @@ function updateGalleryPhoto(index) {
         setTimeout(() => {
             bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
             bgPhotoEl.style.opacity = 1;
-        }, 200);
+        }, 220);
     }
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
@@ -257,7 +262,6 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// 🚀 核心優化：異步讀取外部完好無缺的 japan-map.svg
 function loadAndInitMap() {
     fetch('japan-map.svg')
         .then(response => response.text())
@@ -266,7 +270,6 @@ function loadAndInitMap() {
             if(!wrapper) return;
             wrapper.innerHTML = svgText;
 
-            // 抓取剛塞進去的 SVG 並強行注入我們的控制 ID 與圖層
             const svgEl = wrapper.querySelector('svg');
             if(!svgEl) return;
             svgEl.setAttribute('id', 'japan-map');
@@ -277,7 +280,6 @@ function loadAndInitMap() {
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
 
-            // 動態建立紅針與綠針圖層
             const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             pinsLayer.setAttribute('id', 'dynamic-pref-pins-layer');
             prefContainer.appendChild(pinsLayer);
@@ -285,7 +287,6 @@ function loadAndInitMap() {
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
             
-            // 填入景點綠針代碼
             albums.forEach((album, idx) => {
                 spotsLayer.innerHTML += `
                     <g class="map-pin spot-pin" data-album-index="${idx}" id="${album.spotId}">
@@ -297,11 +298,10 @@ function loadAndInitMap() {
             });
             prefContainer.appendChild(spotsLayer);
 
-            // 完美初始化位置計算
             setTimeout(calculatePositions, 200);
             setupSpotEvents();
         })
-        .catch(err => console.error("地圖載入失敗，請確認 japan-map.svg 在同資料夾下:", err));
+        .catch(err => console.error("地圖載入失敗:", err));
 }
 
 function calculatePositions() {
@@ -438,6 +438,6 @@ function setupSpotEvents() {
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateAlbumCover();
-    loadAndInitMap(); // 開啟引擎
+    updateAlbumCover(); // 🍏 立刻初始化封面
+    loadAndInitMap(); 
 });

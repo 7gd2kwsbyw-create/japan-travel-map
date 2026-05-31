@@ -9,10 +9,14 @@ body {
 
 #scroll-spacer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
+/* 第一幕 & 第二幕：封面與標題 */
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-size: cover; background-position: center; z-index: 2; will-change: opacity;
-    transition: opacity 0.25s ease-in-out; opacity: 0;
+    background-size: cover; background-position: center; z-index: 2; 
+    will-change: opacity;
+    /* 🍏 核心修復：重啟流暢大圖過渡淡入淡出 */
+    transition: opacity 0.25s ease-in-out; 
+    opacity: 0; 
 }
 #bg-photo.gallery-layout { background-size: contain; background-repeat: no-repeat; background-position: center; }
 
@@ -28,6 +32,7 @@ body {
     margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: nowrap; cursor: pointer;
 }
 
+/* 控制元件 */
 .side-click-zone {
     position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5; cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease, pointer-events 0.4s ease;
 }
@@ -77,14 +82,10 @@ body {
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
 
-/* 深度強行換色：高對比洗鍊灰白 */
 #japan-map .prefecture {
-    fill: #32323a !important; /* 沒照片區域：清晰的洗鍊鐵灰色，絕不隱形 */
-    stroke: #111113 !important; /* 精細深色邊界線 */
-    stroke-width: 0.6px !important; transition: fill 0.3s ease;
+    fill: #32323a !important; stroke: #111113 !important; stroke-width: 0.6px !important; transition: fill 0.3s ease;
 }
 
-/* 點亮的縣市 */
 #japan-map .aichi, 
 #japan-map .shimane {
     fill: #ffffff !important; stroke: #ffffff !important; 
