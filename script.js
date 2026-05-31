@@ -4,6 +4,7 @@ const albums = [
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
         selector: ".aichi",
         spotId: "spot-korankei",
+        spotName: "香嵐溪巴川畔",
         photos: [
             "images/korankei/maple_light_road_2.JPG", 
             "images/korankei/cross_line.JPG",
@@ -21,6 +22,7 @@ const albums = [
         location: "📍 島根縣 ． 美保神社",
         selector: ".shimane",
         spotId: "spot-miho",
+        spotName: "美保神社",
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
@@ -45,7 +47,6 @@ let isThrottled = false;
 let isMapZoomed = false; 
 let pinsDropped = false; 
 
-// 第一幕：同步更換封面大圖
 function updateAlbumCover() {
     const bgPhotoEl = document.getElementById('bg-photo');
     const titleEl = document.getElementById('main-title');
@@ -61,7 +62,6 @@ function updateAlbumCover() {
     currentPhotoIndex = 0; 
 }
 
-// 藝廊模式照片切換
 function updateGalleryPhoto(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
@@ -75,31 +75,20 @@ function updateGalleryPhoto(index) {
             bgPhotoEl.style.opacity = 1;
         }, 200);
     }
-    if (locationHintEl) {
-        locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
-    }
-    if (counterEl) {
-        counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
-    }
+    if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
+    if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
 }
 
-// 建立網格索引
 function buildIndexGrid() {
     const gridContainer = document.getElementById('index-grid');
     if (!gridContainer) return;
-    
     gridContainer.innerHTML = ''; 
     const album = albums[currentAlbumIndex];
     let gridHtml = '';
-    
     album.photos.forEach((url, i) => {
-        gridHtml += `
-            <div class="grid-box">
-                <img src="${url}" class="grid-item" data-index="${i}" alt="Photo">
-            </div>`;
+        gridHtml += `<div class="grid-box"><img src="${url}" class="grid-item" data-index="${i}" alt="Photo"></div>`;
     });
     gridContainer.innerHTML = gridHtml;
-    
     document.querySelectorAll('.grid-item').forEach(item => {
         item.addEventListener('click', (e) => {
             currentPhotoIndex = parseInt(e.target.getAttribute('data-index'));
@@ -109,7 +98,6 @@ function buildIndexGrid() {
     });
 }
 
-// 左右控制箭頭
 const btnPrev = document.getElementById('prev-btn');
 const btnNext = document.getElementById('next-btn');
 
@@ -141,7 +129,6 @@ if (btnNext) {
     });
 }
 
-// 藝廊模式開關艙
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
@@ -153,18 +140,13 @@ function openGalleryDirectly(albumIndex) {
     document.getElementById('open-index-btn').style.opacity = 1;
     
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
-    if (closeGalleryBtn) {
-        closeGalleryBtn.style.opacity = 1;
-        closeGalleryBtn.style.pointerEvents = 'auto';
-    }
+    if (closeGalleryBtn) { closeGalleryBtn.style.opacity = 1; closeGalleryBtn.style.pointerEvents = 'auto'; }
     document.body.style.overflowY = 'hidden'; 
     updateGalleryPhoto(0); 
 }
 
 const mainTitleEl = document.getElementById('main-title');
-if (mainTitleEl) {
-    mainTitleEl.addEventListener('click', () => openGalleryDirectly(currentAlbumIndex));
-}
+if (mainTitleEl) mainTitleEl.addEventListener('click', () => openGalleryDirectly(currentAlbumIndex));
 
 const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtnEl) {
@@ -176,8 +158,7 @@ if (closeGalleryBtnEl) {
         document.getElementById('dark-overlay').style.opacity = 0.4;
         document.getElementById('gallery-counter').style.opacity = 0;
         document.getElementById('open-index-btn').style.opacity = 0;
-        closeGalleryBtnEl.style.opacity = 0;
-        closeGalleryBtnEl.style.pointerEvents = 'none';
+        closeGalleryBtnEl.style.opacity = 0; closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll'; 
         updateAlbumCover();
         if(window.scrollY > window.innerHeight * 2) {
@@ -199,11 +180,9 @@ if (document.getElementById('close-index-btn')) {
     });
 }
 
-// 藝廊滾輪動態翻頁
 window.addEventListener('wheel', (e) => {
     if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
     if (isThrottled) return; 
-    
     const album = albums[currentAlbumIndex];
     if (e.deltaY > 20) {
         currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
@@ -216,15 +195,10 @@ window.addEventListener('wheel', (e) => {
     }
 });
 
-function throttleScroll() {
-    isThrottled = true;
-    setTimeout(() => { isThrottled = false; }, 600); 
-}
+function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
 
-// 全域時差滾動監聽
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
-
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
@@ -234,10 +208,8 @@ window.addEventListener('scroll', () => {
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
-
     const currentAlbum = albums[currentAlbumIndex];
 
-    // 🍏 修正核心：控制左右切換箭頭在滑出第一幕後徹底消失且停用
     if (progress < 0.2) {
         if(btnPrev) { btnPrev.style.opacity = "1"; btnPrev.style.pointerEvents = "auto"; }
         if(btnNext) { btnNext.style.opacity = "1"; btnNext.style.pointerEvents = "auto"; }
@@ -253,27 +225,20 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) {
-            locationHint.innerHTML = currentAlbum.location; 
-            locationHint.style.opacity = Math.min(progress * 1.5, 1);
-        }
+        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
         if (bgPhoto) bgPhoto.style.opacity = 1;
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
     else if (progress > 1 && progress <= 2) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (locationHint) {
-            locationHint.innerHTML = currentAlbum.location; 
-            locationHint.style.opacity = 1;
-        }
+        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = 1; }
         if (bgPhoto) bgPhoto.style.opacity = 1;
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
     else if (progress > 2) {
         const stage3Progress = (progress - 2) / 2; 
         const easedProgress = Math.pow(stage3Progress, 2); 
-        
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - easedProgress * 2); 
@@ -287,18 +252,61 @@ window.addEventListener('scroll', () => {
                     locationHint.innerHTML = "📍 點擊行政區探索日本散策";
                     locationHint.style.opacity = 1;
                 }
-            } else { 
-                mapContainer.style.pointerEvents = 'none'; 
-            }
+            } else { mapContainer.style.pointerEvents = 'none'; }
         }
     }
 });
 
-// 日本地圖交互算法（安全防禦版）
-function initPinPositions() {
+// 🚀 核心優化：異步讀取外部完好無缺的 japan-map.svg
+function loadAndInitMap() {
+    fetch('japan-map.svg')
+        .then(response => response.text())
+        .then(svgText => {
+            const wrapper = document.getElementById('map-svg-wrapper');
+            if(!wrapper) return;
+            wrapper.innerHTML = svgText;
+
+            // 抓取剛塞進去的 SVG 並強行注入我們的控制 ID 與圖層
+            const svgEl = wrapper.querySelector('svg');
+            if(!svgEl) return;
+            svgEl.setAttribute('id', 'japan-map');
+
+            const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
+            if(zoomGroup) zoomGroup.setAttribute('id', 'map-zoom-group');
+
+            const prefContainer = svgEl.querySelector('.prefectures');
+            if(!prefContainer) return;
+
+            // 動態建立紅針與綠針圖層
+            const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            pinsLayer.setAttribute('id', 'dynamic-pref-pins-layer');
+            prefContainer.appendChild(pinsLayer);
+
+            const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            spotsLayer.setAttribute('id', 'spots-layer');
+            
+            // 填入景點綠針代碼
+            albums.forEach((album, idx) => {
+                spotsLayer.innerHTML += `
+                    <g class="map-pin spot-pin" data-album-index="${idx}" id="${album.spotId}">
+                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                        <circle cx="12" cy="11" r="3" fill="#fff"/>
+                        <text x="16" y="14" class="spot-label">${album.spotName}</text>
+                    </g>
+                `;
+            });
+            prefContainer.appendChild(spotsLayer);
+
+            // 完美初始化位置計算
+            setTimeout(calculatePositions, 200);
+            setupSpotEvents();
+        })
+        .catch(err => console.error("地圖載入失敗，請確認 japan-map.svg 在同資料夾下:", err));
+}
+
+function calculatePositions() {
     const pinsLayer = document.getElementById('dynamic-pref-pins-layer');
     if (!pinsLayer) return;
-    pinsLayer.innerHTML = ''; 
 
     albums.forEach((album, index) => {
         const targetGroup = document.querySelector(`.prefectures ${album.selector}`);
@@ -308,23 +316,16 @@ function initPinPositions() {
         const transformAttr = targetGroup.getAttribute('transform');
         if (transformAttr) {
             const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
-            if (matches) {
-                baseX = parseFloat(matches[1]);
-                baseY = parseFloat(matches[2]);
-            }
+            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
         }
 
         const paths = targetGroup.querySelectorAll('path, polygon');
-        if (paths.length === 0) return;
-        
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         paths.forEach(p => {
             const box = p.getBBox();
             if(box.width === 0 || box.height === 0) return;
-            if (box.x < minX) minX = box.x;
-            if (box.y < minY) minY = box.y;
-            if (box.x + box.width > maxX) maxX = box.x + box.width;
-            if (box.y + box.height > maxY) maxY = box.y + box.height;
+            if (box.x < minX) minX = box.x; if (box.y < minY) minY = box.y;
+            if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
         });
 
         const centerX = baseX + (minX + maxX) / 2;
@@ -354,9 +355,7 @@ function initPinPositions() {
         prefPath.style.cursor = 'pointer';
         prefPath.addEventListener('click', (e) => {
             const parentG = prefPath.parentElement;
-            if (parentG && parentG.classList.contains('prefecture')) {
-                triggerZoomIn(parentG);
-            }
+            if (parentG && parentG.classList.contains('prefecture')) triggerZoomIn(parentG);
         });
     });
 }
@@ -368,18 +367,12 @@ function triggerPinsDropping() {
         if (!transformStr) return;
         const matches = transformStr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/);
         if (!matches) return;
-
-        const targetX = parseFloat(matches[1]);
-        const targetY = parseFloat(matches[2]);
-
+        const targetX = parseFloat(matches[1]); const targetY = parseFloat(matches[2]);
         pin.style.transition = 'none';
-        pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`;
-        pin.style.opacity = 0;
-
+        pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`; pin.style.opacity = 0;
         setTimeout(() => {
             pin.style.transition = 'transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
-            pin.style.transform = `translate(${targetX}px, ${targetY}px)`;
-            pin.style.opacity = 1;
+            pin.style.transform = `translate(${targetX}px, ${targetY}px)`; pin.style.opacity = 1;
         }, index * 150 + 50);
     });
 }
@@ -391,11 +384,10 @@ function triggerZoomIn(groupElement) {
 
     const titleEl = groupElement.querySelector('title');
     const prefName = titleEl ? titleEl.textContent.split(' / ')[0] : "探索區域";
-    
     const targetX = groupElement.getAttribute('data-center-x');
     const targetY = groupElement.getAttribute('data-center-y');
-
     const zoomGroup = document.getElementById('map-zoom-group');
+    
     zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
     zoomGroup.style.transform = `scale(4.5)`;
 
@@ -417,41 +409,35 @@ document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
     hidePreview();
 });
 
-document.querySelectorAll('.spot-pin').forEach(pin => {
-    const albumIndex = parseInt(pin.getAttribute('data-album-index'));
-    const album = albums[albumIndex];
-    
-    pin.addEventListener('mousemove', (e) => {
-        if (!isMapZoomed) return;
-        const previewCard = document.getElementById('map-preview-card');
-        const previewImg = document.getElementById('map-preview-img');
-        const previewTitle = document.getElementById('map-preview-title');
+function setupSpotEvents() {
+    document.querySelectorAll('.spot-pin').forEach(pin => {
+        const albumIndex = parseInt(pin.getAttribute('data-album-index'));
+        const album = albums[albumIndex];
         
-        previewImg.src = album.photos[0];
-        previewTitle.textContent = album.title;
-        previewCard.style.left = `${e.clientX + 20}px`;
-        previewCard.style.top = `${e.clientY + 20}px`;
-        previewCard.style.opacity = 1;
+        pin.addEventListener('mousemove', (e) => {
+            if (!isMapZoomed) return;
+            const previewCard = document.getElementById('map-preview-card');
+            const previewImg = document.getElementById('map-preview-img');
+            const previewTitle = document.getElementById('map-preview-title');
+            
+            previewImg.src = album.photos[0];
+            previewTitle.textContent = album.title;
+            previewCard.style.left = `${e.clientX + 20}px`;
+            previewCard.style.top = `${e.clientY + 20}px`;
+            previewCard.style.opacity = 1;
+        });
+        
+        pin.addEventListener('mouseleave', () => hidePreview());
+        pin.addEventListener('click', (e) => {
+            e.stopPropagation(); hidePreview();
+            openGalleryDirectly(albumIndex);
+        });
     });
-    
-    pin.addEventListener('mouseleave', () => hidePreview());
-    pin.addEventListener('click', (e) => {
-        e.stopPropagation();
-        hidePreview();
-        openGalleryDirectly(albumIndex);
-    });
-});
-
-function hidePreview() {
-    document.getElementById('map-preview-card').style.opacity = 0;
 }
 
-// 🍏 初始化核心：立刻預載封面照片，並設定多次安全的坐標校正重試機制
+function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
+
 document.addEventListener('DOMContentLoaded', () => {
     updateAlbumCover();
-    
-    // 多層安全時間重試，保證在 Vercel 各種網路載入速度下，`getBBox()` 都能抓到真實尺寸
-    setTimeout(initPinPositions, 300);
-    setTimeout(initPinPositions, 1000);
+    loadAndInitMap(); // 開啟引擎
 });
-window.addEventListener('load', initPinPositions);
