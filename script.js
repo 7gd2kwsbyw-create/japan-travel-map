@@ -47,18 +47,14 @@ let isThrottled = false;
 let isMapZoomed = false; 
 let pinsDropped = false; 
 
-// 🍏 完美修復：第一幕與首頁切換的絲滑過渡流
+// 🍏 修正核心：首頁點擊左右箭頭時保留微幅動態，但不影響滾軸
 function updateAlbumCover() {
     const bgPhotoEl = document.getElementById('bg-photo');
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl && !isGalleryMode) {
-        bgPhotoEl.style.opacity = 0; // 先變透明
-        setTimeout(() => {
-            bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
-            bgPhotoEl.style.opacity = 1; // 換圖後淡入
-        }, 220); // 配合 CSS 0.25s 的轉場
+        bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
     }
     if (titleEl && !isGalleryMode) {
         titleEl.textContent = album.title;
@@ -66,7 +62,6 @@ function updateAlbumCover() {
     currentPhotoIndex = 0; 
 }
 
-// 藝廊模式照片切換過渡
 function updateGalleryPhoto(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
@@ -74,11 +69,7 @@ function updateGalleryPhoto(index) {
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl) {
-        bgPhotoEl.style.opacity = 0;
-        setTimeout(() => {
-            bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
-            bgPhotoEl.style.opacity = 1;
-        }, 220);
+        bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
     }
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
@@ -138,6 +129,7 @@ function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
     document.getElementById('bg-photo').classList.add('gallery-layout');
+    document.getElementById('bg-photo').style.opacity = 1; // 藝廊模式強制完全顯現
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -166,22 +158,6 @@ if (closeGalleryBtnEl) {
         closeGalleryBtnEl.style.opacity = 0; closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll'; 
         updateAlbumCover();
-        if(window.scrollY > window.innerHeight * 2) {
-            document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
-        }
-    });
-}
-
-if (document.getElementById('open-index-btn')) {
-    document.getElementById('open-index-btn').addEventListener('click', () => {
-        buildIndexGrid();
-        document.getElementById('gallery-index-panel').classList.add('open');
-    });
-}
-
-if (document.getElementById('close-index-btn')) {
-    document.getElementById('close-index-btn').addEventListener('click', () => {
-        document.getElementById('gallery-index-panel').classList.remove('open');
     });
 }
 
@@ -202,8 +178,10 @@ window.addEventListener('wheel', (e) => {
 
 function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
 
+// 🍏 全域物理連動時差滾動核心
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
+
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
@@ -230,7 +208,11 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
+        if (locationHint) { 
+            locationHint.innerHTML = currentAlbum.location; 
+            locationHint.style.opacity = Math.min(progress * 1.5, 1); 
+        }
+        // 第一幕滾動時，大圖背景百分之百保持不透明度
         if (bgPhoto) bgPhoto.style.opacity = 1;
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
@@ -242,15 +224,16 @@ window.addEventListener('scroll', () => {
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
     else if (progress > 2) {
-        const stage3Progress = (progress - 2) / 2; 
-        const easedProgress = Math.pow(stage3Progress, 2); 
+        const stage3Progress = (progress - 2) / 2; // 0 ~ 1 
+        
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - easedProgress * 2); 
         
+        // 🍏 照片淡出與地圖淡入：完全由捲軸物理坐標線性控制，沒有定時器！
+        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); 
         if (mapContainer) {
-            mapContainer.style.opacity = Math.min(easedProgress * 2, 1);
-            if (easedProgress > 0.05) { 
+            mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
+            if (stage3Progress > 0.02) { 
                 mapContainer.style.pointerEvents = 'auto'; 
                 if(!pinsDropped) triggerPinsDropping();
                 if(!isMapZoomed && locationHint) {
@@ -298,7 +281,7 @@ function loadAndInitMap() {
             });
             prefContainer.appendChild(spotsLayer);
 
-            setTimeout(calculatePositions, 200);
+            setTimeout(calculatePositions, 150);
             setupSpotEvents();
         })
         .catch(err => console.error("地圖載入失敗:", err));
@@ -371,9 +354,9 @@ function triggerPinsDropping() {
         pin.style.transition = 'none';
         pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`; pin.style.opacity = 0;
         setTimeout(() => {
-            pin.style.transition = 'transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
+            pin.style.transition = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
             pin.style.transform = `translate(${targetX}px, ${targetY}px)`; pin.style.opacity = 1;
-        }, index * 150 + 50);
+        }, index * 120 + 30);
     });
 }
 
@@ -438,6 +421,6 @@ function setupSpotEvents() {
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateAlbumCover(); // 🍏 立刻初始化封面
+    updateAlbumCover(); 
     loadAndInitMap(); 
 });
