@@ -250,8 +250,8 @@ body {
     transform: scale(1.03); 
 }
 
-/* ==========================================
-   第三幕：全新升級 Geolonia 日本互動地圖舞台
+//* ==========================================
+   第三幕：Geolonia 地圖對比度優化版
    ========================================== */
 #map-container { 
     position: fixed; 
@@ -259,7 +259,7 @@ body {
     left: 0; 
     width: 100vw; 
     height: 100vh; 
-    background: #0a0a0a; /* 深邃純黑背景襯托白色陸地 */
+    background: #0d0d11; /* 1. 維持深色底，但微調為帶有高級感的深洗鍊調 */
     z-index: 4; 
     display: flex; 
     align-items: center; 
@@ -274,28 +274,28 @@ body {
     height: 85vh; 
 }
 
-/* 完美對齊您原始精細 SVG 檔案的行政區樣式 */
+/* 覆蓋原始 SVG 屬性：提高未探索縣市的亮度，拉開對比 */
 .prefectures .prefecture {
-    fill: #181818 !important;   /* 未探索縣市：極簡暗灰 */
-    stroke: #2c2c2c !important; /* 邊界線：細碳黑 */
-    stroke-width: 0.8px !important;
+    fill: #26262b !important;   /* 2. 修正：從 #181818 調亮為中深灰色，地圖輪廓立刻現形！ */
+    stroke: #121215 !important; /* 3. 修正：邊界線改為深色，讓白色地圖線條不會太雜亂 */
+    stroke-width: 0.6px !important;
     cursor: default;
     transition: fill 0.35s cubic-bezier(0.25, 1, 0.2, 1);
 }
 
-/* 🎯 核心特規：僅針對我們在 JS 中有安排相簿的選取器發亮（島根、愛知） */
+/* 🎯 保持點亮的縣市（島根、愛知）絕對耀眼 */
 .prefectures .aichi, 
 .prefectures .shimane {
-    fill: #f5f5f7 !important;   /* 有旅拍照片：極簡洗鍊白 */
-    stroke: #b5b5b5 !important; /* 有照片邊界：質感淡灰 */
-    cursor: pointer !important;
+    fill: #ffffff !important;   /* 保持純白 */
+    stroke: #ffffff !important; 
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4)); /* 額外點綴：微幅發光感 */
 }
 
-/* 滑鼠移入有安排相簿的行政區：變色並呈現清澈的高級感光澤 */
+/* 滑鼠移入有照片的行政區 */
 .prefectures .aichi:hover, 
 .prefectures .shimane:hover { 
-    fill: #ffffff !important;
-    stroke: #888888 !important;
+    fill: #e5e5ea !important;
+    stroke: #ffffff !important;
 }
 
 /* 大頭針（Pins）核心基礎樣式與物理校準 */
