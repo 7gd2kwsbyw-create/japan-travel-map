@@ -52,7 +52,7 @@ const regionNames = {
     'region-okinawa': '沖繩地方'
 };
 
-// 🍏 修正重點：全面平衡九大地方視覺體感面積，調高近畿至 3.6，調降四國至 2.8 達成高雅統一比例
+// 🍏 比例尺精準微調：平衡全日本體感面積，並將沖繩獨立倍率推高至 8.5 倍，全面解鎖插針細節
 const regionScales = {
     'region-hokkaido': 2.0, 
     'region-tohoku': 2.4,   
@@ -62,7 +62,7 @@ const regionScales = {
     'region-chugoku': 3.0,  
     'region-shikoku': 2.8,  
     'region-kyushu': 3.0,   
-    'region-okinawa': 4.5   
+    'region-okinawa': 8.5   
 };
 
 let currentAlbumIndex = 0; 
@@ -302,6 +302,7 @@ function updateLocationHintText() {
     }
 }
 
+// 🍏 國家級標準化防禦：依據日本 JIS 官方編門代碼（JIS Code 01-47）進行絕對分割，斬斷 Class 繼承造成的污染缺陷
 function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
@@ -319,30 +320,41 @@ function getRegionClass(gElement) {
     return null;
 }
 
+// 🍏 幾何運算核心：利用瀏覽器 live 矩陣 CTM 進行四角頂點投影，求出絕對精準、跨瀏覽器一致的 True Bounding Box
 function getRegionTrueCenter(regionClass) {
+    const svgEl = document.getElementById('japan-map');
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
+    if (!svgEl) return { x: 500, y: 500 };
+
     members.forEach(m => {
-        const paths = m.querySelectorAll('path, polygon');
-        let baseX = 0, baseY = 0;
-        const transformAttr = m.getAttribute('transform');
-        if (transformAttr) {
-            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
-            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
+        const box = m.getBBox();
+        if (box.width === 0 || box.height === 0) return;
+
+        // 讀取瀏覽器編譯後當前的實體矩陣，徹底解耦文字 transform 屬性的正則缺陷
+        let matrix = svgEl.createSVGMatrix();
+        if (m.transform.baseVal.numItems > 0) {
+            matrix = m.transform.baseVal.consolidate().matrix;
         }
-        paths.forEach(p => {
-            const box = p.getBBox();
-            if (box.width === 0 || box.height === 0) return;
-            const absMinX = 6 + baseX + box.x;
-            const absMinY = 18 + baseY + box.y;
-            const absMaxX = 6 + baseX + box.x + box.width;
-            const absMaxY = 18 + baseY + box.y + box.height;
+
+        // 對多邊形包覆外框的四個極端頂點進行向量矩陣投影
+        const corners = [
+            { x: box.x, y: box.y },
+            { x: box.x + box.width, y: box.y },
+            { x: box.x, y: box.y + box.height },
+            { x: box.x + box.width, y: box.y + box.height }
+        ];
+
+        corners.forEach(c => {
+            const pt = svgEl.createSVGPoint();
+            pt.x = c.x; pt.y = c.y;
+            const transPt = pt.matrixTransform(matrix);
             
-            if (absMinX < minX) minX = absMinX;
-            if (absMinY < minY) minY = absMinY;
-            if (absMaxX > maxX) maxX = absMaxX;
-            if (absMaxY > maxY) maxY = absMaxY;
+            if (transPt.x < minX) minX = transPt.x;
+            if (transPt.y < minY) minY = transPt.y;
+            if (transPt.x > maxX) maxX = transPt.x;
+            if (transPt.y > maxY) maxY = transPt.y;
         });
     });
     
@@ -403,29 +415,26 @@ function loadAndInitMap() {
         .catch(err => console.error("地圖加載失敗:", err));
 }
 
+// 🍏 幾何運算優化：都道府縣中心座標同步重構為 CTM 實體矩陣運算，確保精準絕不飄移
 function calculateGeometries() {
+    const svgEl = document.getElementById('japan-map');
+    if (!svgEl) return;
     const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
     
     prefGroups.forEach(g => {
-        let baseX = 0, baseY = 0;
-        const transformAttr = g.getAttribute('transform');
-        if (transformAttr) {
-            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
-            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
+        const box = g.getBBox();
+        let matrix = svgEl.createSVGMatrix();
+        if (g.transform.baseVal.numItems > 0) {
+            matrix = g.transform.baseVal.consolidate().matrix;
         }
-        const paths = g.querySelectorAll('path, polygon');
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        paths.forEach(p => {
-            const box = p.getBBox();
-            if(box.width === 0 || box.height === 0) return;
-            if (box.x < minX) minX = box.x; if (box.y < minY) minY = box.y;
-            if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
-        });
-        if(minX === Infinity) return;
-        const cx = baseX + (minX + maxX) / 2;
-        const cy = baseY + (minY + maxY) / 2;
-        g.setAttribute('data-center-x', cx);
-        g.setAttribute('data-center-y', cy);
+        
+        const pt = svgEl.createSVGPoint();
+        pt.x = box.x + box.width / 2;
+        pt.y = box.y + box.height / 2;
+        
+        const transPt = pt.matrixTransform(matrix);
+        g.setAttribute('data-center-x', transPt.x);
+        g.setAttribute('data-center-y', transPt.y);
     });
 
     albums.forEach((album) => {
@@ -487,8 +496,13 @@ function setupStageEvents() {
                 zoomGroup.style.transformOrigin = '0 0';
                 
                 let scaleLevel = regionScales[activeRegionClass] || 2.5;
-                const tx = 500 - scaleLevel * rCenter.x;
-                const ty = 500 - scaleLevel * rCenter.y;
+                
+                // 🍏 加上全域容器 transform="matrix(1,0,0,1,6,18)" 的 6 與 18 幾何偏差校正
+                const absRegionCenterX = rCenter.x + 6;
+                const absRegionCenterY = rCenter.y + 18;
+                
+                const tx = 500 - scaleLevel * absRegionCenterX;
+                const ty = 500 - scaleLevel * absRegionCenterY;
                 
                 zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
@@ -513,7 +527,7 @@ function setupStageEvents() {
                 const zoomGroup = document.getElementById('map-zoom-group');
                 zoomGroup.style.transformOrigin = '0 0';
                 
-                const scaleLevel = 5.5;
+                const scaleLevel = 6.5; // 二次微調：聚焦寬幅更優美
                 const tx = 500 - scaleLevel * absCx;
                 const ty = 500 - scaleLevel * absCy;
                 
@@ -533,11 +547,13 @@ function setupStageEvents() {
 
         if (currentLayer === 3) {
             const rCenter = getRegionTrueCenter(activeRegionClass);
+            const absRegionCenterX = rCenter.x + 6;
+            const absRegionCenterY = rCenter.y + 18;
             zoomGroup.style.transformOrigin = '0 0';
             
             let scaleLevel = regionScales[activeRegionClass] || 2.5;
-            const tx = 500 - scaleLevel * rCenter.x;
-            const ty = 500 - scaleLevel * rCenter.y;
+            const tx = 500 - scaleLevel * absRegionCenterX;
+            const ty = 500 - scaleLevel * absRegionCenterY;
             
             zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
@@ -546,7 +562,6 @@ function setupStageEvents() {
             updateLocationHintText();
             hidePreview();
         } else if (currentLayer === 2) {
-            // 🍏 修正重點：退回第一層時，使用精準數值矩陣宣告取代關鍵字 'none'，維持 WebKit 顯示卡快取不失效，徹底根除地圖抖動
             zoomGroup.style.transform = 'translate(0px, 0px) scale(1)';
             currentLayer = 1;
             svgMap.className = `geolonia-svg-map map-layer-1`;
