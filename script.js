@@ -40,6 +40,7 @@ const albums = [
     }
 ];
 
+// 🍏 修正核心：將沖繩獨立為全新行政地方，拉開單獨導覽維度
 const regionNames = {
     'region-hokkaido': '北海道地方',
     'region-tohoku': '東北地方',
@@ -48,7 +49,8 @@ const regionNames = {
     'region-kinki': '近畿地方',
     'region-chugoku': '中國地方',
     'region-shikoku': '四國地方',
-    'region-kyushu': '九州・沖繩地方'
+    'region-kyushu': '九州地方',
+    'region-okinawa': '沖繩地方' 
 };
 
 let currentAlbumIndex = 0; 
@@ -61,20 +63,17 @@ let activeRegionClass = null;
 let activePrefectureGroup = null;
 let pinsDropped = false;
 
-// 🍏 修正核心：分離首次載入與動態漸變切換，根除一開始全黑的缺陷
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
 
     if (isInitial) {
-        // 首次加載：直接同步指定圖片，不進行任何非同步阻塞
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
         bgPhotoEl.style.opacity = 1;
         bgPhotoEl.style.transition = 'none';
         return;
     }
 
-    // 後續點擊切換：優雅啟動交叉漸變過渡
     bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
     bgPhotoEl.style.opacity = 0;
 
@@ -280,7 +279,6 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// 根據目前層級還原 Hint 提示
 function updateLocationHintText() {
     const hint = document.getElementById('location-hint');
     if (!hint) return;
@@ -292,8 +290,10 @@ function updateLocationHintText() {
     }
 }
 
+// 🍏 修正核心：將沖繩防禦抽離，防止其幾何重心被九州綁架
 function getRegionClass(gElement) {
     const cls = gElement.getAttribute('class') || '';
+    if (cls.includes('okinawa')) return 'region-okinawa'; // 優先獨立出沖繩
     if (cls.includes('hokkaido')) return 'region-hokkaido';
     if (cls.includes('tohoku')) return 'region-tohoku';
     if (cls.includes('kanto')) return 'region-kanto';
@@ -438,7 +438,10 @@ function setupStageEvents() {
 
                 const zoomGroup = document.getElementById('map-zoom-group');
                 zoomGroup.style.transformOrigin = `${rCenterX}px ${rCenterY}px`;
-                zoomGroup.style.transform = `scale(2.6)`;
+                
+                // 🍏 鏡頭特調：沖繩地方幅員較小，放大倍率特別提高至 5.5 倍以利點擊，其餘地方維持 2.6 倍
+                let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
+                zoomGroup.style.transform = `scale(${scaleLevel})`;
 
                 currentLayer = 2;
                 svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
@@ -481,7 +484,9 @@ function setupStageEvents() {
                 if(cx && cy) { sumX += cx; sumY += cy; count++; }
             });
             zoomGroup.style.transformOrigin = `${sumX / count}px ${sumY / count}px`;
-            zoomGroup.style.transform = `scale(2.6)`;
+            
+            let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
+            zoomGroup.style.transform = `scale(${scaleLevel})`;
 
             currentLayer = 2;
             svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
@@ -529,6 +534,6 @@ function setupStageEvents() {
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateAlbumCover(true); // 🍏 首次載入強制傳入 true 阻斷任何透明度動畫
+    updateAlbumCover(true); 
     loadAndInitMap(); 
 });

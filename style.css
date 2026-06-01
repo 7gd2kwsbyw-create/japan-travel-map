@@ -9,7 +9,7 @@ body {
 
 #scroll-spacer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* 第一幕 & 第二幕：首頁大圖與專題大標題 */
+/* 第一幕 & 第二幕 */
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-size: cover; background-position: center; z-index: 2; will-change: opacity;
@@ -29,7 +29,6 @@ body {
     margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: nowrap; cursor: pointer;
 }
 
-/* 控制元件 */
 .side-click-zone {
     position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5; cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease;
 }
@@ -80,90 +79,92 @@ body {
 #japan-map { width: 100%; height: 100%; display: block; }
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
-/* 🍏 實體色塊變更：全新高強度呼吸燈（完全操縱 fill 區塊色彩，根除邊線斷裂） */
+/* 🍏 修正核心：拔除基礎狀態的 !important，改靠層級加重權重，完全解鎖 fill 動態呼吸燈效果 */
 @keyframes regionSolidBreathe {
-    0% { fill: #33333d !important; }
-    50% { fill: #5a5a6e !important; } /* 強烈明暗對比之實體色塊脈衝 */
-    100% { fill: #33333d !important; }
+    0% { fill: #23232a; }
+    50% { fill: #4d4d5e; } /* 實體色塊大幅度明暗脈衝 */
+    100% { fill: #23232a; }
 }
 @keyframes prefSolidBreathe {
-    0% { fill: #444454 !important; }
-    50% { fill: #767694 !important; } /* 第二層單一縣市實體色塊呼吸 */
-    100% { fill: #444454 !important; }
+    0% { fill: #3a3a46; }
+    50% { fill: #65657d; } 
+    100% { fill: #3a3a46; }
 }
 
 /* ------------------------------------------
-   第一層：全局區域舞台（大幅拉開基礎背景對比）
+   第一層：全局區域舞台
    ------------------------------------------ */
-.map-layer-1 .prefecture path,
-.map-layer-1 .prefecture polygon {
-    fill: #23232a !important; /* 基礎縣市：清晰可見的中深灰實體色塊 */
-    stroke: #09090c !important; /* 分界線：極細純黑，僅作幾何裁切 */
-    stroke-width: 0.4px !important;
+#japan-map.map-layer-1 .prefecture path,
+#japan-map.map-layer-1 .prefecture polygon {
+    fill: #23232a; /* 基礎縣市：清晰可見的中深灰實體色塊 */
+    stroke: #09090c; /* 邊界線：極細純黑裁切 */
+    stroke-width: 0.4px;
     transition: fill 0.3s ease;
 }
 
 /* 點亮有照片安排的兩大地方板塊（中部、中國） */
-.map-layer-1 .chubu path, .map-layer-1 .chubu polygon,
-.map-layer-1 .chugoku path, .map-layer-1 .chugoku polygon {
-    fill: #33333d !important; 
-    stroke: #121217 !important;
+#japan-map.map-layer-1 .chubu path, #japan-map.map-layer-1 .chubu polygon,
+#japan-map.map-layer-1 .chugoku path, #japan-map.map-layer-1 .chugoku polygon {
+    fill: #33333d; 
+    stroke: #121217;
 }
 
 /* 第一層：滑鼠移入時，該區域所有實體色塊同步發光呼吸 */
-.map-layer-1 .region-hover-pulse path,
-.map-layer-1 .region-hover-pulse polygon {
+#japan-map.map-layer-1 .region-hover-pulse path,
+#japan-map.map-layer-1 .region-hover-pulse polygon {
     animation: regionSolidBreathe 1.2s infinite ease-in-out;
 }
 
 /* ------------------------------------------
    第二層：地方板塊聚焦舞台
    ------------------------------------------ */
-.map-layer-2 .prefecture path,
-.map-layer-2 .prefecture polygon {
-    fill: #111115 !important; stroke: #050507 !important; opacity: 0.12; /* 非焦點區域大幅退化 */
+#japan-map.map-layer-2 .prefecture path,
+#japan-map.map-layer-2 .prefecture polygon {
+    fill: #111115; stroke: #050507; opacity: 0.12; /* 非焦點區域大幅退化 */
 }
 
-/* 喚醒選取區域內的全部縣市實體色塊 */
-.map-layer-2.region-hokkaido .region-hokkaido path, .map-layer-2.region-hokkaido .region-hokkaido polygon,
-.map-layer-2.region-tohoku .region-tohoku path, .map-layer-2.region-tohoku .region-tohoku polygon,
-.map-layer-2.region-kanto .region-kanto path, .map-layer-2.region-kanto .region-kanto polygon,
-.map-layer-2.region-chubu .region-chubu path, .map-layer-2.region-chubu .region-chubu polygon,
-.map-layer-2.region-kinki .region-kinki path, .map-layer-2.region-kinki .region-kinki polygon,
-.map-layer-2.region-chugoku .region-chugoku path, .map-layer-2.region-chugoku .region-chugoku polygon,
-.map-layer-2.region-shikoku .region-shikoku path, .map-layer-2.region-shikoku .region-shikoku polygon,
-.map-layer-2.region-kyushu .region-kyushu path, .map-layer-2.region-kyushu .region-kyushu polygon {
-    fill: #444454 !important; stroke: #16161f !important; stroke-width: 0.4px !important; opacity: 1;
+/* 喚醒選取區域（含獨立沖繩）內的全部縣市實體色塊 */
+#japan-map.map-layer-2.region-hokkaido .region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .region-hokkaido polygon,
+#japan-map.map-layer-2.region-tohoku .region-tohoku path, #japan-map.map-layer-2.region-tohoku .region-tohoku polygon,
+#japan-map.map-layer-2.region-kanto .region-kanto path, #japan-map.map-layer-2.region-kanto .region-kanto polygon,
+#japan-map.map-layer-2.region-chubu .region-chubu path, #japan-map.map-layer-2.region-chubu .region-chubu polygon,
+#japan-map.map-layer-2.region-kinki .region-kinki path, #japan-map.map-layer-2.region-kinki .region-kinki polygon,
+#japan-map.map-layer-2.region-chugoku .region-chugoku path, #japan-map.map-layer-2.region-chugoku .region-chugoku polygon,
+#japan-map.map-layer-2.region-shikoku .region-shikoku path, #japan-map.map-layer-2.region-shikoku .region-shikoku polygon,
+#japan-map.map-layer-2.region-kyushu .region-kyushu path, #japan-map.map-layer-2.region-kyushu .region-kyushu polygon,
+#japan-map.map-layer-2.region-okinawa .region-okinawa path, #japan-map.map-layer-2.region-okinawa .region-okinawa polygon {
+    fill: #3a3a46; stroke: #16161f; stroke-width: 0.4px; opacity: 1;
 }
 
-/* 🎯 核心高亮：島根、愛知在第二層直接以「絕對純白塊」顯現，目標極度顯眼 */
-.map-layer-2 .aichi path, .map-layer-2 .aichi polygon,
-.map-layer-2 .shimane path, .map-layer-2 .shimane polygon {
-    fill: #ffffff !important; stroke: #ffffff !important; opacity: 1 !important;
+/* 🎯 核心高亮：島根、愛知在第二層直接以「絕對純白塊」顯現 */
+#japan-map.map-layer-2 .aichi path, #japan-map.map-layer-2 .aichi polygon,
+#japan-map.map-layer-2 .shimane path, #japan-map.map-layer-2 .shimane polygon {
+    fill: #ffffff; stroke: #ffffff; opacity: 1;
 }
 
 /* 第二層：選取區內一般縣市的實體呼吸燈 */
-.map-layer-2 .pref-hover-pulse path,
-.map-layer-2 .pref-hover-pulse polygon {
+#japan-map.map-layer-2 .pref-hover-pulse path,
+#japan-map.map-layer-2 .pref-hover-pulse polygon {
     animation: prefSolidBreathe 1.0s infinite ease-in-out;
 }
 /* 核心白色塊縣市 Hover 時轉為高貴的淡洗鍊灰，不執行閃爍以防刺眼 */
-.map-layer-2 .aichi.pref-hover-pulse path, .map-layer-2 .aichi.pref-hover-pulse polygon,
-.map-layer-2 .shimane.pref-hover-pulse path, .map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: none; fill: #dcdce2 !important;
+#japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
+#japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
+    animation: none; fill: #dcdce2;
 }
 
 /* ------------------------------------------
    第三層：特定縣市聚焦舞台
    ------------------------------------------ */
-.map-layer-3 .prefecture path,
-.map-layer-3 .prefecture polygon {
-    fill: #111115 !important; stroke: #050507 !important; opacity: 0.08;
+#japan-map.map-layer-3 .prefecture path,
+#japan-map.map-layer-3 .prefecture polygon {
+    fill: #111115; stroke: #050507; opacity: 0.08;
 }
 
-.map-layer-3.region-chubu .aichi path, .map-layer-3.region-chubu .aichi polygon,
-.map-layer-3.region-chugoku .shimane path, .map-layer-3.region-chugoku .shimane polygon {
-    fill: #ffffff !important; stroke: #cccccc !important; stroke-width: 0.2px !important; opacity: 1;
+#japan-map.map-layer-3.region-chubu .aichi path, #japan-map.map-layer-3.region-chubu .aichi polygon,
+#japan-map.map-layer-3.region-chugoku .shimane path, #japan-map.map-layer-3.region-chugoku .shimane polygon,
+#japan-map.map-layer-3.region-okinawa .okinawa path, #japan-map.map-layer-3.region-okinawa .okinawa polygon {
+    fill: #ffffff; stroke: #cccccc; stroke-width: 0.2px; opacity: 1;
 }
 
 /* 大頭針及標籤組件 */
@@ -173,7 +174,7 @@ body {
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
 .spot-label { fill: #ffffff !important; font-size: 2.2px !important; font-family: 'Noto Sans TC', sans-serif; text-shadow: 1px 1px 1px rgba(0,0,0,1); }
 
-.map-layer-3 #spots-layer { opacity: 1; pointer-events: auto; }
+#japan-map.map-layer-3 #spots-layer { opacity: 1; pointer-events: auto; }
 
 /* 介面按鈕與預覽卡片 */
 #back-to-map-btn {
