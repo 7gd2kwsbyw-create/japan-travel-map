@@ -52,16 +52,16 @@ const regionNames = {
     'region-okinawa': '沖繩地方'
 };
 
-// 🍏 視角留白優化：重新配製黃金比例縮放矩陣，保留雜誌級和風舒適空隙，絕無壓迫感
+// 🍏 修正重點：全面平衡九大地方視覺體感面積，調高近畿至 3.6，調降四國至 2.8 達成高雅統一比例
 const regionScales = {
     'region-hokkaido': 2.0, 
-    'region-tohoku': 2.3,   
-    'region-kanto': 3.2,    
-    'region-chubu': 2.4,    
-    'region-kinki': 2.8,    
-    'region-chugoku': 2.6,  
-    'region-shikoku': 3.8,  
-    'region-kyushu': 2.6,   
+    'region-tohoku': 2.4,   
+    'region-kanto': 3.6,    
+    'region-chubu': 2.5,    
+    'region-kinki': 3.6,    
+    'region-chugoku': 3.0,  
+    'region-shikoku': 2.8,  
+    'region-kyushu': 3.0,   
     'region-okinawa': 4.5   
 };
 
@@ -302,7 +302,6 @@ function updateLocationHintText() {
     }
 }
 
-// 🍏 修正核心：全面改用國家級 JIS 官方編門代碼（01-47）進行幾何判別，將九州與沖繩實施絕對物理切開
 function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
@@ -320,7 +319,6 @@ function getRegionClass(gElement) {
     return null;
 }
 
-// 🍏 修正核心：計入父層 .prefectures 的固定 (6, 18) 向量座標偏移，求出最純粹精準的 bounding box 幾何中心
 function getRegionTrueCenter(regionClass) {
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -379,7 +377,6 @@ function loadAndInitMap() {
                 const rClass = getRegionClass(g);
                 if(rClass) {
                     g.classList.add(rClass);
-                    // 🍏 徹底清洗原生剩餘 Class，避免 CSS 樣式污染
                     if (rClass === 'region-okinawa') {
                         g.removeAttribute('class');
                         g.classList.add('prefecture', 'region-okinawa');
@@ -487,7 +484,6 @@ function setupStageEvents() {
                 const rCenter = getRegionTrueCenter(activeRegionClass);
                 const zoomGroup = document.getElementById('map-zoom-group');
                 
-                // 🍏 修正核心：鎖死跨瀏覽器基準點 (0 0)，並套用優化後的比例與平移置中公式
                 zoomGroup.style.transformOrigin = '0 0';
                 
                 let scaleLevel = regionScales[activeRegionClass] || 2.5;
@@ -512,7 +508,6 @@ function setupStageEvents() {
                 const pCenterX = parseFloat(g.getAttribute('data-center-x'));
                 const pCenterY = parseFloat(g.getAttribute('data-center-y'));
 
-                // 🍏 第三層縮放亦完全對齊 (0 0) 全域視框置中機制
                 const absCx = 6 + pCenterX;
                 const absCy = 18 + pCenterY;
                 const zoomGroup = document.getElementById('map-zoom-group');
@@ -551,8 +546,8 @@ function setupStageEvents() {
             updateLocationHintText();
             hidePreview();
         } else if (currentLayer === 2) {
-            // 🍏 退回第一層：清除全域樣式轉化屬性，交還給 SVG 內聯矩陣
-            zoomGroup.style.transform = 'none';
+            // 🍏 修正重點：退回第一層時，使用精準數值矩陣宣告取代關鍵字 'none'，維持 WebKit 顯示卡快取不失效，徹底根除地圖抖動
+            zoomGroup.style.transform = 'translate(0px, 0px) scale(1)';
             currentLayer = 1;
             svgMap.className = `geolonia-svg-map map-layer-1`;
             document.getElementById('back-to-map-btn').style.opacity = 0;
