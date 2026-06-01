@@ -52,6 +52,19 @@ const regionNames = {
     'region-okinawa': '沖繩地方'
 };
 
+// 🍏 雙贏核心配置：為九大地方板塊量身訂製最適縮放比例（既能放大熱區，又絕無畫面溢出之壓迫感）
+const regionScales = {
+    'region-hokkaido': 2.3, // 北海道疆域龐大，2.3 倍最符合視角
+    'region-tohoku': 3.1,   // 東北狹長，3.1 倍可完美包覆
+    'region-kanto': 4.3,    // 關東精緻，提高至 4.3 倍大幅增加點擊熱區
+    'region-chubu': 3.3,    // 中部寬廣，3.3 倍可清晰舒適展現
+    'region-kinki': 3.9,    // 近畿適中，3.9 倍可輕鬆點選各縣
+    'region-chugoku': 3.8,  // 中國橫向延伸，3.8 倍比例最為高雅
+    'region-shikoku': 5.2,  // 四國島嶼較小，大幅放大至 5.2 倍消除像素獵殺
+    'region-kyushu': 3.6,   // 九州縱向適中，3.6 倍最優
+    'region-okinawa': 5.5   // 沖繩群島分散，維持 5.5 倍高精度聚焦
+};
+
 let currentAlbumIndex = 0; 
 let currentPhotoIndex = 0; 
 let isGalleryMode = false;  
@@ -289,10 +302,9 @@ function updateLocationHintText() {
     }
 }
 
-// 🍏 修正核心：改用 classList.contains 記號匹配，斬斷 kyushu-okinawa 子字串的模糊誤判
 function getRegionClass(gElement) {
     const cl = gElement.classList;
-    if (cl.contains('okinawa')) return 'region-okinawa'; // 精準鎖定沖繩本尊
+    if (cl.contains('okinawa')) return 'region-okinawa'; 
     if (cl.contains('hokkaido')) return 'region-hokkaido';
     if (cl.contains('tohoku')) return 'region-tohoku';
     if (cl.contains('kanto')) return 'region-kanto';
@@ -302,6 +314,41 @@ function getRegionClass(gElement) {
     if (cl.contains('shikoku')) return 'region-shikoku';
     if (cl.contains('kyushu') || cl.contains('kyushu-okinawa')) return 'region-kyushu';
     return null;
+}
+
+// 🍏 雙贏核心演算法：計算該地方所有路徑的實體外框（True Bounding Box）達成幾何幾何級完美置中
+function getRegionTrueCenter(regionClass) {
+    const members = document.querySelectorAll(`.prefectures .${regionClass}`);
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    
+    members.forEach(m => {
+        const paths = m.querySelectorAll('path, polygon');
+        let baseX = 0, baseY = 0;
+        const transformAttr = m.getAttribute('transform');
+        if (transformAttr) {
+            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
+            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
+        }
+        paths.forEach(p => {
+            const box = p.getBBox();
+            if (box.width === 0 || box.height === 0) return;
+            const absMinX = baseX + box.x;
+            const absMinY = baseY + box.y;
+            const absMaxX = baseX + box.x + box.width;
+            const absMaxY = baseY + box.y + box.height;
+            
+            if (absMinX < minX) minX = absMinX;
+            if (absMinY < minY) minY = absMinY;
+            if (absMaxX > maxX) maxX = absMaxX;
+            if (absMaxY > maxY) maxY = absMaxY;
+        });
+    });
+    
+    if (minX === Infinity) return { x: 500, y: 500 }; 
+    return {
+        x: (minX + maxX) / 2,
+        y: (minY + maxY) / 2
+    };
 }
 
 function loadAndInitMap() {
@@ -328,7 +375,6 @@ function loadAndInitMap() {
                 const rClass = getRegionClass(g);
                 if(rClass) {
                     g.classList.add(rClass);
-                    // 🍏 徹底切開：將沖繩從原生大組中剔除，防止任何 CSS 穿透與同步閃爍
                     if (rClass === 'region-okinawa') {
                         g.classList.remove('kyushu');
                         g.classList.remove('kyushu-okinawa');
@@ -395,7 +441,6 @@ function setupStageEvents() {
     const svgMap = document.getElementById('japan-map');
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
-        // 🍏 修正核心：完全改用局部變數，根除全域變數事件競爭引起的呼吸燈同步 Bug
         g.addEventListener('mouseenter', () => {
             const localRegion = getRegionClass(g);
             if (currentLayer === 1) {
@@ -434,20 +479,14 @@ function setupStageEvents() {
                 activeRegionClass = getRegionClass(g);
                 if (!activeRegionClass) return;
 
-                const members = document.querySelectorAll(`.prefectures .${activeRegionClass}`);
-                let sumX = 0, sumY = 0, count = 0;
-                members.forEach(m => {
-                    const cx = parseFloat(m.getAttribute('data-center-x'));
-                    const cy = parseFloat(m.getAttribute('data-center-y'));
-                    if(cx && cy) { sumX += cx; sumY += cy; count++; }
-                });
-                const rCenterX = sumX / count;
-                const rCenterY = sumY / count;
+                // 🍏 修正重點：使用全新 True Bounding Box 核心計算出絕對幾何置中點
+                const rCenter = getRegionTrueCenter(activeRegionClass);
 
                 const zoomGroup = document.getElementById('map-zoom-group');
-                zoomGroup.style.transformOrigin = `${rCenterX}px ${rCenterY}px`;
+                zoomGroup.style.transformOrigin = `${rCenter.x}px ${rCenter.y}px`;
                 
-                let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
+                // 🍏 修正重點：驅動為該地方定製的動態最佳縮放比例，徹底根除偏小、不易點擊與邊界壓迫缺陷
+                let scaleLevel = regionScales[activeRegionClass] || 3.0;
                 zoomGroup.style.transform = `scale(${scaleLevel})`;
 
                 currentLayer = 2;
@@ -483,16 +522,11 @@ function setupStageEvents() {
         const zoomGroup = document.getElementById('map-zoom-group');
 
         if (currentLayer === 3) {
-            const members = document.querySelectorAll(`.prefectures .${activeRegionClass}`);
-            let sumX = 0, sumY = 0, count = 0;
-            members.forEach(m => {
-                const cx = parseFloat(m.getAttribute('data-center-x'));
-                const cy = parseFloat(m.getAttribute('data-center-y'));
-                if(cx && cy) { sumX += cx; sumY += cy; count++; }
-            });
-            zoomGroup.style.transformOrigin = `${sumX / count}px ${sumY / count}px`;
+            // 🍏 修正重點：退回第二層時，同步套用優化後的幾何置中點與地方獨立最佳縮放比，防範鏡頭閃切跳躍
+            const rCenter = getRegionTrueCenter(activeRegionClass);
+            zoomGroup.style.transformOrigin = `${rCenter.x}px ${rCenter.y}px`;
             
-            let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
+            let scaleLevel = regionScales[activeRegionClass] || 3.0;
             zoomGroup.style.transform = `scale(${scaleLevel})`;
 
             currentLayer = 2;
