@@ -52,17 +52,17 @@ const regionNames = {
     'region-okinawa': '沖繩地方'
 };
 
-// 🍏 雙贏核心配置：為九大地方板塊量身訂製最適縮放比例（既能放大熱區，又絕無畫面溢出之壓迫感）
+// 🍏 視角留白優化：重新配製黃金比例縮放矩陣，保留雜誌級和風舒適空隙，絕無壓迫感
 const regionScales = {
-    'region-hokkaido': 2.3, // 北海道疆域龐大，2.3 倍最符合視角
-    'region-tohoku': 3.1,   // 東北狹長，3.1 倍可完美包覆
-    'region-kanto': 4.3,    // 關東精緻，提高至 4.3 倍大幅增加點擊熱區
-    'region-chubu': 3.3,    // 中部寬廣，3.3 倍可清晰舒適展現
-    'region-kinki': 3.9,    // 近畿適中，3.9 倍可輕鬆點選各縣
-    'region-chugoku': 3.8,  // 中國橫向延伸，3.8 倍比例最為高雅
-    'region-shikoku': 5.2,  // 四國島嶼較小，大幅放大至 5.2 倍消除像素獵殺
-    'region-kyushu': 3.6,   // 九州縱向適中，3.6 倍最優
-    'region-okinawa': 5.5   // 沖繩群島分散，維持 5.5 倍高精度聚焦
+    'region-hokkaido': 2.0, 
+    'region-tohoku': 2.3,   
+    'region-kanto': 3.2,    
+    'region-chubu': 2.4,    
+    'region-kinki': 2.8,    
+    'region-chugoku': 2.6,  
+    'region-shikoku': 3.8,  
+    'region-kyushu': 2.6,   
+    'region-okinawa': 4.5   
 };
 
 let currentAlbumIndex = 0; 
@@ -302,21 +302,25 @@ function updateLocationHintText() {
     }
 }
 
+// 🍏 修正核心：全面改用國家級 JIS 官方編門代碼（01-47）進行幾何判別，將九州與沖繩實施絕對物理切開
 function getRegionClass(gElement) {
-    const cl = gElement.classList;
-    if (cl.contains('okinawa')) return 'region-okinawa'; 
-    if (cl.contains('hokkaido')) return 'region-hokkaido';
-    if (cl.contains('tohoku')) return 'region-tohoku';
-    if (cl.contains('kanto')) return 'region-kanto';
-    if (cl.contains('chubu')) return 'region-chubu';
-    if (cl.contains('kinki')) return 'region-kinki';
-    if (cl.contains('chugoku')) return 'region-chugoku';
-    if (cl.contains('shikoku')) return 'region-shikoku';
-    if (cl.contains('kyushu') || cl.contains('kyushu-okinawa')) return 'region-kyushu';
+    const codeAttr = gElement.getAttribute('data-code');
+    if (!codeAttr) return null;
+    const code = parseInt(codeAttr, 10);
+    
+    if (code === 47) return 'region-okinawa'; 
+    if (code === 1) return 'region-hokkaido'; 
+    if (code >= 2 && code <= 7) return 'region-tohoku'; 
+    if (code >= 8 && code <= 14) return 'region-kanto'; 
+    if (code >= 15 && code <= 23) return 'region-chubu'; 
+    if (code >= 24 && code <= 30) return 'region-kinki'; 
+    if (code >= 31 && code <= 35) return 'region-chugoku'; 
+    if (code >= 36 && code <= 39) return 'region-shikoku'; 
+    if (code >= 40 && code <= 46) return 'region-kyushu'; 
     return null;
 }
 
-// 🍏 雙贏核心演算法：計算該地方所有路徑的實體外框（True Bounding Box）達成幾何幾何級完美置中
+// 🍏 修正核心：計入父層 .prefectures 的固定 (6, 18) 向量座標偏移，求出最純粹精準的 bounding box 幾何中心
 function getRegionTrueCenter(regionClass) {
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
@@ -332,10 +336,10 @@ function getRegionTrueCenter(regionClass) {
         paths.forEach(p => {
             const box = p.getBBox();
             if (box.width === 0 || box.height === 0) return;
-            const absMinX = baseX + box.x;
-            const absMinY = baseY + box.y;
-            const absMaxX = baseX + box.x + box.width;
-            const absMaxY = baseY + box.y + box.height;
+            const absMinX = 6 + baseX + box.x;
+            const absMinY = 18 + baseY + box.y;
+            const absMaxX = 6 + baseX + box.x + box.width;
+            const absMaxY = 18 + baseY + box.y + box.height;
             
             if (absMinX < minX) minX = absMinX;
             if (absMinY < minY) minY = absMinY;
@@ -375,9 +379,10 @@ function loadAndInitMap() {
                 const rClass = getRegionClass(g);
                 if(rClass) {
                     g.classList.add(rClass);
+                    // 🍏 徹底清洗原生剩餘 Class，避免 CSS 樣式污染
                     if (rClass === 'region-okinawa') {
-                        g.classList.remove('kyushu');
-                        g.classList.remove('kyushu-okinawa');
+                        g.removeAttribute('class');
+                        g.classList.add('prefecture', 'region-okinawa');
                     }
                 }
             });
@@ -479,15 +484,17 @@ function setupStageEvents() {
                 activeRegionClass = getRegionClass(g);
                 if (!activeRegionClass) return;
 
-                // 🍏 修正重點：使用全新 True Bounding Box 核心計算出絕對幾何置中點
                 const rCenter = getRegionTrueCenter(activeRegionClass);
-
                 const zoomGroup = document.getElementById('map-zoom-group');
-                zoomGroup.style.transformOrigin = `${rCenter.x}px ${rCenter.y}px`;
                 
-                // 🍏 修正重點：驅動為該地方定製的動態最佳縮放比例，徹底根除偏小、不易點擊與邊界壓迫缺陷
-                let scaleLevel = regionScales[activeRegionClass] || 3.0;
-                zoomGroup.style.transform = `scale(${scaleLevel})`;
+                // 🍏 修正核心：鎖死跨瀏覽器基準點 (0 0)，並套用優化後的比例與平移置中公式
+                zoomGroup.style.transformOrigin = '0 0';
+                
+                let scaleLevel = regionScales[activeRegionClass] || 2.5;
+                const tx = 500 - scaleLevel * rCenter.x;
+                const ty = 500 - scaleLevel * rCenter.y;
+                
+                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
                 currentLayer = 2;
                 svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
@@ -505,9 +512,17 @@ function setupStageEvents() {
                 const pCenterX = parseFloat(g.getAttribute('data-center-x'));
                 const pCenterY = parseFloat(g.getAttribute('data-center-y'));
 
+                // 🍏 第三層縮放亦完全對齊 (0 0) 全域視框置中機制
+                const absCx = 6 + pCenterX;
+                const absCy = 18 + pCenterY;
                 const zoomGroup = document.getElementById('map-zoom-group');
-                zoomGroup.style.transformOrigin = `${pCenterX}px ${pCenterY}px`;
-                zoomGroup.style.transform = `scale(6.0)`; 
+                zoomGroup.style.transformOrigin = '0 0';
+                
+                const scaleLevel = 5.5;
+                const tx = 500 - scaleLevel * absCx;
+                const ty = 500 - scaleLevel * absCy;
+                
+                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
                 currentLayer = 3;
                 svgMap.className = `geolonia-svg-map map-layer-3 ${activeRegionClass}`;
@@ -522,19 +537,22 @@ function setupStageEvents() {
         const zoomGroup = document.getElementById('map-zoom-group');
 
         if (currentLayer === 3) {
-            // 🍏 修正重點：退回第二層時，同步套用優化後的幾何置中點與地方獨立最佳縮放比，防範鏡頭閃切跳躍
             const rCenter = getRegionTrueCenter(activeRegionClass);
-            zoomGroup.style.transformOrigin = `${rCenter.x}px ${rCenter.y}px`;
+            zoomGroup.style.transformOrigin = '0 0';
             
-            let scaleLevel = regionScales[activeRegionClass] || 3.0;
-            zoomGroup.style.transform = `scale(${scaleLevel})`;
+            let scaleLevel = regionScales[activeRegionClass] || 2.5;
+            const tx = 500 - scaleLevel * rCenter.x;
+            const ty = 500 - scaleLevel * rCenter.y;
+            
+            zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
             currentLayer = 2;
             svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
             updateLocationHintText();
             hidePreview();
         } else if (currentLayer === 2) {
-            zoomGroup.style.transform = `scale(1)`;
+            // 🍏 退回第一層：清除全域樣式轉化屬性，交還給 SVG 內聯矩陣
+            zoomGroup.style.transform = 'none';
             currentLayer = 1;
             svgMap.className = `geolonia-svg-map map-layer-1`;
             document.getElementById('back-to-map-btn').style.opacity = 0;
