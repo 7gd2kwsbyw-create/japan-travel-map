@@ -289,17 +289,18 @@ function updateLocationHintText() {
     }
 }
 
+// 🍏 修正核心：改用 classList.contains 記號匹配，斬斷 kyushu-okinawa 子字串的模糊誤判
 function getRegionClass(gElement) {
-    const cls = gElement.getAttribute('class') || '';
-    if (cls.includes('okinawa')) return 'region-okinawa'; 
-    if (cls.includes('hokkaido')) return 'region-hokkaido';
-    if (cls.includes('tohoku')) return 'region-tohoku';
-    if (cls.includes('kanto')) return 'region-kanto';
-    if (cls.includes('chubu')) return 'region-chubu';
-    if (cls.includes('kinki')) return 'region-kinki';
-    if (cls.includes('chugoku')) return 'region-chugoku';
-    if (cls.includes('shikoku')) return 'region-shikoku';
-    if (cls.includes('kyushu')) return 'region-kyushu';
+    const cl = gElement.classList;
+    if (cl.contains('okinawa')) return 'region-okinawa'; // 精準鎖定沖繩本尊
+    if (cl.contains('hokkaido')) return 'region-hokkaido';
+    if (cl.contains('tohoku')) return 'region-tohoku';
+    if (cl.contains('kanto')) return 'region-kanto';
+    if (cl.contains('chubu')) return 'region-chubu';
+    if (cl.contains('kinki')) return 'region-kinki';
+    if (cl.contains('chugoku')) return 'region-chugoku';
+    if (cl.contains('shikoku')) return 'region-shikoku';
+    if (cl.contains('kyushu') || cl.contains('kyushu-okinawa')) return 'region-kyushu';
     return null;
 }
 
@@ -327,9 +328,10 @@ function loadAndInitMap() {
                 const rClass = getRegionClass(g);
                 if(rClass) {
                     g.classList.add(rClass);
-                    // 🍏 徹底切開：如果是沖繩，強行把原生的 'kyushu' class 拔掉，防止任何 CSS 洩漏或同步
+                    // 🍏 徹底切開：將沖繩從原生大組中剔除，防止任何 CSS 穿透與同步閃爍
                     if (rClass === 'region-okinawa') {
                         g.classList.remove('kyushu');
+                        g.classList.remove('kyushu-okinawa');
                     }
                 }
             });
@@ -393,7 +395,7 @@ function setupStageEvents() {
     const svgMap = document.getElementById('japan-map');
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
-        // 🍏 修正核心：改用區域區域變數計算，徹底消除全域變數異步競爭造成的燈光同步混亂 Bug
+        // 🍏 修正核心：完全改用局部變數，根除全域變數事件競爭引起的呼吸燈同步 Bug
         g.addEventListener('mouseenter', () => {
             const localRegion = getRegionClass(g);
             if (currentLayer === 1) {
@@ -445,7 +447,6 @@ function setupStageEvents() {
                 const zoomGroup = document.getElementById('map-zoom-group');
                 zoomGroup.style.transformOrigin = `${rCenterX}px ${rCenterY}px`;
                 
-                // 🍏 鏡頭特調：獨立沖繩地方聚焦放大倍率提高至 5.5 倍，其餘地方維持 2.6 倍
                 let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
                 zoomGroup.style.transform = `scale(${scaleLevel})`;
 
@@ -537,7 +538,6 @@ function setupStageEvents() {
     });
 }
 
-// 隱藏地圖懸浮預覽小卡
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
 
 document.addEventListener('DOMContentLoaded', () => {

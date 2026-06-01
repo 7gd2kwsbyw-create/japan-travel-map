@@ -37,7 +37,7 @@ body {
 .side-click-zone:hover .arrow { opacity: 0.8; }
 
 #location-hint {
-    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 10; opacity: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%); transition: opacity 0.4s ease; pointer-events: none;
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; color: rgba(0, 0, 0, 0.8); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 400; z-index: 10; opacity: 0; background: linear-gradient(to top, rgba(244, 243, 239, 1) 0%, rgba(244, 243, 239, 0.4) 60%, transparent 100%); transition: opacity 0.4s ease; pointer-events: none;
 }
 
 #gallery-counter {
@@ -67,7 +67,7 @@ body {
 .grid-item:hover { opacity: 1; transform: scale(1.03); }
 
 /* ==========================================
-   第三幕舞台：高雅日系和風淺色調舞台
+   第三幕舞台：高雅日系和風淺色調舞台（鳥之子色底）
    ========================================== */
 #map-container { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -80,7 +80,7 @@ body {
 #japan-map { width: 100%; height: 100%; display: block; }
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
-/* 🍏 頻率修正：調快至 2.0s，兼顧沉穩感與流暢動態交互 */
+/* 🍏 頻率修正：調快至 2.0s，兼顧沉穩感與流暢動態互動 */
 @keyframes regionSolidBreathe {
     0% { fill: #dcdad2; }
     50% { fill: #b8b6ae; } 
@@ -103,10 +103,10 @@ body {
     transition: fill 0.3s ease;
 }
 
-/* 第一層：滑鼠移入地方板塊時觸發修正後的 1.5s 呼吸燈 */
+/* 第一層：滑鼠移入地方板塊時觸發修正後的 2.0s 呼吸燈 */
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 1.5s infinite ease-in-out;
+    animation: regionSolidBreathe 2.0s infinite ease-in-out;
 }
 
 /* ------------------------------------------
@@ -135,10 +135,10 @@ body {
     fill: #2b2b30; stroke: #2b2b30; opacity: 1;
 }
 
-/* 第二層：縣市實體 1.5s 呼吸燈 */
+/* 第二層：縣市實體 2.0s 呼吸燈 */
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 1.5s infinite ease-in-out;
+    animation: prefSolidBreathe 2.0s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
