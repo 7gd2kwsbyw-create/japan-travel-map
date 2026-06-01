@@ -40,33 +40,38 @@ const albums = [
     }
 ];
 
+const regionNames = {
+    'region-hokkaido': '北海道地方',
+    'region-tohoku': '東北地方',
+    'region-kanto': '關東地方',
+    'region-chubu': '中部地方',
+    'region-kinki': '近畿地方',
+    'region-chugoku': '中國地方',
+    'region-shikoku': '四國地方',
+    'region-kyushu': '九州・沖繩地方'
+};
+
 let currentAlbumIndex = 0; 
 let currentPhotoIndex = 0; 
 let isGalleryMode = false;  
 let isThrottled = false;   
-let isMapZoomed = false; 
-let pinsDropped = false; 
 
-// 🍏 雙贏核心：客製化動態時序淡入淡出器（完美結合點擊過渡與滾軸物理控制）
+// 三層架構狀態核心控制
+let currentLayer = 1; // 1: 地方板塊, 2: 都道府縣, 3: 景點插針
+let activeRegionClass = null;
+let activePrefectureGroup = null;
+let pinsDropped = false;
+
 function changePhotoWithFade(newUrl) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
-
-    // 1. 瞬間注入過渡樣式，並讓照片淡出
     bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
     bgPhotoEl.style.opacity = 0;
-
     setTimeout(() => {
-        // 2. 在看不見的真空期抽換圖片網址
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
-        // 3. 換圖完成，優雅淡入
         bgPhotoEl.style.opacity = 1;
-
-        // 4. 動畫播放完畢後，立刻拔除過渡屬性，將物理控制權完好歸還給捲軸
         setTimeout(() => {
-            if (!isGalleryMode) {
-                bgPhotoEl.style.transition = 'none';
-            }
+            if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
         }, 230);
     }, 220);
 }
@@ -74,11 +79,7 @@ function changePhotoWithFade(newUrl) {
 function updateAlbumCover() {
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
-    
-    if (titleEl && !isGalleryMode) {
-        titleEl.textContent = album.title;
-    }
-    // 使用動態過渡器換圖
+    if (titleEl && !isGalleryMode) titleEl.textContent = album.title;
     changePhotoWithFade(album.photos[0]);
     currentPhotoIndex = 0; 
 }
@@ -87,12 +88,8 @@ function updateGalleryPhoto(index) {
     const counterEl = document.getElementById('gallery-counter');
     const locationHintEl = document.getElementById('location-hint');
     const album = albums[currentAlbumIndex];
-    
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
-    if (counterEl) {
-        counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
-    }
-    // 使用動態過渡器換圖
+    if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
     changePhotoWithFade(album.photos[index]);
 }
 
@@ -149,10 +146,8 @@ if (btnNext) {
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
-    
     const bgPhotoEl = document.getElementById('bg-photo');
     if(bgPhotoEl) bgPhotoEl.classList.add('gallery-layout');
-    
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -162,7 +157,6 @@ function openGalleryDirectly(albumIndex) {
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
     if (closeGalleryBtn) { closeGalleryBtn.style.opacity = 1; closeGalleryBtn.style.pointerEvents = 'auto'; }
     document.body.style.overflowY = 'hidden'; 
-    
     updateGalleryPhoto(0); 
 }
 
@@ -174,10 +168,7 @@ if (closeGalleryBtnEl) {
     closeGalleryBtnEl.addEventListener('click', () => {
         isGalleryMode = false;
         const bgPhotoEl = document.getElementById('bg-photo');
-        if(bgPhotoEl) {
-            bgPhotoEl.classList.remove('gallery-layout');
-            bgPhotoEl.style.transition = 'none'; // 退出時確保洗掉藝廊模式的過渡屬性
-        }
+        if(bgPhotoEl) { bgPhotoEl.classList.remove('gallery-layout'); bgPhotoEl.style.transition = 'none'; }
         document.getElementById('main-title-container').style.opacity = 1;
         document.getElementById('main-title-container').style.pointerEvents = 'auto';
         document.getElementById('dark-overlay').style.opacity = 0.4;
@@ -191,8 +182,7 @@ if (closeGalleryBtnEl) {
 
 if (document.getElementById('open-index-btn')) {
     document.getElementById('open-index-btn').addEventListener('click', (e) => {
-        e.stopPropagation(); 
-        buildIndexGrid();
+        e.stopPropagation(); buildIndexGrid();
         document.getElementById('gallery-index-panel').classList.add('open');
     });
 }
@@ -220,6 +210,7 @@ window.addEventListener('wheel', (e) => {
 
 function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
 
+// 全域時差滾動控制
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
     const scrollY = window.scrollY;
@@ -249,8 +240,6 @@ window.addEventListener('scroll', () => {
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
         if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
-        
-        // 🍏 確保滾動時，絕對沒有 transition 機制干擾物理盲點
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
@@ -266,22 +255,43 @@ window.addEventListener('scroll', () => {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         
-        // 🍏 雙贏控制：滾動時強行維持 transition = none，讓地圖與照片完美貼合捲軸
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (mapContainer) {
             mapContainer.style.transition = 'none';
             mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
             if (stage3Progress > 0.02) { 
                 mapContainer.style.pointerEvents = 'auto'; 
-                if(!pinsDropped) triggerPinsDropping();
-                if(!isMapZoomed && locationHint) {
-                    locationHint.innerHTML = "📍 點擊行政區探索日本散策";
-                    locationHint.style.opacity = 1;
-                }
+                updateLocationHintText();
             } else { mapContainer.style.pointerEvents = 'none'; }
         }
     }
 });
+
+// 根據目前所在層級，動態還原底部的 Hint 提示
+function updateLocationHintText() {
+    const hint = document.getElementById('location-hint');
+    if (!hint) return;
+    hint.style.opacity = 1;
+    if (currentLayer === 1) {
+        hint.innerHTML = "📍 🔍 請選擇日本八大地方板塊";
+    } else if (currentLayer === 2) {
+        hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ． 請選擇都道府縣`;
+    }
+}
+
+// 🍏 核心解析：自動抓取 Geolonia class 屬性並歸類為 8 大地方板塊
+function getRegionClass(gElement) {
+    const cls = gElement.getAttribute('class') || '';
+    if (cls.includes('hokkaido')) return 'region-hokkaido';
+    if (cls.includes('tohoku')) return 'region-tohoku';
+    if (cls.includes('kanto')) return 'region-kanto';
+    if (cls.includes('chubu')) return 'region-chubu';
+    if (cls.includes('kinki')) return 'region-kinki';
+    if (cls.includes('chugoku')) return 'region-chugoku';
+    if (cls.includes('shikoku')) return 'region-shikoku';
+    if (cls.includes('kyushu')) return 'region-kyushu';
+    return null;
+}
 
 function loadAndInitMap() {
     fetch('japan-map.svg')
@@ -294,6 +304,7 @@ function loadAndInitMap() {
             const svgEl = wrapper.querySelector('svg');
             if(!svgEl) return;
             svgEl.setAttribute('id', 'japan-map');
+            svgEl.classList.add('map-layer-1'); // 預設加入第一層樣式
 
             const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
             if(zoomGroup) zoomGroup.setAttribute('id', 'map-zoom-group');
@@ -301,13 +312,16 @@ function loadAndInitMap() {
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
 
-            const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            pinsLayer.setAttribute('id', 'dynamic-pref-pins-layer');
-            prefContainer.appendChild(pinsLayer);
+            // 給予 47 縣市綁定地方分區 class 標籤
+            const prefGroups = prefContainer.querySelectorAll('g.prefecture');
+            prefGroups.forEach(g => {
+                const rClass = getRegionClass(g);
+                if(rClass) g.classList.add(rClass);
+            });
 
+            // 動態建立第三層景點針層
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
-            
             albums.forEach((album, idx) => {
                 spotsLayer.innerHTML += `
                     <g class="map-pin spot-pin" data-album-index="${idx}" id="${album.spotId}">
@@ -319,28 +333,25 @@ function loadAndInitMap() {
             });
             prefContainer.appendChild(spotsLayer);
 
-            setTimeout(calculatePositions, 150);
-            setupSpotEvents();
+            setTimeout(calculateGeometries, 150);
+            setupStageEvents();
         })
-        .catch(err => console.error("地圖載入失敗:", err));
+        .catch(err => console.error("地圖加載失敗:", err));
 }
 
-function calculatePositions() {
-    const pinsLayer = document.getElementById('dynamic-pref-pins-layer');
-    if (!pinsLayer) return;
-
-    albums.forEach((album, index) => {
-        const targetGroup = document.querySelector(`.prefectures ${album.selector}`);
-        if (!targetGroup) return;
-
+// 幾何計算中心點 (包含地方與縣市中心)
+function calculateGeometries() {
+    const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
+    
+    // 1. 計算個別縣市的幾何中心
+    prefGroups.forEach(g => {
         let baseX = 0, baseY = 0;
-        const transformAttr = targetGroup.getAttribute('transform');
+        const transformAttr = g.getAttribute('transform');
         if (transformAttr) {
             const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
             if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
         }
-
-        const paths = targetGroup.querySelectorAll('path, polygon');
+        const paths = g.querySelectorAll('path, polygon');
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         paths.forEach(p => {
             const box = p.getBBox();
@@ -348,100 +359,163 @@ function calculatePositions() {
             if (box.x < minX) minX = box.x; if (box.y < minY) minY = box.y;
             if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
         });
+        if(minX === Infinity) return;
+        const cx = baseX + (minX + maxX) / 2;
+        const cy = baseY + (minY + maxY) / 2;
+        g.setAttribute('data-center-x', cx);
+        g.setAttribute('data-center-y', cy);
+    });
 
-        if(minX === Infinity || minX === NaN || minX === 0) return; 
-
-        const centerX = baseX + (minX + maxX) / 2;
-        const centerY = baseY + (minY + maxY) / 2;
-
-        targetGroup.setAttribute('data-center-x', centerX);
-        targetGroup.setAttribute('data-center-y', centerY);
-
-        const pinG = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        pinG.setAttribute('class', 'map-pin pref-pin');
-        pinG.innerHTML = `
-            <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#ff4757"/>
-            <circle cx="12" cy="11" r="4" fill="#fff"/>
-        `;
-        pinG.style.transform = `translate(${centerX}px, ${centerY}px)`;
-        pinsLayer.appendChild(pinG);
-
+    // 2. 定位第三層的景點綠針位置
+    albums.forEach((album) => {
+        const prefG = document.querySelector(`.prefectures ${album.selector}`);
         const spotPin = document.getElementById(album.spotId);
-        if (spotPin) {
-            const offsetX = index === 0 ? 15 : -20;
-            const offsetY = index === 0 ? -10 : 15;
-            spotPin.style.transform = `translate(${centerX + offsetX}px, ${centerY + offsetY}px)`;
+        if (prefG && spotPin) {
+            const cx = parseFloat(prefG.getAttribute('data-center-x'));
+            const cy = parseFloat(prefG.getAttribute('data-center-y'));
+            spotPin.style.transform = `translate(${cx}px, ${cy}px)`;
+        }
+    });
+}
+
+// 設置三層鑽取交互事件
+function setupStageEvents() {
+    const svgMap = document.getElementById('japan-map');
+
+    document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
+        // --- 1. 滑鼠 Hover 監聽流 ---
+        g.addEventListener('mouseenter', () => {
+            if (currentLayer === 1) {
+                // 第一層：讓整個地方板塊一起閃爍呼吸
+                activeRegionClass = getRegionClass(g);
+                if (activeRegionClass) {
+                    document.querySelectorAll(`.prefectures .${activeRegionClass}`).forEach(el => {
+                        el.classList.add('region-hover-pulse');
+                    });
+                    document.getElementById('location-hint').innerHTML = `📍 探索 ➔ ${regionNames[activeRegionClass]}`;
+                }
+            } else if (currentLayer === 2) {
+                // 第二層：僅讓目前移入的縣市觸發呼吸發光
+                if (g.classList.contains(activeRegionClass)) {
+                    g.classList.add('pref-hover-pulse');
+                    const title = g.querySelector('title') ? g.querySelector('title').textContent.split(' / ')[0] : '';
+                    document.getElementById('location-hint').innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${title}`;
+                }
+            }
+        });
+
+        g.addEventListener('mouseleave', () => {
+            if (currentLayer === 1) {
+                if (activeRegionClass) {
+                    document.querySelectorAll(`.prefectures .${activeRegionClass}`).forEach(el => {
+                        el.classList.remove('region-hover-pulse');
+                    });
+                }
+            } else if (currentLayer === 2) {
+                g.classList.remove('pref-hover-pulse');
+            }
+            updateLocationHintText();
+        });
+
+        // --- 2. 點擊鑽取監聽流 ---
+        g.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (currentLayer === 1) {
+                // 第一層點擊 ➔ 進入第二層（地方聚焦）
+                activeRegionClass = getRegionClass(g);
+                if (!activeRegionClass) return;
+
+                // 計算整個地方所有縣市的中心包覆點
+                const members = document.querySelectorAll(`.prefectures .${activeRegionClass}`);
+                let sumX = 0, sumY = 0, count = 0;
+                members.forEach(m => {
+                    const cx = parseFloat(m.getAttribute('data-center-x'));
+                    const cy = parseFloat(m.getAttribute('data-center-y'));
+                    if(cx && cy) { sumX += cx; sumY += cy; count++; }
+                });
+                const rCenterX = sumX / count;
+                const rCenterY = sumY / count;
+
+                // 執行鏡頭一次縮放
+                const zoomGroup = document.getElementById('map-zoom-group');
+                zoomGroup.style.transformOrigin = `${rCenterX}px ${rCenterY}px`;
+                zoomGroup.style.transform = `scale(2.6)`;
+
+                currentLayer = 2;
+                svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
+                document.getElementById('back-to-map-btn').style.opacity = 1;
+                document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
+                updateLocationHintText();
+
+            } else if (currentLayer === 2) {
+                // 第二層點擊 ➔ 進入第三層（縣市深度聚焦）
+                if (!g.classList.contains(activeRegionClass)) return;
+                
+                // 檢查該縣市是否有安排照片導流
+                const hasAlbum = albums.some(a => g.classList.contains(a.selector.replace('.','')));
+                if (!hasAlbum) return;
+
+                activePrefectureGroup = g;
+                const pCenterX = parseFloat(g.getAttribute('data-center-x'));
+                const pCenterY = parseFloat(g.getAttribute('data-center-y'));
+
+                // 執行鏡頭二次深度縮放
+                const zoomGroup = document.getElementById('map-zoom-group');
+                zoomGroup.style.transformOrigin = `${pCenterX}px ${pCenterY}px`;
+                zoomGroup.style.transform = `scale(6.0)`; // 深度聚焦
+
+                currentLayer = 3;
+                svgMap.className = `geolonia-svg-map map-layer-3 ${activeRegionClass}`;
+                const title = g.querySelector('title') ? g.querySelector('title').textContent.split(' / ')[0] : '';
+                document.getElementById('location-hint').innerHTML = `📍 ${title} ． 請點擊綠色大頭針開艙閱讀`;
+            }
+        });
+    });
+
+    // 返回按鈕狀態回退艙
+    document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const zoomGroup = document.getElementById('map-zoom-group');
+
+        if (currentLayer === 3) {
+            // 第三層退回第二層
+            const members = document.querySelectorAll(`.prefectures .${activeRegionClass}`);
+            let sumX = 0, sumY = 0, count = 0;
+            members.forEach(m => {
+                const cx = parseFloat(m.getAttribute('data-center-x'));
+                const cy = parseFloat(m.getAttribute('data-center-y'));
+                if(cx && cy) { sumX += cx; sumY += cy; count++; }
+            });
+            zoomGroup.style.transformOrigin = `${sumX / count}px ${sumY / count}px`;
+            zoomGroup.style.transform = `scale(2.6)`;
+
+            currentLayer = 2;
+            svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
+            updateLocationHintText();
+            hidePreview();
+        } else if (currentLayer === 2) {
+            // 第二層退回第一層
+            zoomGroup.style.transform = `scale(1)`;
+            currentLayer = 1;
+            svgMap.className = `geolonia-svg-map map-layer-1`;
+            document.getElementById('back-to-map-btn').style.opacity = 0;
+            document.getElementById('back-to-map-btn').style.pointerEvents = 'none';
+            // 清除殘留屬性
+            document.querySelectorAll('.prefectures g.prefecture').forEach(el => {
+                el.classList.remove('region-hover-pulse', 'pref-hover-pulse');
+            });
+            activeRegionClass = null;
+            updateLocationHintText();
         }
     });
 
-    document.querySelectorAll('.prefecture').forEach(prefPath => {
-        prefPath.style.cursor = 'pointer';
-        prefPath.addEventListener('click', (e) => {
-            const parentG = prefPath.parentElement;
-            if (parentG && parentG.classList.contains('prefecture')) triggerZoomIn(parentG);
-        });
-    });
-}
-
-function triggerPinsDropping() {
-    pinsDropped = true;
-    document.querySelectorAll('.pref-pin').forEach((pin, index) => {
-        const transformStr = pin.style.transform;
-        if (!transformStr) return;
-        const matches = transformStr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/);
-        if (!matches) return;
-        const targetX = parseFloat(matches[1]); const targetY = parseFloat(matches[2]);
-        pin.style.transition = 'none';
-        pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`; pin.style.opacity = 0;
-        setTimeout(() => {
-            pin.style.transition = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
-            pin.style.transform = `translate(${targetX}px, ${targetY}px)`; pin.style.opacity = 1;
-        }, index * 120 + 30);
-    });
-}
-
-function triggerZoomIn(groupElement) {
-    if (isMapZoomed) return;
-    const hasAlbum = albums.some(a => groupElement.classList.contains(a.selector.replace('.','')));
-    if (!hasAlbum) return;
-
-    const titleEl = groupElement.querySelector('title');
-    const prefName = titleEl ? titleEl.textContent.split(' / ')[0] : "探索區域";
-    const targetX = groupElement.getAttribute('data-center-x');
-    const targetY = groupElement.getAttribute('data-center-y');
-    const zoomGroup = document.getElementById('map-zoom-group');
-    
-    groupElement.setAttribute('data-raw-center-x', targetX);
-    groupElement.setAttribute('data-raw-center-y', targetY);
-
-    zoomGroup.style.transformOrigin = `${targetX}px ${targetY}px`;
-    zoomGroup.style.transform = `scale(4.5)`;
-
-    isMapZoomed = true;
-    document.getElementById('japan-map').classList.add('zoomed');
-    document.getElementById('back-to-map-btn').style.opacity = 1;
-    document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
-    document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請點擊綠色大頭針進入遊記`;
-}
-
-document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
-    e.stopPropagation();
-    document.getElementById('map-zoom-group').style.transform = `scale(1)`;
-    isMapZoomed = false;
-    document.getElementById('japan-map').classList.remove('zoomed');
-    document.getElementById('back-to-map-btn').style.opacity = 0;
-    document.getElementById('back-to-map-btn').style.pointerEvents = 'none';
-    document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
-    hidePreview();
-});
-
-function setupSpotEvents() {
+    // 第三層綠針動態懸浮首圖
     document.querySelectorAll('.spot-pin').forEach(pin => {
         const albumIndex = parseInt(pin.getAttribute('data-album-index'));
         const album = albums[albumIndex];
         
         pin.addEventListener('mousemove', (e) => {
-            if (!isMapZoomed) return;
+            if (currentLayer !== 3) return;
             const previewCard = document.getElementById('map-preview-card');
             const previewImg = document.getElementById('map-preview-img');
             const previewTitle = document.getElementById('map-preview-title');
@@ -462,8 +536,3 @@ function setupSpotEvents() {
 }
 
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
-
-document.addEventListener('DOMContentLoaded', () => {
-    updateAlbumCover(); 
-    loadAndInitMap(); 
-});

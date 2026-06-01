@@ -12,11 +12,8 @@ body {
 /* 第一幕 & 第二幕 */
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-size: cover; background-position: center; z-index: 2; 
-    will-change: opacity;
-    /* 🍏 雙贏核心：CSS 預設不給予全域過渡，完全防範滾動黏滯感，動畫由 JS 精準注入 */
-    transition: none; 
-    opacity: 1; 
+    background-size: cover; background-position: center; z-index: 2; will-change: opacity;
+    transition: none; opacity: 1; 
 }
 #bg-photo.gallery-layout { background-size: contain; background-repeat: no-repeat; background-position: center; }
 
@@ -32,7 +29,6 @@ body {
     margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: nowrap; cursor: pointer;
 }
 
-/* 控制元件 */
 .side-click-zone {
     position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5; cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease;
 }
@@ -54,7 +50,7 @@ body {
 #close-gallery-mode-btn:hover { color: #fff; }
 
 #open-index-btn {
-    position: fixed; bottom: 40px; right: 40px; z-index: 6; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease; opacity: 0;
+    position: fixed; bottom: 40px; right: 40px; z-index: 90; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease; opacity: 0;
 }
 #open-index-btn:hover { color: rgba(255, 255, 255, 1); transform: scale(1.1); }
 
@@ -71,7 +67,7 @@ body {
 .grid-item:hover { opacity: 1; transform: scale(1.03); }
 
 /* ==========================================
-   第三幕舞台：Geolonia 高明度對比黑白流
+   第三幕：全新升級 三層動態鑽取舞台
    ========================================== */
 #map-container { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -81,45 +77,106 @@ body {
 
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
+#map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
-#japan-map .prefecture {
-    fill: #32323a !important; stroke: #111113 !important; stroke-width: 0.6px !important; transition: fill 0.3s ease;
+/* 🍏 呼吸發光效果關鍵影格 */
+@keyframes regionBreathe {
+    0% { fill: #2c2c35 !important; }
+    50% { fill: #484858 !important; }
+    100% { fill: #2c2c35 !important; }
+}
+@keyframes prefBreathe {
+    0% { fill: #4a4a5a !important; }
+    50% { fill: #6e6e85 !important; }
+    100% { fill: #4a4a5a !important; }
 }
 
-#japan-map .aichi, 
-#japan-map .shimane {
-    fill: #ffffff !important; stroke: #ffffff !important; 
-    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)) !important;
+/* ------------------------------------------
+   第一層：區域選擇狀態樣式
+   ------------------------------------------ */
+.map-layer-1 .prefecture {
+    fill: #202026 !important; stroke: #0f0f12 !important; stroke-width: 0.5px !important;
 }
-#japan-map .aichi:hover, 
-#japan-map .shimane:hover { fill: #e5e5ea !important; stroke: #ffffff !important; }
+/* 讓有安排照片的地方（中部、中國）在第一層保持高亮提示 */
+.map-layer-1 .chubu .prefecture,
+.map-layer-1 .chugoku .prefecture {
+    fill: #2c2c35 !important; stroke: #3e3e4a !important;
+}
+/* 第一層板塊聯動呼吸效果 */
+.map-layer-1 .region-hover-pulse .prefecture {
+    animation: regionBreathe 1.4s infinite ease-in-out;
+    stroke: #8a8a9e !important;
+}
 
+/* ------------------------------------------
+   第二層：特定地方聚焦狀態樣式
+   ------------------------------------------ */
+.map-layer-2 .prefecture {
+    fill: #141418 !important; stroke: #08080a !important; opacity: 0.2; /* 隱藏非主導板塊 */
+}
+/* 點亮當前選取的地方板塊 */
+.map-layer-2.region-hokkaido .region-hokkaido .prefecture,
+.map-layer-2.region-tohoku .region-tohoku .prefecture,
+.map-layer-2.region-kanto .region-kanto .prefecture,
+.map-layer-2.region-chubu .region-chubu .prefecture,
+.map-layer-2.region-kinki .region-kinki .prefecture,
+.map-layer-2.region-chugoku .region-chugoku .prefecture,
+.map-layer-2.region-shikoku .region-shikoku .prefecture,
+.map-layer-2.region-kyushu .region-kyushu .prefecture {
+    fill: #3a3a46 !important; stroke: #1a1a22 !important; stroke-width: 0.4px !important; opacity: 1;
+}
+/* 僅針對真正有相簿的縣市亮起純白殼 */
+.map-layer-2 .aichi .prefecture,
+.map-layer-2 .shimane .prefecture {
+    fill: #ffffff !important; stroke: #ffffff !important;
+}
+/* 第二層縣市獨立呼吸燈 */
+.map-layer-2 .pref-hover-pulse .prefecture {
+    animation: prefBreathe 1.2s infinite ease-in-out;
+}
+.map-layer-2 .aichi.pref-hover-pulse .prefecture,
+.map-layer-2 .shimane.pref-hover-pulse .prefecture {
+    animation: none; fill: #e5e5ea !important;
+}
+
+/* ------------------------------------------
+   第三層：縣市深度聚焦與大頭針
+   ------------------------------------------ */
+.map-layer-3 .prefecture {
+    fill: #141418 !important; stroke: #08080a !important; opacity: 0.1;
+}
+/* 保持選取縣市完全不透明 */
+.map-layer-3.region-chubu .aichi .prefecture,
+.map-layer-3.region-chugoku .shimane .prefecture {
+    fill: #ffffff !important; stroke: #b5b5b5 !important; stroke-width: 0.2px !important; opacity: 1;
+}
+
+/* 大頭針控制層 */
 .map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
 .pin-shape { transform: translate(-12px, -22px); }
 
-#spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease 0.3s; }
-.spot-label { fill: #ffffff !important; font-size: 3.5px !important; font-family: 'Noto Sans TC', sans-serif; text-shadow: 1px 1px 2px rgba(0, 0, 0, 1); }
+#spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+.spot-label { fill: #ffffff !important; font-size: 2.2px !important; font-family: 'Noto Sans TC', sans-serif; text-shadow: 1px 1px 1px rgba(0,0,0,1); }
 
-#map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
-#japan-map.zoomed .pref-pin { opacity: 0 !important; pointer-events: none; }
-#japan-map.zoomed #spots-layer { opacity: 1; pointer-events: auto; }
+/* 當進入第三層時才顯露大頭針 */
+.map-layer-3 #spots-layer { opacity: 1; pointer-events: auto; }
 
+/* 返回與預覽 */
 #back-to-map-btn {
-    position: fixed; top: 40px; left: 40px; z-index: 10; color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif; font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300; cursor: pointer; opacity: 0; pointer-events: none; background: rgba(255, 255, 255, 0.05); padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.4s ease, color 0.3s ease;
+    position: fixed; top: 40px; left: 40px; z-index: 95; color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif; font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300; cursor: pointer; opacity: 0; pointer-events: none; background: rgba(255, 255, 255, 0.05); padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.4s ease, color 0.3s ease;
 }
 #back-to-map-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
 
 #map-preview-card {
-    position: fixed; z-index: 50; width: 180px; background: rgba(20, 20, 20, 0.88); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px; pointer-events: none; opacity: 0; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); transition: opacity 0.2s ease;
+    position: fixed; z-index: 95; width: 180px; background: rgba(20, 20, 20, 0.88); border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 8px; pointer-events: none; opacity: 0; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6); transition: opacity 0.2s ease;
 }
 #map-preview-img { width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block; }
 #map-preview-title { color: #fff; font-size: 0.75rem; font-weight: 300; line-height: 1.4; margin-top: 6px; }
 
-.boundary-line { opacity: 0.15; }
+.boundary-line { display: none; }
 
 @media (max-width: 768px) {
     #main-title { font-size: 2rem; white-space: normal; }
     .masonry-grid { column-count: 1; }
     #map-svg-wrapper { width: 95vw; height: 70vh; }
-    #map-preview-card { width: 140px; }
 }
