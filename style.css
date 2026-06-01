@@ -13,9 +13,9 @@ body {
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-size: cover; background-position: center; z-index: 2; 
-    will-change: opacity, background-image;
-    /* 🍏 終極優化：將大圖交叉淡入淡出完全交給 GPU 原生處理，完全解耦不與滾動 opacity 打架 */
-    transition: background-image 0.28s cubic-bezier(0.25, 1, 0.5, 1); 
+    will-change: opacity;
+    /* 🍏 雙贏核心：CSS 預設不給予全域過渡，完全防範滾動黏滯感，動畫由 JS 精準注入 */
+    transition: none; 
     opacity: 1; 
 }
 #bg-photo.gallery-layout { background-size: contain; background-repeat: no-repeat; background-position: center; }
@@ -76,7 +76,7 @@ body {
 #map-container { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: #09090c; z-index: 4; display: flex; align-items: center; justify-content: center; 
-    opacity: 0; pointer-events: none; transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1);
+    opacity: 0; pointer-events: none; transition: none; 
 }
 
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }

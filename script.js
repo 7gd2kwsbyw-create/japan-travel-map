@@ -47,32 +47,53 @@ let isThrottled = false;
 let isMapZoomed = false; 
 let pinsDropped = false; 
 
-// 🍏 終極優化：移除所有 setTimeout，直接變更網址，交由 CSS 原生交叉淡入淡出
-function updateAlbumCover() {
+// 🍏 雙贏核心：客製化動態時序淡入淡出器（完美結合點擊過渡與滾軸物理控制）
+function changePhotoWithFade(newUrl) {
     const bgPhotoEl = document.getElementById('bg-photo');
+    if (!bgPhotoEl) return;
+
+    // 1. 瞬間注入過渡樣式，並讓照片淡出
+    bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
+    bgPhotoEl.style.opacity = 0;
+
+    setTimeout(() => {
+        // 2. 在看不見的真空期抽換圖片網址
+        bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
+        // 3. 換圖完成，優雅淡入
+        bgPhotoEl.style.opacity = 1;
+
+        // 4. 動畫播放完畢後，立刻拔除過渡屬性，將物理控制權完好歸還給捲軸
+        setTimeout(() => {
+            if (!isGalleryMode) {
+                bgPhotoEl.style.transition = 'none';
+            }
+        }, 230);
+    }, 220);
+}
+
+function updateAlbumCover() {
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
     
-    if (bgPhotoEl && !isGalleryMode) {
-        bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
-    }
     if (titleEl && !isGalleryMode) {
         titleEl.textContent = album.title;
     }
+    // 使用動態過渡器換圖
+    changePhotoWithFade(album.photos[0]);
     currentPhotoIndex = 0; 
 }
 
 function updateGalleryPhoto(index) {
-    const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
     const locationHintEl = document.getElementById('location-hint');
     const album = albums[currentAlbumIndex];
     
-    if (bgPhotoEl) {
-        bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
-    }
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
-    if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
+    if (counterEl) {
+        counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
+    }
+    // 使用動態過渡器換圖
+    changePhotoWithFade(album.photos[index]);
 }
 
 function buildIndexGrid() {
@@ -128,8 +149,10 @@ if (btnNext) {
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
-    document.getElementById('bg-photo').classList.add('gallery-layout');
-    document.getElementById('bg-photo').style.opacity = 1; 
+    
+    const bgPhotoEl = document.getElementById('bg-photo');
+    if(bgPhotoEl) bgPhotoEl.classList.add('gallery-layout');
+    
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -139,6 +162,7 @@ function openGalleryDirectly(albumIndex) {
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
     if (closeGalleryBtn) { closeGalleryBtn.style.opacity = 1; closeGalleryBtn.style.pointerEvents = 'auto'; }
     document.body.style.overflowY = 'hidden'; 
+    
     updateGalleryPhoto(0); 
 }
 
@@ -149,7 +173,11 @@ const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtnEl) {
     closeGalleryBtnEl.addEventListener('click', () => {
         isGalleryMode = false;
-        document.getElementById('bg-photo').classList.remove('gallery-layout');
+        const bgPhotoEl = document.getElementById('bg-photo');
+        if(bgPhotoEl) {
+            bgPhotoEl.classList.remove('gallery-layout');
+            bgPhotoEl.style.transition = 'none'; // 退出時確保洗掉藝廊模式的過渡屬性
+        }
         document.getElementById('main-title-container').style.opacity = 1;
         document.getElementById('main-title-container').style.pointerEvents = 'auto';
         document.getElementById('dark-overlay').style.opacity = 0.4;
@@ -220,18 +248,17 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) { 
-            locationHint.innerHTML = currentAlbum.location; 
-            locationHint.style.opacity = Math.min(progress * 1.5, 1); 
-        }
-        if (bgPhoto) bgPhoto.style.opacity = 1;
+        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
+        
+        // 🍏 確保滾動時，絕對沒有 transition 機制干擾物理盲點
+        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
     else if (progress > 1 && progress <= 2) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = 1; }
-        if (bgPhoto) bgPhoto.style.opacity = 1;
+        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
     else if (progress > 2) {
@@ -239,8 +266,10 @@ window.addEventListener('scroll', () => {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         
-        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); 
+        // 🍏 雙贏控制：滾動時強行維持 transition = none，讓地圖與照片完美貼合捲軸
+        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (mapContainer) {
+            mapContainer.style.transition = 'none';
             mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
             if (stage3Progress > 0.02) { 
                 mapContainer.style.pointerEvents = 'auto'; 
