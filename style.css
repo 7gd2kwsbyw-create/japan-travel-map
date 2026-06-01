@@ -103,10 +103,10 @@ body {
     transition: fill 0.3s ease;
 }
 
-/* 第一層：滑鼠移入地方板塊時觸發修正後的 2.0s 呼吸燈 */
+/* 第一層：滑鼠移入地方板塊時觸發修正後的 1.5s 呼吸燈 */
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 2.0s infinite ease-in-out;
+    animation: regionSolidBreathe 1.5s infinite ease-in-out;
 }
 
 /* ------------------------------------------
@@ -135,10 +135,10 @@ body {
     fill: #2b2b30; stroke: #2b2b30; opacity: 1;
 }
 
-/* 第二層：縣市實體 2.0s 呼吸燈 */
+/* 第二層：縣市實體 1.5s 呼吸燈 */
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 2.0s infinite ease-in-out;
+    animation: prefSolidBreathe 1.5s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
