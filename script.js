@@ -40,7 +40,6 @@ const albums = [
     }
 ];
 
-// 🍏 修正核心：將沖繩獨立為全新行政地方，拉開單獨導覽維度
 const regionNames = {
     'region-hokkaido': '北海道地方',
     'region-tohoku': '東北地方',
@@ -50,7 +49,7 @@ const regionNames = {
     'region-chugoku': '中國地方',
     'region-shikoku': '四國地方',
     'region-kyushu': '九州地方',
-    'region-okinawa': '沖繩地方' 
+    'region-okinawa': '沖繩地方'
 };
 
 let currentAlbumIndex = 0; 
@@ -284,16 +283,15 @@ function updateLocationHintText() {
     if (!hint) return;
     hint.style.opacity = 1;
     if (currentLayer === 1) {
-        hint.innerHTML = "📍 🔍 請選擇日本八大地方板塊";
+        hint.innerHTML = "📍 🔍 請選擇日本九大地方板塊";
     } else if (currentLayer === 2) {
         hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ． 請選擇都道府縣`;
     }
 }
 
-// 🍏 修正核心：將沖繩防禦抽離，防止其幾何重心被九州綁架
 function getRegionClass(gElement) {
     const cls = gElement.getAttribute('class') || '';
-    if (cls.includes('okinawa')) return 'region-okinawa'; // 優先獨立出沖繩
+    if (cls.includes('okinawa')) return 'region-okinawa'; 
     if (cls.includes('hokkaido')) return 'region-hokkaido';
     if (cls.includes('tohoku')) return 'region-tohoku';
     if (cls.includes('kanto')) return 'region-kanto';
@@ -327,7 +325,13 @@ function loadAndInitMap() {
             const prefGroups = prefContainer.querySelectorAll('g.prefecture');
             prefGroups.forEach(g => {
                 const rClass = getRegionClass(g);
-                if(rClass) g.classList.add(rClass);
+                if(rClass) {
+                    g.classList.add(rClass);
+                    // 🍏 徹底切開：如果是沖繩，強行把原生的 'kyushu' class 拔掉，防止任何 CSS 洩漏或同步
+                    if (rClass === 'region-okinawa') {
+                        g.classList.remove('kyushu');
+                    }
+                }
             });
 
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -389,17 +393,18 @@ function setupStageEvents() {
     const svgMap = document.getElementById('japan-map');
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
+        // 🍏 修正核心：改用區域區域變數計算，徹底消除全域變數異步競爭造成的燈光同步混亂 Bug
         g.addEventListener('mouseenter', () => {
+            const localRegion = getRegionClass(g);
             if (currentLayer === 1) {
-                activeRegionClass = getRegionClass(g);
-                if (activeRegionClass) {
-                    document.querySelectorAll(`.prefectures .${activeRegionClass}`).forEach(el => {
+                if (localRegion) {
+                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => {
                         el.classList.add('region-hover-pulse');
                     });
-                    document.getElementById('location-hint').innerHTML = `📍 探索 ➔ ${regionNames[activeRegionClass]}`;
+                    document.getElementById('location-hint').innerHTML = `📍 探索 ➔ ${regionNames[localRegion]}`;
                 }
             } else if (currentLayer === 2) {
-                if (g.classList.contains(activeRegionClass)) {
+                if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
                     const title = g.querySelector('title') ? g.querySelector('title').textContent.split(' / ')[0] : '';
                     document.getElementById('location-hint').innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${title}`;
@@ -408,9 +413,10 @@ function setupStageEvents() {
         });
 
         g.addEventListener('mouseleave', () => {
+            const localRegion = getRegionClass(g);
             if (currentLayer === 1) {
-                if (activeRegionClass) {
-                    document.querySelectorAll(`.prefectures .${activeRegionClass}`).forEach(el => {
+                if (localRegion) {
+                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => {
                         el.classList.remove('region-hover-pulse');
                     });
                 }
@@ -439,7 +445,7 @@ function setupStageEvents() {
                 const zoomGroup = document.getElementById('map-zoom-group');
                 zoomGroup.style.transformOrigin = `${rCenterX}px ${rCenterY}px`;
                 
-                // 🍏 鏡頭特調：沖繩地方幅員較小，放大倍率特別提高至 5.5 倍以利點擊，其餘地方維持 2.6 倍
+                // 🍏 鏡頭特調：獨立沖繩地方聚焦放大倍率提高至 5.5 倍，其餘地方維持 2.6 倍
                 let scaleLevel = (activeRegionClass === 'region-okinawa') ? 5.5 : 2.6;
                 zoomGroup.style.transform = `scale(${scaleLevel})`;
 
@@ -531,6 +537,7 @@ function setupStageEvents() {
     });
 }
 
+// 隱藏地圖懸浮預覽小卡
 function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
 
 document.addEventListener('DOMContentLoaded', () => {
