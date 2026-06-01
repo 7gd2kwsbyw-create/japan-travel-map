@@ -47,19 +47,14 @@ let isThrottled = false;
 let isMapZoomed = false; 
 let pinsDropped = false; 
 
-// 🍏 修正核心：第一幕首頁封面大圖左右切換重新釋放過渡流
+// 🍏 終極優化：移除所有 setTimeout，直接變更網址，交由 CSS 原生交叉淡入淡出
 function updateAlbumCover() {
     const bgPhotoEl = document.getElementById('bg-photo');
     const titleEl = document.getElementById('main-title');
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl && !isGalleryMode) {
-        // 先變透明，等待 Vercel 非同步載入大圖
-        bgPhotoEl.style.opacity = 0;
-        setTimeout(() => {
-            bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
-            bgPhotoEl.style.opacity = 1; // 換圖後淡入，重新釋放流暢轉場
-        }, 220); // 配合 CSS 0.25s 轉場
+        bgPhotoEl.style.backgroundImage = `url('${album.photos[0]}')`;
     }
     if (titleEl && !isGalleryMode) {
         titleEl.textContent = album.title;
@@ -67,7 +62,6 @@ function updateAlbumCover() {
     currentPhotoIndex = 0; 
 }
 
-// 🍏 修正核心：藝廊模式照片切換重新釋放生動過渡感
 function updateGalleryPhoto(index) {
     const bgPhotoEl = document.getElementById('bg-photo');
     const counterEl = document.getElementById('gallery-counter');
@@ -75,17 +69,12 @@ function updateGalleryPhoto(index) {
     const album = albums[currentAlbumIndex];
     
     if (bgPhotoEl) {
-        bgPhotoEl.style.opacity = 0;
-        setTimeout(() => {
-            bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
-            bgPhotoEl.style.opacity = 1;
-        }, 220);
+        bgPhotoEl.style.backgroundImage = `url('${album.photos[index]}')`;
     }
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
 }
 
-// 建立網格索引內容
 function buildIndexGrid() {
     const gridContainer = document.getElementById('index-grid');
     if (!gridContainer) return;
@@ -105,7 +94,6 @@ function buildIndexGrid() {
     });
 }
 
-// 控制元件綁定
 const btnPrev = document.getElementById('prev-btn');
 const btnNext = document.getElementById('next-btn');
 
@@ -137,11 +125,11 @@ if (btnNext) {
     });
 }
 
-// 藝廊模式開關艙與 Z-index 優化處理
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
     document.getElementById('bg-photo').classList.add('gallery-layout');
+    document.getElementById('bg-photo').style.opacity = 1; 
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -170,17 +158,12 @@ if (closeGalleryBtnEl) {
         closeGalleryBtnEl.style.opacity = 0; closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll'; 
         updateAlbumCover();
-        if(window.scrollY > window.innerHeight * 2) {
-            document.getElementById('location-hint').innerHTML = "📍 點擊行政區探索日本散策";
-        }
     });
 }
 
-// 🍏 修正核心：重新設定九宮格按鈕點擊監聽器位置與作用域，防範異步衝突 (第 3 點Bug)
 if (document.getElementById('open-index-btn')) {
     document.getElementById('open-index-btn').addEventListener('click', (e) => {
-        e.stopPropagation(); // 阻止冒泡
-        // 當索引艙打開時，我們必須強化其在放大狀態地圖上的點擊實體區域
+        e.stopPropagation(); 
         buildIndexGrid();
         document.getElementById('gallery-index-panel').classList.add('open');
     });
@@ -209,7 +192,6 @@ window.addEventListener('wheel', (e) => {
 
 function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
 
-// 全域時差滾動舞台控制（包含控制元件的顯隱時序）
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
     const scrollY = window.scrollY;
@@ -238,7 +220,10 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
+        if (locationHint) { 
+            locationHint.innerHTML = currentAlbum.location; 
+            locationHint.style.opacity = Math.min(progress * 1.5, 1); 
+        }
         if (bgPhoto) bgPhoto.style.opacity = 1;
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
@@ -251,14 +236,13 @@ window.addEventListener('scroll', () => {
     }
     else if (progress > 2) {
         const stage3Progress = (progress - 2) / 2; 
-        const easedProgress = Math.pow(stage3Progress, 2); 
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - easedProgress * 2); 
         
+        if (bgPhoto) bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); 
         if (mapContainer) {
-            mapContainer.style.opacity = Math.min(easedProgress * 2, 1);
-            if (easedProgress > 0.05) { 
+            mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
+            if (stage3Progress > 0.02) { 
                 mapContainer.style.pointerEvents = 'auto'; 
                 if(!pinsDropped) triggerPinsDropping();
                 if(!isMapZoomed && locationHint) {
@@ -270,7 +254,6 @@ window.addEventListener('scroll', () => {
     }
 });
 
-// 日本地圖交互算法核心 (異步讀取日本地圖 SVG 外部檔案並注入)
 function loadAndInitMap() {
     fetch('japan-map.svg')
         .then(response => response.text())
@@ -289,7 +272,6 @@ function loadAndInitMap() {
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
 
-            // 動態注入大頭針圖層與景點針代碼
             const pinsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             pinsLayer.setAttribute('id', 'dynamic-pref-pins-layer');
             prefContainer.appendChild(pinsLayer);
@@ -308,14 +290,12 @@ function loadAndInitMap() {
             });
             prefContainer.appendChild(spotsLayer);
 
-            // 當 Vercel SVG 完成載入後，進行坐標幾何計算定位
-            setTimeout(calculatePositions, 200);
+            setTimeout(calculatePositions, 150);
             setupSpotEvents();
         })
-        .catch(err => console.error("日本地圖 SVG 外部檔案載入失敗，請確認 japan-map.svg 程式碼是否完整:", err));
+        .catch(err => console.error("地圖載入失敗:", err));
 }
 
-// 自動根據行政區 path 計算中心點與插針定位 (強化異步重試機制防止失效)
 function calculatePositions() {
     const pinsLayer = document.getElementById('dynamic-pref-pins-layer');
     if (!pinsLayer) return;
@@ -332,8 +312,6 @@ function calculatePositions() {
         }
 
         const paths = targetGroup.querySelectorAll('path, polygon');
-        if (paths.length === 0) return;
-        
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
         paths.forEach(p => {
             const box = p.getBBox();
@@ -342,12 +320,7 @@ function calculatePositions() {
             if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
         });
 
-        // 當 getBBox 計算出為極大或極小值時，極有機率是 SVG 幾何錯誤。
-        // 🍏 修正核心：防範第 3 點Bug，當大頭針坐標錯誤噴飛時進行幾何校正。
-        if(minX === Infinity || minX === NaN || minX === 0) { 
-             console.warn(`${album.selector} (島根或愛知縣) SVG 幾何計算錯誤，已防禦防失效`); 
-             return; 
-        }
+        if(minX === Infinity || minX === NaN || minX === 0) return; 
 
         const centerX = baseX + (minX + maxX) / 2;
         const centerY = baseY + (minY + maxY) / 2;
@@ -392,13 +365,12 @@ function triggerPinsDropping() {
         pin.style.transition = 'none';
         pin.style.transform = `translate(${targetX}px, ${targetY - 120}px)`; pin.style.opacity = 0;
         setTimeout(() => {
-            pin.style.transition = 'transform 0.9s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
+            pin.style.transition = 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.4s ease';
             pin.style.transform = `translate(${targetX}px, ${targetY}px)`; pin.style.opacity = 1;
-        }, index * 150 + 50);
+        }, index * 120 + 30);
     });
 }
 
-// 點擊行政區 Zoom-in 放大舞台核心
 function triggerZoomIn(groupElement) {
     if (isMapZoomed) return;
     const hasAlbum = albums.some(a => groupElement.classList.contains(a.selector.replace('.','')));
@@ -410,8 +382,6 @@ function triggerZoomIn(groupElement) {
     const targetY = groupElement.getAttribute('data-center-y');
     const zoomGroup = document.getElementById('map-zoom-group');
     
-    // 🍏 修正核心：當地圖放大時，九宮格按鈕的點擊區域會因為幾何偏差而飄走。
-    // 在放大前先將坐標重置。
     groupElement.setAttribute('data-raw-center-x', targetX);
     groupElement.setAttribute('data-raw-center-y', targetY);
 
@@ -423,8 +393,6 @@ function triggerZoomIn(groupElement) {
     document.getElementById('back-to-map-btn').style.opacity = 1;
     document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
     document.getElementById('location-hint').innerHTML = `📍 ${prefName} ． 請點擊綠色大頭針進入遊記`;
-    // 滑到第三幕進入放大狀態時，九宮格按鈕實體區域需精準對齊，防止失效 (第 3 點Bug修正)
-    initPinPositions(); 
 }
 
 document.getElementById('back-to-map-btn').addEventListener('click', (e) => {

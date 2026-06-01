@@ -1,117 +1,73 @@
 @import url('https://fonts.googleapis.com/css2?family=Iansui:wght@400&display=swap');
 
-*, *::before, *::after { 
-    box-sizing: border-box; 
-}
+*, *::before, *::after { box-sizing: border-box; }
 
 body {
-    margin: 0; 
-    padding: 0; 
-    height: 500vh;
-    background-color: #080808; 
-    font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif;
-    overflow-x: hidden;
-    overscroll-behavior-y: none;
+    margin: 0; padding: 0; height: 500vh; background-color: #080808; 
+    font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif; overflow-x: hidden; overscroll-behavior-y: none;
 }
 
 #scroll-spacer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
 
-/* 第一幕 & 第二幕：首頁與封面 */
+/* 第一幕 & 第二幕 */
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-size: cover; background-position: center;
-    z-index: 2; will-change: opacity;
-    /* 🍏 修正核心：重啟流暢大圖過渡淡入淡出 */
-    transition: opacity 0.25s ease-in-out; 
-    opacity: 0; /* 預設交由 JS 動態淡入 */
+    background-size: cover; background-position: center; z-index: 2; 
+    will-change: opacity, background-image;
+    /* 🍏 終極優化：將大圖交叉淡入淡出完全交給 GPU 原生處理，完全解耦不與滾動 opacity 打架 */
+    transition: background-image 0.28s cubic-bezier(0.25, 1, 0.5, 1); 
+    opacity: 1; 
 }
-
-#bg-photo.gallery-layout {
-    background-size: contain; background-repeat: no-repeat; background-position: center;
-}
+#bg-photo.gallery-layout { background-size: contain; background-repeat: no-repeat; background-position: center; }
 
 #dark-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity;
-    transition: opacity 0.4s ease;
+    background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity; transition: opacity 0.4s ease;
 }
 
 #main-title-container {
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%);
-    width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center;
-    transition: opacity 0.4s ease, transform 0.4s ease;
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center; transition: opacity 0.4s ease, transform 0.4s ease;
 }
-
 #main-title {
-    margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; 
-    font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center;
-    white-space: nowrap; cursor: pointer;
+    margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: nowrap; cursor: pointer;
 }
 
 /* 控制元件 */
 .side-click-zone {
-    position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5;
-    cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center;
-    transition: opacity 0.4s ease;
+    position: fixed; top: 0; height: 100vh; width: 100px; z-index: 5; cursor: pointer; background: transparent; display: flex; align-items: center; justify-content: center; transition: opacity 0.4s ease;
 }
 .left-zone { left: 0; } .right-zone { right: 0; }
 .arrow { color: white; font-size: 1.5rem; font-weight: 300; opacity: 0; transition: opacity 0.4s ease; }
 .side-click-zone:hover .arrow { opacity: 0.8; }
 
 #location-hint {
-    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px;
-    text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif;
-    font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 10; opacity: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%);
-    transition: opacity 0.4s ease; pointer-events: none;
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; color: rgba(255, 255, 255, 0.9); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; z-index: 10; opacity: 0; background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 60%, transparent 100%); transition: opacity 0.4s ease; pointer-events: none;
 }
 
 #gallery-counter {
-    position: fixed; top: 40px; left: 40px; z-index: 5;
-    color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif;
-    font-size: 0.9rem; letter-spacing: 0.2em; font-weight: 300;
-    opacity: 0; transition: opacity 0.5s ease;
+    position: fixed; top: 40px; left: 40px; z-index: 5; color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif; font-size: 0.9rem; letter-spacing: 0.2em; font-weight: 300; opacity: 0; transition: opacity 0.5s ease;
 }
 
 #close-gallery-mode-btn {
-    position: fixed; top: 40px; right: 40px; z-index: 5;
-    color: rgba(255, 255, 255, 0.5); font-family: 'Noto Serif TC', serif;
-    font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300;
-    cursor: pointer; opacity: 0; pointer-events: none;
-    transition: opacity 0.5s ease, color 0.3s ease;
+    position: fixed; top: 40px; right: 40px; z-index: 5; color: rgba(255, 255, 255, 0.5); font-family: 'Noto Serif TC', serif; font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.5s ease, color 0.3s ease;
 }
 #close-gallery-mode-btn:hover { color: #fff; }
 
 #open-index-btn {
-    position: fixed; bottom: 40px; right: 40px; z-index: 6;
-    color: rgba(255, 255, 255, 0.5); cursor: pointer;
-    transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease;
-    opacity: 0;
+    position: fixed; bottom: 40px; right: 40px; z-index: 6; color: rgba(255, 255, 255, 0.5); cursor: pointer; transition: color 0.3s ease, transform 0.3s ease, opacity 0.5s ease; opacity: 0;
 }
 #open-index-btn:hover { color: rgba(255, 255, 255, 1); transform: scale(1.1); }
 
-/* 網格索引艙 (Z-index 優化) */
 #gallery-index-panel {
-    position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh;
-    background: rgba(10, 10, 10, 0.92); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
-    z-index: 100; /* 擋在地圖與照片前 */
-    transition: right 0.5s cubic-bezier(0.25, 1, 0.2, 1);
-    overflow-y: auto; padding: 120px 6%; box-sizing: border-box;
+    position: fixed; top: 0; right: -100vw; width: 100vw; height: 100vh; background: rgba(10, 10, 10, 0.92); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); z-index: 100; transition: right 0.5s cubic-bezier(0.25, 1, 0.2, 1); overflow-y: auto; padding: 120px 6%; box-sizing: border-box;
 }
 #gallery-index-panel.open { right: 0; }
-.index-close-btn {
-    position: absolute; top: 40px; right: 40px; font-size: 0.8rem; letter-spacing: 0.2em;
-    color: #888; cursor: pointer; font-weight: 300; transition: color 0.3s ease;
-}
+.index-close-btn { position: absolute; top: 40px; right: 40px; font-size: 0.8rem; letter-spacing: 0.2em; color: #888; cursor: pointer; font-weight: 300; transition: color 0.3s ease; }
 .index-close-btn:hover { color: #fff; }
 
 .masonry-grid { column-count: 3; column-gap: 24px; max-width: 1400px; margin: 0 auto; }
 .grid-box { display: block; width: 100%; margin-bottom: 24px; break-inside: avoid; }
-.grid-item {
-    width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer;
-    opacity: 0.4; will-change: transform, opacity; transition: opacity 0.35s ease, transform 0.35s ease;
-}
+.grid-item { width: 100%; height: auto; display: block; border-radius: 4px; cursor: pointer; opacity: 0.4; will-change: transform, opacity; transition: opacity 0.35s ease, transform 0.35s ease; }
 .grid-item:hover { opacity: 1; transform: scale(1.03); }
 
 /* ==========================================
@@ -120,47 +76,34 @@ body {
 #map-container { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
     background: #09090c; z-index: 4; display: flex; align-items: center; justify-content: center; 
-    opacity: 0; pointer-events: none; transition: opacity 0.6s ease-in-out;
+    opacity: 0; pointer-events: none; transition: opacity 0.5s cubic-bezier(0.25, 1, 0.5, 1);
 }
 
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
 
-/* 深度換色：配合 Vercel 暗色視覺，將邊界與陸地調色為高明度灰白 */
 #japan-map .prefecture {
-    fill: #32323a !important;   /* 未探索區域：質感鐵灰色，絕不隱形 */
-    stroke: #111113 !important; /* 邊界線：細碳黑 */
-    stroke-width: 0.6px !important; transition: fill 0.3s ease;
+    fill: #32323a !important; stroke: #111113 !important; stroke-width: 0.6px !important; transition: fill 0.3s ease;
 }
 
-/* 🎯 點亮的縣市（島根、愛知） */
 #japan-map .aichi, 
 #japan-map .shimane {
-    fill: #ffffff !important;   /* 洗鍊白色 */
-    stroke: #ffffff !important; 
+    fill: #ffffff !important; stroke: #ffffff !important; 
     filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)) !important;
 }
 #japan-map .aichi:hover, 
 #japan-map .shimane:hover { fill: #e5e5ea !important; stroke: #ffffff !important; }
 
-/* 大頭針樣式定位中心校準 (Z-index 優化) */
 .map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
 .pin-shape { transform: translate(-12px, -22px); }
 
-/* 景點綠針層細節 (Z-index 優化) */
-#spots-layer {
-    opacity: 0; pointer-events: none; transition: opacity 0.4s ease 0.3s;
-}
-.spot-label {
-    fill: #ffffff !important; font-size: 3.5px !important; font-family: 'Noto Sans TC', sans-serif; text-shadow: 1px 1px 2px rgba(0, 0, 0, 1);
-}
+#spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease 0.3s; }
+.spot-label { fill: #ffffff !important; font-size: 3.5px !important; font-family: 'Noto Sans TC', sans-serif; text-shadow: 1px 1px 2px rgba(0, 0, 0, 1); }
 
-/* 地圖 Zoom-In 狀態控制 */
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 #japan-map.zoomed .pref-pin { opacity: 0 !important; pointer-events: none; }
 #japan-map.zoomed #spots-layer { opacity: 1; pointer-events: auto; }
 
-/* 返回按鈕與懸浮小卡 Z-index 優化 */
 #back-to-map-btn {
     position: fixed; top: 40px; left: 40px; z-index: 10; color: rgba(255, 255, 255, 0.6); font-family: 'Noto Serif TC', serif; font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 300; cursor: pointer; opacity: 0; pointer-events: none; background: rgba(255, 255, 255, 0.05); padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.4s ease, color 0.3s ease;
 }
@@ -172,7 +115,6 @@ body {
 #map-preview-img { width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block; }
 #map-preview-title { color: #fff; font-size: 0.75rem; font-weight: 300; line-height: 1.4; margin-top: 6px; }
 
-/* 隱藏地圖裝飾分隔線，保持畫面純淨 */
 .boundary-line { opacity: 0.15; }
 
 @media (max-width: 768px) {
