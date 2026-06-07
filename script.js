@@ -77,6 +77,7 @@ let currentViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
 let previewHideTimer = null;
+let galleryReturnContext = 'home';
 
 function getPrefClassFromSelector(selector) {
     return selector ? selector.replace('.', '') : '';
@@ -225,9 +226,10 @@ if (btnNext) {
     });
 }
 
-function openGalleryDirectly(albumIndex) {
+function openGalleryDirectly(albumIndex, returnContext = 'home') {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
+    galleryReturnContext = returnContext;
 
     const bgPhotoEl = document.getElementById('bg-photo');
     if (bgPhotoEl) {
@@ -254,6 +256,15 @@ function openGalleryDirectly(albumIndex) {
     document.getElementById('gallery-counter').style.opacity = 1;
     document.getElementById('open-index-btn').style.opacity = 1;
 
+    if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
+    if (btnNext) { btnNext.style.opacity = '1'; btnNext.style.pointerEvents = 'auto'; }
+
+    const locationHint = document.getElementById('location-hint');
+    if (locationHint) {
+        locationHint.classList.remove('light-mode');
+        locationHint.style.opacity = 1;
+    }
+
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
     if (closeGalleryBtn) {
         closeGalleryBtn.style.opacity = 1;
@@ -271,6 +282,8 @@ const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtnEl) {
     closeGalleryBtnEl.addEventListener('click', () => {
         isGalleryMode = false;
+        const shouldReturnToMap = galleryReturnContext === 'map';
+        galleryReturnContext = 'home';
 
         const bgPhotoEl = document.getElementById('bg-photo');
         if (bgPhotoEl) {
@@ -279,16 +292,59 @@ if (closeGalleryBtnEl) {
             bgPhotoEl.style.transition = 'none';
         }
 
-        document.getElementById('main-title-container').style.opacity = 1;
-        document.getElementById('main-title-container').style.pointerEvents = 'auto';
-        document.getElementById('dark-overlay').style.opacity = 0.4;
         document.getElementById('gallery-counter').style.opacity = 0;
         document.getElementById('open-index-btn').style.opacity = 0;
         closeGalleryBtnEl.style.opacity = 0;
         closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll';
-        updateAlbumCover(true);
+
+        if (btnPrev) { btnPrev.style.opacity = '0'; btnPrev.style.pointerEvents = 'none'; }
+        if (btnNext) { btnNext.style.opacity = '0'; btnNext.style.pointerEvents = 'none'; }
+
+        if (shouldReturnToMap) {
+            returnToMapAfterGallery();
+        } else {
+            document.getElementById('main-title-container').style.opacity = 1;
+            document.getElementById('main-title-container').style.pointerEvents = 'auto';
+            document.getElementById('dark-overlay').style.opacity = 0.4;
+            if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
+            if (btnNext) { btnNext.style.opacity = '1'; btnNext.style.pointerEvents = 'auto'; }
+            updateAlbumCover(true);
+        }
     });
+}
+
+function returnToMapAfterGallery() {
+    const mainTitleContainer = document.getElementById('main-title-container');
+    const darkOverlay = document.getElementById('dark-overlay');
+    const bgPhoto = document.getElementById('bg-photo');
+    const mapContainer = document.getElementById('map-container');
+    const locationHint = document.getElementById('location-hint');
+    const backBtn = document.getElementById('back-to-map-btn');
+
+    if (mainTitleContainer) {
+        mainTitleContainer.style.opacity = 0;
+        mainTitleContainer.style.pointerEvents = 'none';
+    }
+    if (darkOverlay) darkOverlay.style.opacity = 0;
+    if (bgPhoto) {
+        bgPhoto.style.transition = 'none';
+        bgPhoto.style.opacity = 0;
+    }
+    if (mapContainer) {
+        mapContainer.style.opacity = 1;
+        mapContainer.style.pointerEvents = 'auto';
+    }
+    if (locationHint) {
+        locationHint.classList.add('light-mode');
+        locationHint.style.opacity = 1;
+    }
+    if (backBtn && currentLayer > 1) {
+        backBtn.style.opacity = 1;
+        backBtn.style.pointerEvents = 'auto';
+    }
+
+    updateLocationHintText();
 }
 
 if (document.getElementById('open-index-btn')) {
@@ -1076,7 +1132,7 @@ function showAlbumPreview(albumList, heading, anchor = null) {
             e.stopPropagation();
             const albumIndex = parseInt(button.getAttribute('data-album-index'), 10);
             hidePreview(true);
-            openGalleryDirectly(albumIndex);
+            openGalleryDirectly(albumIndex, 'map');
         });
     });
 

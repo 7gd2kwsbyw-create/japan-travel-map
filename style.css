@@ -120,6 +120,16 @@ body {
     50% { fill: #9e9c94; } 
     100% { fill: #c4c2ba; }
 }
+@keyframes albumPrefBreathe {
+    0% { fill: #bdb5a6; }
+    50% { fill: #a69d8f; }
+    100% { fill: #bdb5a6; }
+}
+@keyframes pinBreathe {
+    0% { opacity: 0.92; }
+    50% { opacity: 1; }
+    100% { opacity: 0.92; }
+}
 
 /* ------------------------------------------
    第一層：全局區域舞台
@@ -204,8 +214,11 @@ body {
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: none;
-    fill: #9f9789;
+    animation: albumPrefBreathe 1.4s infinite ease-in-out;
+}
+#japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse path,
+#japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse polygon {
+    animation: albumPrefBreathe 1.4s infinite ease-in-out;
 }
 
 /* ------------------------------------------
@@ -257,6 +270,7 @@ body {
 #japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
     opacity: 1;
     pointer-events: auto;
+    animation: pinBreathe 1.8s infinite ease-in-out;
 }
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }
