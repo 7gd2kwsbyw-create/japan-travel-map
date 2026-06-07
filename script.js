@@ -51,6 +51,19 @@ const regionNames = {
     'region-kyushu': '九州地方'
 };
 
+const regionFitOptions = {
+    'region-hokkaido': { padding: 1.35, minWidth: 360 },
+    'region-tohoku': { padding: 1.45, minWidth: 270 },
+    'region-kanto': { padding: 1.55, minWidth: 210 },
+    'region-chubu': { padding: 1.55, minWidth: 260 },
+    'region-kinki': { padding: 1.65, minWidth: 210 },
+    'region-chugoku': { padding: 1.55, minWidth: 230 },
+    'region-shikoku': { padding: 1.45, minWidth: 185 },
+    'region-kyushu': { padding: 1.12, minWidth: 165 }
+};
+
+const MAP_ANIMATION_FAST = 520;
+
 let currentAlbumIndex = 0;
 let currentPhotoIndex = 0;
 let isGalleryMode = false;
@@ -482,7 +495,7 @@ function fitMapToBounds(bounds, options = {}) {
 
     const padding = options.padding ?? 1.45;
     const minWidth = options.minWidth ?? 0;
-    const duration = options.duration ?? 850;
+    const duration = options.duration ?? MAP_ANIMATION_FAST;
 
     const svgWidth = svgMap.clientWidth || originalViewBox.width;
     const svgHeight = svgMap.clientHeight || originalViewBox.height;
@@ -516,7 +529,7 @@ function fitMapToBounds(bounds, options = {}) {
 }
 
 function resetMapView() {
-    animateViewBox(originalViewBox, 850);
+    animateViewBox(originalViewBox, MAP_ANIMATION_FAST);
 }
 
 function getCenterInsidePrefectureContainer(g) {
@@ -738,10 +751,11 @@ function setupStageEvents() {
                 if (!activeRegionClass) return;
 
                 const bounds = getRegionBounds(activeRegionClass);
+                const fit = regionFitOptions[activeRegionClass] || { padding: 1.45, minWidth: 220 };
                 fitMapToBounds(bounds, {
-                    padding: 1.42,
-                    minWidth: 300,
-                    duration: 900
+                    padding: fit.padding,
+                    minWidth: fit.minWidth,
+                    duration: MAP_ANIMATION_FAST
                 });
 
                 currentLayer = 2;
@@ -763,9 +777,9 @@ function setupStageEvents() {
                 activePrefectureGroup = g;
                 const bounds = getPrefectureBounds(g);
                 fitMapToBounds(bounds, {
-                    padding: 3.2,
-                    minWidth: 155,
-                    duration: 900
+                    padding: 2.55,
+                    minWidth: 105,
+                    duration: MAP_ANIMATION_FAST
                 });
 
                 currentLayer = 3;
@@ -781,10 +795,11 @@ function setupStageEvents() {
 
             if (currentLayer === 3) {
                 const bounds = getRegionBounds(activeRegionClass);
+                const fit = regionFitOptions[activeRegionClass] || { padding: 1.45, minWidth: 220 };
                 fitMapToBounds(bounds, {
-                    padding: 1.42,
-                    minWidth: 300,
-                    duration: 850
+                    padding: fit.padding,
+                    minWidth: fit.minWidth,
+                    duration: MAP_ANIMATION_FAST
                 });
 
                 currentLayer = 2;
