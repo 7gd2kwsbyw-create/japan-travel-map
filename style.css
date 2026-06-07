@@ -184,6 +184,20 @@ body {
     pointer-events: auto;
 }
 
+#japan-map.map-layer-2.region-hokkaido .prefecture.album-prefecture.region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .prefecture.album-prefecture.region-hokkaido polygon,
+#japan-map.map-layer-2.region-tohoku .prefecture.album-prefecture.region-tohoku path, #japan-map.map-layer-2.region-tohoku .prefecture.album-prefecture.region-tohoku polygon,
+#japan-map.map-layer-2.region-kanto .prefecture.album-prefecture.region-kanto path, #japan-map.map-layer-2.region-kanto .prefecture.album-prefecture.region-kanto polygon,
+#japan-map.map-layer-2.region-chubu .prefecture.album-prefecture.region-chubu path, #japan-map.map-layer-2.region-chubu .prefecture.album-prefecture.region-chubu polygon,
+#japan-map.map-layer-2.region-kinki .prefecture.album-prefecture.region-kinki path, #japan-map.map-layer-2.region-kinki .prefecture.album-prefecture.region-kinki polygon,
+#japan-map.map-layer-2.region-chugoku .prefecture.album-prefecture.region-chugoku path, #japan-map.map-layer-2.region-chugoku .prefecture.album-prefecture.region-chugoku polygon,
+#japan-map.map-layer-2.region-shikoku .prefecture.album-prefecture.region-shikoku path, #japan-map.map-layer-2.region-shikoku .prefecture.album-prefecture.region-shikoku polygon,
+#japan-map.map-layer-2.region-kyushu .prefecture.album-prefecture.region-kyushu path, #japan-map.map-layer-2.region-kyushu .prefecture.album-prefecture.region-kyushu polygon {
+    fill: #cbbfb0;
+    stroke: #a44a3c;
+    stroke-width: 0.82px;
+    opacity: 1;
+}
+
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
     animation: prefSolidBreathe 1.5s infinite ease-in-out;
@@ -215,10 +229,10 @@ body {
     pointer-events: auto;
 }
 
-.map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
+.map-pin { cursor: pointer; will-change: transform, opacity; }
 
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
-.pin-body { fill: #a44a3c; filter: drop-shadow(0 3px 4px rgba(60, 35, 25, 0.24)); transition: fill 0.25s ease, transform 0.25s ease; }
+.pin-body { fill: #a44a3c; stroke: #f4f3ef; stroke-width: 1.1px; filter: drop-shadow(0 3px 4px rgba(60, 35, 25, 0.24)); transition: fill 0.25s ease, transform 0.25s ease; }
 .spot-pin:hover .pin-body { fill: #7d352c; }
 .pin-count-bg { fill: #f4f3ef; stroke: #a44a3c; stroke-width: 1.2px; }
 .pin-count {
@@ -256,6 +270,18 @@ body {
     position: fixed; z-index: 95; width: 230px; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 10px; pointer-events: none; opacity: 0; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16); transition: opacity 0.2s ease, transform 0.2s ease;
 }
 #map-preview-card.choice-mode { pointer-events: auto; }
+#map-preview-card::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: -7px;
+    width: 14px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    border-left: 1px solid rgba(0,0,0,0.08);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    transform: translateY(-50%) rotate(45deg);
+}
 .preview-cover-stack {
     position: relative;
     width: 100%;
@@ -309,8 +335,9 @@ body {
     background: rgba(244, 243, 239, 0.86);
     cursor: pointer;
     text-align: left;
+    transition: background 0.2s ease, transform 0.2s ease;
 }
-.preview-album-btn:hover { background: rgba(232, 228, 218, 0.95); }
+.preview-album-btn:hover { background: rgba(232, 228, 218, 0.95); transform: translateY(-1px); }
 .preview-album-btn img {
     width: 42px;
     height: 34px;
