@@ -132,9 +132,32 @@ body {
     transition: fill 0.3s ease;
 }
 
+#japan-map.map-layer-1 .album-region path,
+#japan-map.map-layer-1 .album-region polygon {
+    fill: #d8d3c8;
+}
+
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
     animation: regionSolidBreathe 1.5s infinite ease-in-out;
+}
+
+#region-badges-layer {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+#japan-map.map-layer-1 #region-badges-layer { opacity: 1; }
+.region-badge-halo { fill: rgba(154, 67, 50, 0.12); }
+.region-badge-dot { fill: #a44a3c; filter: drop-shadow(0 2px 3px rgba(60, 35, 25, 0.25)); }
+.region-badge-count {
+    fill: #fff;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 7px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
 }
 
 /* ------------------------------------------
@@ -195,9 +218,32 @@ body {
 .map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
 
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
-.spot-label { fill: #000000 !important; font-size: 2.2px !important; font-family: 'Noto Sans TC', sans-serif; font-weight: bold; text-shadow: 1px 1px 1px rgba(255,255,255,1); }
+.pin-body { fill: #a44a3c; filter: drop-shadow(0 3px 4px rgba(60, 35, 25, 0.24)); transition: fill 0.25s ease, transform 0.25s ease; }
+.spot-pin:hover .pin-body { fill: #7d352c; }
+.pin-count-bg { fill: #f4f3ef; stroke: #a44a3c; stroke-width: 1.2px; }
+.pin-count {
+    fill: #7d352c;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 7px;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+}
 
+#japan-map.map-layer-2 #spots-layer,
 #japan-map.map-layer-3 #spots-layer { opacity: 1; pointer-events: auto; }
+#japan-map.map-layer-2 .spot-pin { opacity: 0; pointer-events: none; }
+#japan-map.map-layer-2.region-hokkaido .spot-pin.region-hokkaido,
+#japan-map.map-layer-2.region-tohoku .spot-pin.region-tohoku,
+#japan-map.map-layer-2.region-kanto .spot-pin.region-kanto,
+#japan-map.map-layer-2.region-chubu .spot-pin.region-chubu,
+#japan-map.map-layer-2.region-kinki .spot-pin.region-kinki,
+#japan-map.map-layer-2.region-chugoku .spot-pin.region-chugoku,
+#japan-map.map-layer-2.region-shikoku .spot-pin.region-shikoku,
+#japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
+    opacity: 1;
+    pointer-events: auto;
+}
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }
 
@@ -207,10 +253,82 @@ body {
 #back-to-map-btn:hover { color: #000; background: rgba(0, 0, 0, 0.12); }
 
 #map-preview-card {
-    position: fixed; z-index: 95; width: 180px; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 8px; pointer-events: none; opacity: 0; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15); transition: opacity 0.2s ease;
+    position: fixed; z-index: 95; width: 230px; background: rgba(255, 255, 255, 0.92); border: 1px solid rgba(0,0,0,0.08); border-radius: 6px; padding: 10px; pointer-events: none; opacity: 0; backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px); box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16); transition: opacity 0.2s ease, transform 0.2s ease;
 }
-#map-preview-img { width: 100%; height: 110px; object-fit: cover; border-radius: 4px; display: block; }
-#map-preview-title { color: #222; font-size: 0.75rem; font-weight: 400; line-height: 1.4; margin-top: 6px; }
+#map-preview-card.choice-mode { pointer-events: auto; }
+.preview-cover-stack {
+    position: relative;
+    width: 100%;
+    height: 118px;
+    margin-bottom: 10px;
+}
+.preview-stack-img {
+    position: absolute;
+    width: 86%;
+    height: 112px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+}
+.preview-stack-0 { left: 0; top: 0; z-index: 3; }
+.preview-stack-1 { right: 0; top: 5px; z-index: 2; opacity: 0.72; transform: rotate(2deg); }
+.preview-stack-2 { right: 12px; top: 9px; z-index: 1; opacity: 0.45; transform: rotate(-2deg); }
+.preview-kicker {
+    color: rgba(34, 30, 27, 0.58);
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    margin-bottom: 3px;
+}
+.preview-title {
+    color: #24211f;
+    font-family: 'Noto Serif TC', serif;
+    font-size: 0.96rem;
+    line-height: 1.35;
+}
+.preview-subtitle {
+    color: rgba(34, 30, 27, 0.68);
+    font-size: 0.76rem;
+    line-height: 1.45;
+    margin-top: 4px;
+}
+.preview-album-list {
+    display: grid;
+    gap: 6px;
+    margin-top: 10px;
+}
+.preview-album-btn {
+    display: grid;
+    grid-template-columns: 42px 1fr;
+    gap: 8px;
+    align-items: center;
+    width: 100%;
+    border: 0;
+    border-radius: 4px;
+    padding: 6px;
+    background: rgba(244, 243, 239, 0.86);
+    cursor: pointer;
+    text-align: left;
+}
+.preview-album-btn:hover { background: rgba(232, 228, 218, 0.95); }
+.preview-album-btn img {
+    width: 42px;
+    height: 34px;
+    object-fit: cover;
+    border-radius: 3px;
+}
+.preview-album-btn strong {
+    display: block;
+    color: #2b2825;
+    font-size: 0.76rem;
+    font-weight: 500;
+}
+.preview-album-btn small {
+    display: block;
+    color: rgba(43, 40, 37, 0.58);
+    font-size: 0.66rem;
+    line-height: 1.3;
+}
 
 .boundary-line { display: none; }
 

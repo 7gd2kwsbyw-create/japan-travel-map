@@ -63,6 +63,7 @@ const regionFitOptions = {
 };
 
 const MAP_ANIMATION_FAST = 520;
+const REGION_CLASSES = Object.keys(regionNames);
 
 let currentAlbumIndex = 0;
 let currentPhotoIndex = 0;
@@ -75,6 +76,36 @@ let activePrefectureGroup = null;
 let currentViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
+
+function getPrefClassFromSelector(selector) {
+    return selector ? selector.replace('.', '') : '';
+}
+
+function getAlbumsForPrefecture(prefectureGroup) {
+    if (!prefectureGroup) return [];
+
+    return albums
+        .map((album, index) => ({ ...album, albumIndex: index }))
+        .filter(album => prefectureGroup.classList.contains(getPrefClassFromSelector(album.selector)));
+}
+
+function getAlbumsForRegion(regionClass) {
+    return albums
+        .map((album, index) => ({ ...album, albumIndex: index }))
+        .filter(album => {
+            const pref = document.querySelector(`.prefectures ${album.selector}`);
+            return pref && pref.classList.contains(regionClass);
+        });
+}
+
+function getAlbumsByPrefecture() {
+    return albums.reduce((groups, album, index) => {
+        const prefClass = getPrefClassFromSelector(album.selector);
+        if (!groups[prefClass]) groups[prefClass] = [];
+        groups[prefClass].push({ ...album, albumIndex: index });
+        return groups;
+    }, {});
+}
 
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
@@ -509,7 +540,7 @@ function getBoundsInSvg(elements) {
 }
 
 function getRegionBounds(regionClass) {
-    const members = Array.from(document.querySelectorAll(`.prefectures .${regionClass}`));
+    const members = Array.from(document.querySelectorAll(`.prefectures g.prefecture.${regionClass}`));
     return getBoundsInSvg(members);
 }
 
@@ -633,21 +664,30 @@ function loadAndInitMap() {
                 }
             });
 
+            const regionBadgesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            regionBadgesLayer.setAttribute('id', 'region-badges-layer');
+            prefContainer.appendChild(regionBadgesLayer);
+
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
 
-            albums.forEach((album, idx) => {
+            Object.entries(getAlbumsByPrefecture()).forEach(([prefClass, prefAlbums]) => {
+                const representative = prefAlbums[0];
+                const prefG = prefContainer.querySelector(`.${prefClass}`);
+                const regionClass = prefG ? getRegionClass(prefG) : '';
+
                 const pin = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                pin.setAttribute('class', 'map-pin spot-pin');
-                pin.setAttribute('data-album-index', String(idx));
-                pin.setAttribute('id', album.spotId);
+                pin.setAttribute('class', `map-pin spot-pin ${regionClass} ${prefClass}`.trim());
+                pin.setAttribute('data-pref-class', prefClass);
+                pin.setAttribute('data-album-indexes', prefAlbums.map(album => album.albumIndex).join(','));
+                pin.setAttribute('id', representative.spotId);
 
                 pin.innerHTML = `
                     <g transform="translate(-12, -22)">
-                        <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                        <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" class="pin-body"/>
                         <circle cx="12" cy="11" r="3" fill="#fff"/>
                     </g>
-                    <text x="16" y="14" class="spot-label">${album.spotName}</text>
+                    ${prefAlbums.length > 1 ? `<circle cx="9" cy="-21" r="7" class="pin-count-bg"/><text x="9" y="-18.4" class="pin-count">${prefAlbums.length}</text>` : ''}
                 `;
                 spotsLayer.appendChild(pin);
             });
@@ -721,14 +761,63 @@ function calculateGeometries() {
 
     albums.forEach(album => {
         const prefG = document.querySelector(`.prefectures ${album.selector}`);
-        const spotPin = document.getElementById(album.spotId);
-        if (!prefG || !spotPin) return;
+        if (!prefG) return;
 
         const cx = parseFloat(prefG.getAttribute('data-center-x'));
         const cy = parseFloat(prefG.getAttribute('data-center-y'));
+        const prefClass = getPrefClassFromSelector(album.selector);
+        const spotPin = document.querySelector(`.spot-pin[data-pref-class="${prefClass}"]`);
+
         if (Number.isFinite(cx) && Number.isFinite(cy)) {
-            spotPin.setAttribute('transform', `translate(${cx}, ${cy})`);
+            if (spotPin) spotPin.setAttribute('transform', `translate(${cx}, ${cy})`);
         }
+    });
+
+    markAlbumRegions();
+    positionRegionBadges();
+}
+
+function markAlbumRegions() {
+    const albumRegionClasses = new Set();
+
+    albums.forEach(album => {
+        const prefG = document.querySelector(`.prefectures ${album.selector}`);
+        if (!prefG) return;
+
+        const regionClass = getRegionClass(prefG);
+        if (regionClass) albumRegionClasses.add(regionClass);
+        prefG.classList.add('album-prefecture');
+    });
+
+    albumRegionClasses.forEach(regionClass => {
+        document.querySelectorAll(`.prefectures .${regionClass}`).forEach(pref => {
+            pref.classList.add('album-region');
+        });
+    });
+}
+
+function positionRegionBadges() {
+    const layer = document.getElementById('region-badges-layer');
+    if (!layer) return;
+
+    layer.innerHTML = '';
+
+    REGION_CLASSES.forEach(regionClass => {
+        const regionAlbums = getAlbumsForRegion(regionClass);
+        if (regionAlbums.length === 0) return;
+
+        const bounds = getRegionBounds(regionClass);
+        if (!bounds) return;
+
+        const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        badge.setAttribute('class', `region-album-badge ${regionClass}`);
+        badge.setAttribute('transform', `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`);
+        badge.innerHTML = `
+            <circle r="13" class="region-badge-halo"></circle>
+            <circle r="8" class="region-badge-dot"></circle>
+            <text y="3" class="region-badge-count">${regionAlbums.length}</text>
+        `;
+        layer.appendChild(badge);
     });
 }
 
@@ -738,7 +827,7 @@ function setupStageEvents() {
     if (!svgMap) return;
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
-        g.addEventListener('mouseenter', () => {
+        g.addEventListener('mouseenter', (e) => {
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
             const hint = document.getElementById('location-hint');
@@ -746,12 +835,23 @@ function setupStageEvents() {
             if (currentLayer === 1) {
                 if (localRegion) {
                     document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => el.classList.add('region-hover-pulse'));
-                    if (hint) hint.innerHTML = `📍 探索 ➔ ${regionNames[localRegion]}`;
+                    const regionAlbums = getAlbumsForRegion(localRegion);
+                    if (hint) {
+                        hint.innerHTML = regionAlbums.length > 0
+                            ? `📍 ${regionNames[localRegion]} ． ${regionAlbums.length} 本相簿`
+                            : `📍 探索 ➔ ${regionNames[localRegion]}`;
+                    }
                 }
             } else if (currentLayer === 2) {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
-                    if (hint) hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${getPrefectureTitle(g)}`;
+                    const prefAlbums = getAlbumsForPrefecture(g);
+                    if (prefAlbums.length > 0) {
+                        showAlbumPreview(prefAlbums, getPrefectureTitle(g), false, e);
+                        if (hint) hint.innerHTML = `📍 ${getPrefectureTitle(g)} ． ${prefAlbums.length} 本相簿`;
+                    } else if (hint) {
+                        hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${getPrefectureTitle(g)}`;
+                    }
                 }
             }
         });
@@ -765,9 +865,22 @@ function setupStageEvents() {
                 }
             } else if (currentLayer === 2) {
                 g.classList.remove('pref-hover-pulse');
+                hidePreview();
             }
 
             updateLocationHintText();
+        });
+
+        g.addEventListener('mousemove', (e) => {
+            if (currentLayer !== 2 || g.style.display === 'none') return;
+
+            const localRegion = getRegionClass(g);
+            if (!localRegion || !g.classList.contains(activeRegionClass)) return;
+
+            const prefAlbums = getAlbumsForPrefecture(g);
+            if (prefAlbums.length === 0) return;
+
+            showAlbumPreview(prefAlbums, getPrefectureTitle(g), false, e);
         });
 
         g.addEventListener('click', (e) => {
@@ -800,22 +913,17 @@ function setupStageEvents() {
             } else if (currentLayer === 2) {
                 if (!g.classList.contains(activeRegionClass)) return;
 
-                const hasAlbum = albums.some(a => g.classList.contains(a.selector.replace('.', '')));
-                if (!hasAlbum) return;
+                const prefAlbums = getAlbumsForPrefecture(g);
+                if (prefAlbums.length === 0) return;
 
-                activePrefectureGroup = g;
-                const albumIndex = albums.findIndex(a => g.classList.contains(a.selector.replace('.', '')));
-                setActiveMapFocus(g, albumIndex);
-                const bounds = getPrefectureBounds(g);
-                fitMapToBounds(bounds, {
-                    padding: 2.55,
-                    minWidth: 105,
-                    duration: MAP_ANIMATION_FAST
-                });
+                if (prefAlbums.length === 1) {
+                    hidePreview(true);
+                    openGalleryDirectly(prefAlbums[0].albumIndex);
+                    return;
+                }
 
-                currentLayer = 3;
-                setSvgMapClass(`map-layer-3 ${activeRegionClass}`);
-                updateLocationHintText();
+                showAlbumPreview(prefAlbums, getPrefectureTitle(g), true);
+                return;
             }
         });
     });
@@ -837,7 +945,7 @@ function setupStageEvents() {
                 activePrefectureGroup = null;
                 setActiveMapFocus();
                 setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
-                hidePreview();
+                hidePreview(true);
                 updateLocationHintText();
             } else if (currentLayer === 2) {
                 resetMapView();
@@ -854,43 +962,89 @@ function setupStageEvents() {
                     el.classList.remove('region-hover-pulse', 'pref-hover-pulse');
                 });
 
-                hidePreview();
+                hidePreview(true);
                 updateLocationHintText();
             }
         });
     }
 
     document.querySelectorAll('.spot-pin').forEach(pin => {
-        const albumIndex = parseInt(pin.getAttribute('data-album-index'), 10);
-        const album = albums[albumIndex];
+        const albumIndexes = (pin.getAttribute('data-album-indexes') || '')
+            .split(',')
+            .map(value => parseInt(value, 10))
+            .filter(Number.isFinite);
+        const pinAlbums = albumIndexes.map(index => ({ ...albums[index], albumIndex: index })).filter(Boolean);
 
         pin.addEventListener('mousemove', (e) => {
-            if (currentLayer !== 3) return;
-
-            const previewCard = document.getElementById('map-preview-card');
-            const previewImg = document.getElementById('map-preview-img');
-            const previewTitle = document.getElementById('map-preview-title');
-            if (!previewCard || !previewImg || !previewTitle) return;
-
-            previewImg.src = album.photos[0];
-            previewTitle.textContent = album.title;
-            previewCard.style.left = `${e.clientX + 20}px`;
-            previewCard.style.top = `${e.clientY + 20}px`;
-            previewCard.style.opacity = 1;
+            if (currentLayer !== 2 && currentLayer !== 3) return;
+            showAlbumPreview(pinAlbums, pinAlbums[0]?.spotName || '', false, e);
         });
 
         pin.addEventListener('mouseleave', () => hidePreview());
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
-            hidePreview();
-            openGalleryDirectly(albumIndex);
+            hidePreview(true);
+            if (pinAlbums.length === 1) {
+                openGalleryDirectly(pinAlbums[0].albumIndex);
+            } else {
+                showAlbumPreview(pinAlbums, pinAlbums[0]?.spotName || '', true, e);
+            }
         });
     });
 }
 
-function hidePreview() {
+function showAlbumPreview(albumList, heading, pinned = false, event = null) {
     const card = document.getElementById('map-preview-card');
-    if (card) card.style.opacity = 0;
+    if (!card || !albumList || albumList.length === 0) return;
+
+    const countText = albumList.length > 1 ? `共 ${albumList.length} 本相簿` : albumList[0].location.replace('📍 ', '');
+    const coverStack = albumList.slice(0, 3).map((album, index) => `
+        <img class="preview-stack-img preview-stack-${index}" src="${album.photos[0]}" alt="${album.spotName}">
+    `).join('');
+    const albumItems = albumList.map(album => `
+        <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
+            <img src="${album.photos[0]}" alt="">
+            <span>
+                <strong>${album.spotName}</strong>
+                <small>${album.title}</small>
+            </span>
+        </button>
+    `).join('');
+
+    card.classList.toggle('choice-mode', pinned || albumList.length > 1);
+    card.innerHTML = `
+        <div class="preview-cover-stack">${coverStack}</div>
+        <div class="preview-kicker">${countText}</div>
+        <div class="preview-title">${albumList.length === 1 ? albumList[0].spotName : (heading || albumList[0].spotName)}</div>
+        ${albumList.length > 1 ? `<div class="preview-album-list">${albumItems}</div>` : `<div class="preview-subtitle">${albumList[0].title}</div>`}
+    `;
+
+    card.querySelectorAll('.preview-album-btn').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const albumIndex = parseInt(button.getAttribute('data-album-index'), 10);
+            hidePreview(true);
+            openGalleryDirectly(albumIndex);
+        });
+    });
+
+    if (event) {
+        const left = Math.min(event.clientX + 22, window.innerWidth - 260);
+        const top = Math.min(event.clientY + 22, window.innerHeight - 240);
+        card.style.left = `${Math.max(16, left)}px`;
+        card.style.top = `${Math.max(16, top)}px`;
+    }
+
+    card.style.opacity = 1;
+}
+
+function hidePreview(force = false) {
+    const card = document.getElementById('map-preview-card');
+    if (card) {
+        if (card.classList.contains('choice-mode') && !force) return;
+        card.style.opacity = 0;
+        card.classList.remove('choice-mode');
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
