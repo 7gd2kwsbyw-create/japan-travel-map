@@ -15,7 +15,16 @@ body {
     background-size: cover; background-position: center; z-index: 2; will-change: opacity;
     transition: none; opacity: 1;
 }
-#bg-photo.gallery-layout { background-size: cover; background-repeat: no-repeat; background-position: center; }
+#bg-photo.gallery-layout {
+    background-color: #080808;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+#bg-photo.gallery-layout.portrait-layout {
+    background-size: contain;
+}
 
 #bg-photo.gallery-layout::after {
     content: "";

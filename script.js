@@ -80,8 +80,22 @@ function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
 
-    if (isInitial) {
+    const applyPhoto = () => {
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
+
+        if (bgPhotoEl.classList.contains('gallery-layout')) {
+            const probe = new Image();
+            probe.onload = () => {
+                bgPhotoEl.classList.toggle('portrait-layout', probe.naturalHeight > probe.naturalWidth);
+            };
+            probe.src = newUrl;
+        } else {
+            bgPhotoEl.classList.remove('portrait-layout');
+        }
+    };
+
+    if (isInitial) {
+        applyPhoto();
         bgPhotoEl.style.opacity = 1;
         bgPhotoEl.style.transition = 'none';
         return;
@@ -91,7 +105,7 @@ function changePhotoWithFade(newUrl, isInitial = false) {
     bgPhotoEl.style.opacity = 0;
 
     setTimeout(() => {
-        bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
+        applyPhoto();
         bgPhotoEl.style.opacity = 1;
         setTimeout(() => {
             if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
@@ -216,6 +230,7 @@ if (closeGalleryBtnEl) {
         const bgPhotoEl = document.getElementById('bg-photo');
         if (bgPhotoEl) {
             bgPhotoEl.classList.remove('gallery-layout');
+            bgPhotoEl.classList.remove('portrait-layout');
             bgPhotoEl.style.transition = 'none';
         }
 
@@ -508,7 +523,6 @@ function fitMapToBounds(bounds, options = {}) {
 
     const padding = options.padding ?? 1.45;
     const minWidth = options.minWidth ?? 0;
-    const context = options.context ?? 0;
     const duration = options.duration ?? MAP_ANIMATION_FAST;
 
     const svgWidth = svgMap.clientWidth || originalViewBox.width;
@@ -532,22 +546,12 @@ function fitMapToBounds(bounds, options = {}) {
     const centerX = bounds.x + bounds.width / 2;
     const centerY = bounds.y + bounds.height / 2;
 
-    let targetBox = {
+    const targetBox = {
         x: centerX - targetWidth / 2,
         y: centerY - targetHeight / 2,
         width: targetWidth,
         height: targetHeight
     };
-
-    if (context > 0) {
-        const keep = Math.max(0, Math.min(context, 0.85));
-        targetBox = {
-            x: targetBox.x * (1 - keep) + originalViewBox.x * keep,
-            y: targetBox.y * (1 - keep) + originalViewBox.y * keep,
-            width: targetBox.width * (1 - keep) + originalViewBox.width * keep,
-            height: targetBox.height * (1 - keep) + originalViewBox.height * keep
-        };
-    }
 
     animateViewBox(targetBox, duration);
 }
@@ -779,7 +783,6 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: fit.padding,
                     minWidth: fit.minWidth,
-                    context: 0.18,
                     duration: MAP_ANIMATION_FAST
                 });
 
@@ -807,7 +810,6 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: 2.55,
                     minWidth: 105,
-                    context: 0.42,
                     duration: MAP_ANIMATION_FAST
                 });
 
@@ -828,7 +830,6 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: fit.padding,
                     minWidth: fit.minWidth,
-                    context: 0.18,
                     duration: MAP_ANIMATION_FAST
                 });
 
