@@ -320,11 +320,14 @@ window.addEventListener('scroll', () => {
 
         if (mapContainer) {
             mapContainer.style.transition = 'none';
-            mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
+            const mapOpacity = Math.min(stage3Progress * 2.5, 1);
+            mapContainer.style.opacity = mapOpacity;
             if (stage3Progress > 0.02) {
                 mapContainer.style.pointerEvents = 'auto';
                 updateLocationHintText();
-                if (locationHint) locationHint.classList.add('light-mode');
+                if (locationHint) {
+                    locationHint.classList.toggle('light-mode', mapOpacity > 0.72);
+                }
             } else {
                 mapContainer.style.pointerEvents = 'none';
                 if (locationHint) locationHint.classList.remove('light-mode');
@@ -374,6 +377,16 @@ function setSvgMapClass(layerClass) {
     const svgMap = document.getElementById('japan-map');
     if (!svgMap) return;
     svgMap.setAttribute('class', `geolonia-svg-map ${layerClass}`.trim());
+}
+
+function setActiveMapFocus(prefectureGroup = null, albumIndex = null) {
+    document.querySelectorAll('.prefectures g.prefecture').forEach(el => {
+        el.classList.toggle('active-prefecture', el === prefectureGroup);
+    });
+
+    document.querySelectorAll('.spot-pin').forEach(pin => {
+        pin.classList.toggle('active-spot', pin.getAttribute('data-album-index') === String(albumIndex));
+    });
 }
 
 function setViewBox(box) {
@@ -760,6 +773,7 @@ function setupStageEvents() {
 
                 currentLayer = 2;
                 activePrefectureGroup = null;
+                setActiveMapFocus();
                 setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
 
                 if (backBtn) {
@@ -775,6 +789,8 @@ function setupStageEvents() {
                 if (!hasAlbum) return;
 
                 activePrefectureGroup = g;
+                const albumIndex = albums.findIndex(a => g.classList.contains(a.selector.replace('.', '')));
+                setActiveMapFocus(g, albumIndex);
                 const bounds = getPrefectureBounds(g);
                 fitMapToBounds(bounds, {
                     padding: 2.55,
@@ -804,6 +820,7 @@ function setupStageEvents() {
 
                 currentLayer = 2;
                 activePrefectureGroup = null;
+                setActiveMapFocus();
                 setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
                 hidePreview();
                 updateLocationHintText();
@@ -812,6 +829,7 @@ function setupStageEvents() {
                 currentLayer = 1;
                 activeRegionClass = null;
                 activePrefectureGroup = null;
+                setActiveMapFocus();
                 setSvgMapClass('map-layer-1');
 
                 backBtn.style.opacity = 0;
