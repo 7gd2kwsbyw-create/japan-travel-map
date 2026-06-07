@@ -67,7 +67,7 @@ body {
 .grid-item:hover { opacity: 1; transform: scale(1.03); }
 
 /* ==========================================
-   第三幕舞台：高雅日系和風淺色調舞台（鳥之子色底）
+   第三幕舞台：高雅日系和風淺色調舞台
    ========================================== */
 #map-container { 
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; 
@@ -78,9 +78,8 @@ body {
 
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
-#map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
-/* 🍏 頻率修正：調快至 2.0s，兼顧沉穩感與流暢動態互動 */
+/* 🍏 修正快慢：調整為完美適中的 1.5s 節奏 */
 @keyframes regionSolidBreathe {
     0% { fill: #dcdad2; }
     50% { fill: #b8b6ae; } 
@@ -92,21 +91,32 @@ body {
     100% { fill: #c4c2ba; }
 }
 
+/* 🍏 修正重點：改為偵測 transform 屬性過渡，徹底支援 Safari 3D 矩陣平滑動畫 */
+#map-zoom-group { 
+    transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); 
+}
+
 /* ------------------------------------------
    第一層：全局區域舞台
    ------------------------------------------ */
 #japan-map.map-layer-1 .prefecture path,
 #japan-map.map-layer-1 .prefecture polygon {
-    fill: #dcdad2; /* 全日本初始顏色完全統一，消除未移入即變深的現象 */
+    fill: #dcdad2; 
     stroke: #f4f3ef; 
     stroke-width: 0.6px;
     transition: fill 0.3s ease;
 }
 
-/* 第一層：滑鼠移入地方板塊時觸發修正後的 2.0s 呼吸燈 */
+#japan-map.map-layer-1 .chubu path, #japan-map.map-layer-1 .chubu polygon,
+#japan-map.map-layer-1 .chugoku path, #japan-map.map-layer-1 .chugoku polygon {
+    fill: #b4b2aa; 
+    stroke: #f4f3ef;
+}
+
+/* 🍏 修正重點：綁定 1.5s 的優雅呼吸調 */
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 2.0s infinite ease-in-out;
+    animation: regionSolidBreathe 1.5s infinite ease-in-out;
 }
 
 /* ------------------------------------------
@@ -129,16 +139,15 @@ body {
     fill: #c4c2ba; stroke: #f4f3ef; stroke-width: 0.5px; opacity: 1;
 }
 
-/* 核心高亮：島根、愛知保持消炭色 */
 #japan-map.map-layer-2 .aichi path, #japan-map.map-layer-2 .aichi polygon,
 #japan-map.map-layer-2 .shimane path, #japan-map.map-layer-2 .shimane polygon {
     fill: #2b2b30; stroke: #2b2b30; opacity: 1;
 }
 
-/* 第二層：縣市實體 2.0s 呼吸燈 */
+/* 🍏 修正重點：綁定第二層 1.5s 縣市呼吸燈 */
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 2.0s infinite ease-in-out;
+    animation: prefSolidBreathe 1.5s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
@@ -161,7 +170,6 @@ body {
 
 /* 大頭針組件 */
 .map-pin { position: absolute; cursor: pointer; will-change: transform, opacity; }
-.pin-shape { transform: translate(-12px, -22px); }
 
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
 .spot-label { fill: #000000 !important; font-size: 2.2px !important; font-family: 'Noto Sans TC', sans-serif; font-weight: bold; text-shadow: 1px 1px 1px rgba(255,255,255,1); }

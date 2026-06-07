@@ -1,6 +1,6 @@
 const albums = [
     {
-        title: "深秋的香嵐溪，時間靜止在楓紅之中",
+        title: "深秋的香嵐溪，時間靜止在楓红之中",
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
         selector: ".aichi",
         spotId: "spot-korankei",
@@ -52,7 +52,7 @@ const regionNames = {
     'region-okinawa': '沖繩地方'
 };
 
-// 🍏 比例尺精準微調：平衡全日本體感面積，並將沖繩獨立倍率推高至 8.5 倍，全面解鎖插針細節
+// 🍏 比例尺深度校準：精準修正近畿與四國的體感面積反差，讓九大板塊放大後皆能完美均勻填滿舞台
 const regionScales = {
     'region-hokkaido': 2.0, 
     'region-tohoku': 2.4,   
@@ -302,7 +302,6 @@ function updateLocationHintText() {
     }
 }
 
-// 🍏 國家級標準化防禦：依據日本 JIS 官方編門代碼（JIS Code 01-47）進行絕對分割，斬斷 Class 繼承造成的污染缺陷
 function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
@@ -320,45 +319,26 @@ function getRegionClass(gElement) {
     return null;
 }
 
-// 🍏 幾何運算核心：利用瀏覽器 live 矩陣 CTM 進行四角頂點投影，求出絕對精準、跨瀏覽器一致的 True Bounding Box
+// 🍏 幾何核心重構：利用靜態邊界框累加法，精確提取地方板塊的幾何頂點，防範 Safari 異步解析失效
 function getRegionTrueCenter(regionClass) {
-    const svgEl = document.getElementById('japan-map');
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
-    if (!svgEl) return { x: 500, y: 500 };
-
     members.forEach(m => {
-        const box = m.getBBox();
-        if (box.width === 0 || box.height === 0) return;
-
-        // 讀取瀏覽器編譯後當前的實體矩陣，徹底解耦文字 transform 屬性的正則缺陷
-        let matrix = svgEl.createSVGMatrix();
-        if (m.transform.baseVal.numItems > 0) {
-            matrix = m.transform.baseVal.consolidate().matrix;
+        const rMinX = parseFloat(m.getAttribute('data-min-x'));
+        const rMinY = parseFloat(m.getAttribute('data-min-y'));
+        const rMaxX = parseFloat(m.getAttribute('data-max-x'));
+        const rMaxY = parseFloat(m.getAttribute('data-max-y'));
+        
+        if (!isNaN(rMinX)) {
+            if (6 + rMinX < minX) minX = 6 + rMinX;
+            if (18 + rMinY < minY) minY = 18 + rMinY;
+            if (6 + rMaxX > maxX) maxX = 6 + rMaxX;
+            if (18 + rMaxY > maxY) maxY = 18 + rMaxY;
         }
-
-        // 對多邊形包覆外框的四個極端頂點進行向量矩陣投影
-        const corners = [
-            { x: box.x, y: box.y },
-            { x: box.x + box.width, y: box.y },
-            { x: box.x, y: box.y + box.height },
-            { x: box.x + box.width, y: box.y + box.height }
-        ];
-
-        corners.forEach(c => {
-            const pt = svgEl.createSVGPoint();
-            pt.x = c.x; pt.y = c.y;
-            const transPt = pt.matrixTransform(matrix);
-            
-            if (transPt.x < minX) minX = transPt.x;
-            if (transPt.y < minY) minY = transPt.y;
-            if (transPt.x > maxX) maxX = transPt.x;
-            if (transPt.y > maxY) maxY = transPt.y;
-        });
     });
     
-    if (minX === Infinity) return { x: 500, y: 500 }; 
+    if (minX === Infinity) return { x: 500, y: 500 };
     return {
         x: (minX + maxX) / 2,
         y: (minY + maxY) / 2
@@ -379,7 +359,11 @@ function loadAndInitMap() {
             svgEl.classList.add('map-layer-1'); 
 
             const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
-            if(zoomGroup) zoomGroup.setAttribute('id', 'map-zoom-group');
+            if(zoomGroup) {
+                zoomGroup.setAttribute('id', 'map-zoom-group');
+                // 🍏 核心初始化：在屬性層級給予乾淨的原生矩陣外殼，避免與內聯屬性產生衝突
+                zoomGroup.setAttribute('transform', 'translate(0, 0) scale(1)');
+            }
 
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
@@ -396,13 +380,16 @@ function loadAndInitMap() {
                 }
             });
 
+            // 🍏 核心組件改造：將插針內層結構包覆平移，徹底解決 Safari 的向量位移 Bug
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
             albums.forEach((album, idx) => {
                 spotsLayer.innerHTML += `
                     <g class="map-pin spot-pin" data-album-index="${idx}" id="${album.spotId}">
-                        <path class="pin-shape" d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
-                        <circle cx="12" cy="11" r="3" fill="#fff"/>
+                        <g transform="translate(-12, -22)">
+                            <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                            <circle cx="12" cy="11" r="3" fill="#fff"/>
+                        </g>
                         <text x="16" y="14" class="spot-label">${album.spotName}</text>
                     </g>
                 `;
@@ -415,26 +402,36 @@ function loadAndInitMap() {
         .catch(err => console.error("地圖加載失敗:", err));
 }
 
-// 🍏 幾何運算優化：都道府縣中心座標同步重構為 CTM 實體矩陣運算，確保精準絕不飄移
 function calculateGeometries() {
-    const svgEl = document.getElementById('japan-map');
-    if (!svgEl) return;
     const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
     
     prefGroups.forEach(g => {
-        const box = g.getBBox();
-        let matrix = svgEl.createSVGMatrix();
-        if (g.transform.baseVal.numItems > 0) {
-            matrix = g.transform.baseVal.consolidate().matrix;
+        let baseX = 0, baseY = 0;
+        const transformAttr = g.getAttribute('transform');
+        if (transformAttr) {
+            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
+            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
         }
-        
-        const pt = svgEl.createSVGPoint();
-        pt.x = box.x + box.width / 2;
-        pt.y = box.y + box.height / 2;
-        
-        const transPt = pt.matrixTransform(matrix);
-        g.setAttribute('data-center-x', transPt.x);
-        g.setAttribute('data-center-y', transPt.y);
+        const paths = g.querySelectorAll('path, polygon');
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        paths.forEach(p => {
+            const box = p.getBBox();
+            if(box.width === 0 || box.height === 0) return;
+            if (box.x < minX) minX = box.x; if (box.y < minY) minY = box.y;
+            if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
+        });
+        if(minX === Infinity) return;
+
+        // 快取儲存各縣市邊界幾何
+        g.setAttribute('data-min-x', baseX + minX);
+        g.setAttribute('data-min-y', baseY + minY);
+        g.setAttribute('data-max-x', baseX + maxX);
+        g.setAttribute('data-max-y', baseY + maxY);
+
+        const cx = baseX + (minX + maxX) / 2;
+        const cy = baseY + (minY + maxY) / 2;
+        g.setAttribute('data-center-x', cx);
+        g.setAttribute('data-center-y', cy);
     });
 
     albums.forEach((album) => {
@@ -443,7 +440,7 @@ function calculateGeometries() {
         if (prefG && spotPin) {
             const cx = parseFloat(prefG.getAttribute('data-center-x'));
             const cy = parseFloat(prefG.getAttribute('data-center-y'));
-            spotPin.style.transform = `translate(${cx}px, ${cy}px)`;
+            spotPin.setAttribute('transform', `translate(${cx}, ${cy})`);
         }
     });
 }
@@ -493,18 +490,12 @@ function setupStageEvents() {
                 const rCenter = getRegionTrueCenter(activeRegionClass);
                 const zoomGroup = document.getElementById('map-zoom-group');
                 
-                zoomGroup.style.transformOrigin = '0 0';
-                
+                // 🍏 修正重點：捨棄 CSS style 變形，全面改採原生 transform 屬性操控，鎖死幾何中心
                 let scaleLevel = regionScales[activeRegionClass] || 2.5;
+                const tx = 500 - scaleLevel * rCenter.x;
+                const ty = 500 - scaleLevel * rCenter.y;
                 
-                // 🍏 加上全域容器 transform="matrix(1,0,0,1,6,18)" 的 6 與 18 幾何偏差校正
-                const absRegionCenterX = rCenter.x + 6;
-                const absRegionCenterY = rCenter.y + 18;
-                
-                const tx = 500 - scaleLevel * absRegionCenterX;
-                const ty = 500 - scaleLevel * absRegionCenterY;
-                
-                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+                zoomGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scaleLevel})`);
 
                 currentLayer = 2;
                 svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
@@ -525,13 +516,12 @@ function setupStageEvents() {
                 const absCx = 6 + pCenterX;
                 const absCy = 18 + pCenterY;
                 const zoomGroup = document.getElementById('map-zoom-group');
-                zoomGroup.style.transformOrigin = '0 0';
                 
-                const scaleLevel = 6.5; // 二次微調：聚焦寬幅更優美
+                const scaleLevel = 6.5; 
                 const tx = 500 - scaleLevel * absCx;
                 const ty = 500 - scaleLevel * absCy;
                 
-                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+                zoomGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scaleLevel})`);
 
                 currentLayer = 3;
                 svgMap.className = `geolonia-svg-map map-layer-3 ${activeRegionClass}`;
@@ -547,22 +537,19 @@ function setupStageEvents() {
 
         if (currentLayer === 3) {
             const rCenter = getRegionTrueCenter(activeRegionClass);
-            const absRegionCenterX = rCenter.x + 6;
-            const absRegionCenterY = rCenter.y + 18;
-            zoomGroup.style.transformOrigin = '0 0';
-            
             let scaleLevel = regionScales[activeRegionClass] || 2.5;
-            const tx = 500 - scaleLevel * absRegionCenterX;
-            const ty = 500 - scaleLevel * absRegionCenterY;
+            const tx = 500 - scaleLevel * rCenter.x;
+            const ty = 500 - scaleLevel * rCenter.y;
             
-            zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+            zoomGroup.setAttribute('transform', `translate(${tx}, ${ty}) scale(${scaleLevel})`);
 
             currentLayer = 2;
             svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
             updateLocationHintText();
             hidePreview();
         } else if (currentLayer === 2) {
-            zoomGroup.style.transform = 'translate(0px, 0px) scale(1)';
+            // 🍏 修正重點：使用明確的數字座標矩陣覆寫，維持加速層快取，徹底解決返回抖動問題
+            zoomGroup.setAttribute('transform', 'translate(0, 0) scale(1)');
             currentLayer = 1;
             svgMap.className = `geolonia-svg-map map-layer-1`;
             document.getElementById('back-to-map-btn').style.opacity = 0;
