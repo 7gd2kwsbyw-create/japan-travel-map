@@ -51,26 +51,17 @@ const regionNames = {
     'region-kyushu': '九州地方'
 };
 
-// 🍏 比例尺二次優化：配合純淨版邊界，提供極致飽滿的視覺放大率
-const regionScales = {
-    'region-hokkaido': 2.3, 
-    'region-tohoku': 2.8,   
-    'region-kanto': 4.2,    
-    'region-chubu': 3.4,    
-    'region-kinki': 4.2,    
-    'region-chugoku': 3.8,  
-    'region-shikoku': 4.8,  
-    'region-kyushu': 3.8    
-};
+let currentAlbumIndex = 0;
+let currentPhotoIndex = 0;
+let isGalleryMode = false;
+let isThrottled = false;
 
-let currentAlbumIndex = 0; 
-let currentPhotoIndex = 0; 
-let isGalleryMode = false;  
-let isThrottled = false;   
-
-let currentLayer = 1; 
+let currentLayer = 1;
 let activeRegionClass = null;
 let activePrefectureGroup = null;
+let currentViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
+let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
+let viewBoxAnimationId = null;
 
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
@@ -100,31 +91,44 @@ function updateAlbumCover(isInitial = false) {
     const album = albums[currentAlbumIndex];
     if (titleEl && !isGalleryMode) titleEl.textContent = album.title;
     changePhotoWithFade(album.photos[0], isInitial);
-    currentPhotoIndex = 0; 
+    currentPhotoIndex = 0;
 }
 
 function updateGalleryPhoto(index) {
     const counterEl = document.getElementById('gallery-counter');
     const locationHintEl = document.getElementById('location-hint');
     const album = albums[currentAlbumIndex];
+
     if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
+
     changePhotoWithFade(album.photos[index], false);
 }
 
 function buildIndexGrid() {
     const gridContainer = document.getElementById('index-grid');
     if (!gridContainer) return;
-    gridContainer.innerHTML = ''; 
+
+    gridContainer.innerHTML = '';
     const album = albums[currentAlbumIndex];
-    let gridHtml = '';
+
     album.photos.forEach((url, i) => {
-        gridHtml += `<div class="grid-box"><img src="${url}" class="grid-item" data-index="${i}" alt="Photo"></div>`;
+        const box = document.createElement('div');
+        box.className = 'grid-box';
+
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'grid-item';
+        img.dataset.index = String(i);
+        img.alt = 'Photo';
+
+        box.appendChild(img);
+        gridContainer.appendChild(box);
     });
-    gridContainer.innerHTML = gridHtml;
+
     document.querySelectorAll('.grid-item').forEach(item => {
         item.addEventListener('click', (e) => {
-            currentPhotoIndex = parseInt(e.target.getAttribute('data-index'));
+            currentPhotoIndex = parseInt(e.target.getAttribute('data-index'), 10);
             updateGalleryPhoto(currentPhotoIndex);
             document.getElementById('gallery-index-panel').classList.remove('open');
         });
@@ -165,18 +169,27 @@ if (btnNext) {
 function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
+
     const bgPhotoEl = document.getElementById('bg-photo');
-    if(bgPhotoEl) { bgPhotoEl.classList.add('gallery-layout'); bgPhotoEl.style.opacity = 1; }
+    if (bgPhotoEl) {
+        bgPhotoEl.classList.add('gallery-layout');
+        bgPhotoEl.style.opacity = 1;
+    }
+
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
     document.getElementById('gallery-counter').style.opacity = 1;
     document.getElementById('open-index-btn').style.opacity = 1;
-    
+
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
-    if (closeGalleryBtn) { closeGalleryBtn.style.opacity = 1; closeGalleryBtn.style.pointerEvents = 'auto'; }
-    document.body.style.overflowY = 'hidden'; 
-    updateGalleryPhoto(0); 
+    if (closeGalleryBtn) {
+        closeGalleryBtn.style.opacity = 1;
+        closeGalleryBtn.style.pointerEvents = 'auto';
+    }
+
+    document.body.style.overflowY = 'hidden';
+    updateGalleryPhoto(0);
 }
 
 const mainTitleEl = document.getElementById('main-title');
@@ -186,22 +199,29 @@ const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtnEl) {
     closeGalleryBtnEl.addEventListener('click', () => {
         isGalleryMode = false;
+
         const bgPhotoEl = document.getElementById('bg-photo');
-        if(bgPhotoEl) { bgPhotoEl.classList.remove('gallery-layout'); bgPhotoEl.style.transition = 'none'; }
+        if (bgPhotoEl) {
+            bgPhotoEl.classList.remove('gallery-layout');
+            bgPhotoEl.style.transition = 'none';
+        }
+
         document.getElementById('main-title-container').style.opacity = 1;
         document.getElementById('main-title-container').style.pointerEvents = 'auto';
         document.getElementById('dark-overlay').style.opacity = 0.4;
         document.getElementById('gallery-counter').style.opacity = 0;
         document.getElementById('open-index-btn').style.opacity = 0;
-        closeGalleryBtnEl.style.opacity = 0; closeGalleryBtnEl.style.pointerEvents = 'none';
-        document.body.style.overflowY = 'scroll'; 
+        closeGalleryBtnEl.style.opacity = 0;
+        closeGalleryBtnEl.style.pointerEvents = 'none';
+        document.body.style.overflowY = 'scroll';
         updateAlbumCover(true);
     });
 }
 
 if (document.getElementById('open-index-btn')) {
     document.getElementById('open-index-btn').addEventListener('click', (e) => {
-        e.stopPropagation(); buildIndexGrid();
+        e.stopPropagation();
+        buildIndexGrid();
         document.getElementById('gallery-index-panel').classList.add('open');
     });
 }
@@ -214,7 +234,8 @@ if (document.getElementById('close-index-btn')) {
 
 window.addEventListener('wheel', (e) => {
     if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
-    if (isThrottled) return; 
+    if (isThrottled) return;
+
     const album = albums[currentAlbumIndex];
     if (e.deltaY > 20) {
         currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
@@ -227,11 +248,14 @@ window.addEventListener('wheel', (e) => {
     }
 });
 
-function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
+function throttleScroll() {
+    isThrottled = true;
+    setTimeout(() => { isThrottled = false; }, 600);
+}
 
-// 🍏 修正重點 1：恢復照片完美的純粹過渡，透過切換 light-mode class 動態顯示白漸層
 window.addEventListener('scroll', () => {
-    if (isGalleryMode) return; 
+    if (isGalleryMode) return;
+
     const scrollY = window.scrollY;
     const windowHeight = window.innerHeight;
     const progress = Math.min(scrollY / windowHeight, 4);
@@ -244,11 +268,11 @@ window.addEventListener('scroll', () => {
     const currentAlbum = albums[currentAlbumIndex];
 
     if (progress < 0.2) {
-        if(btnPrev) { btnPrev.style.opacity = "1"; btnPrev.style.pointerEvents = "auto"; }
-        if(btnNext) { btnNext.style.opacity = "1"; btnNext.style.pointerEvents = "auto"; }
+        if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
+        if (btnNext) { btnNext.style.opacity = '1'; btnNext.style.pointerEvents = 'auto'; }
     } else {
-        if(btnPrev) { btnPrev.style.opacity = "0"; btnPrev.style.pointerEvents = "none"; }
-        if(btnNext) { btnNext.style.opacity = "0"; btnNext.style.pointerEvents = "none"; }
+        if (btnPrev) { btnPrev.style.opacity = '0'; btnPrev.style.pointerEvents = 'none'; }
+        if (btnNext) { btnNext.style.opacity = '0'; btnNext.style.pointerEvents = 'none'; }
     }
 
     if (progress <= 1) {
@@ -258,41 +282,39 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) { 
-            locationHint.innerHTML = currentAlbum.location; 
-            locationHint.style.opacity = Math.min(progress * 1.5, 1); 
-            locationHint.classList.remove('light-mode'); // 看照片時關閉白底，還原深色通透
-        }
-        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
-        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
-    } 
-    else if (progress > 1 && progress <= 2) {
-        if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
-        if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (locationHint) { 
-            locationHint.innerHTML = currentAlbum.location; 
-            locationHint.style.opacity = 1; 
+        if (locationHint) {
+            locationHint.innerHTML = currentAlbum.location;
+            locationHint.style.opacity = Math.min(progress * 1.5, 1);
             locationHint.classList.remove('light-mode');
         }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
-    }
-    else if (progress > 2) {
-        const stage3Progress = (progress - 2) / 2; 
+    } else if (progress > 1 && progress <= 2) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        
+        if (locationHint) {
+            locationHint.innerHTML = currentAlbum.location;
+            locationHint.style.opacity = 1;
+            locationHint.classList.remove('light-mode');
+        }
+        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
+    } else if (progress > 2) {
+        const stage3Progress = (progress - 2) / 2;
+        if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
+        if (darkOverlay) darkOverlay.style.opacity = 0;
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
+
         if (mapContainer) {
             mapContainer.style.transition = 'none';
             mapContainer.style.opacity = Math.min(stage3Progress * 2.5, 1);
-            if (stage3Progress > 0.02) { 
-                mapContainer.style.pointerEvents = 'auto'; 
+            if (stage3Progress > 0.02) {
+                mapContainer.style.pointerEvents = 'auto';
                 updateLocationHintText();
-                if(locationHint) locationHint.classList.add('light-mode'); // 進入地圖時才開啟和紙白底
-            } else { 
-                mapContainer.style.pointerEvents = 'none'; 
-                if(locationHint) locationHint.classList.remove('light-mode');
+                if (locationHint) locationHint.classList.add('light-mode');
+            } else {
+                mapContainer.style.pointerEvents = 'none';
+                if (locationHint) locationHint.classList.remove('light-mode');
             }
         }
     }
@@ -301,45 +323,115 @@ window.addEventListener('scroll', () => {
 function updateLocationHintText() {
     const hint = document.getElementById('location-hint');
     if (!hint) return;
+
     hint.style.opacity = 1;
     if (currentLayer === 1) {
-        hint.innerHTML = "📍 🔍 請選擇日本八大地方板塊";
+        hint.innerHTML = '📍 🔍 請選擇日本八大地方板塊';
     } else if (currentLayer === 2) {
         hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ． 請選擇都道府縣`;
+    } else if (currentLayer === 3 && activePrefectureGroup) {
+        const title = getPrefectureTitle(activePrefectureGroup);
+        hint.innerHTML = `📍 ${title} ． 請點擊綠色大頭針進入專題`;
     }
+}
+
+function getPrefectureTitle(g) {
+    const titleEl = g ? g.querySelector('title') : null;
+    return titleEl ? titleEl.textContent.split(' / ')[0] : '';
 }
 
 function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
+
     const code = parseInt(codeAttr, 10);
-    
-    if (code === 47) return 'region-okinawa'; 
-    if (code === 1) return 'region-hokkaido'; 
-    if (code >= 2 && code <= 7) return 'region-tohoku'; 
-    if (code >= 8 && code <= 14) return 'region-kanto'; 
-    if (code >= 15 && code <= 23) return 'region-chubu'; 
-    if (code >= 24 && code <= 30) return 'region-kinki'; 
-    if (code >= 31 && code <= 35) return 'region-chugoku'; 
-    if (code >= 36 && code <= 39) return 'region-shikoku'; 
-    if (code >= 40 && code <= 46) return 'region-kyushu'; 
+    if (code === 47) return 'region-okinawa';
+    if (code === 1) return 'region-hokkaido';
+    if (code >= 2 && code <= 7) return 'region-tohoku';
+    if (code >= 8 && code <= 14) return 'region-kanto';
+    if (code >= 15 && code <= 23) return 'region-chubu';
+    if (code >= 24 && code <= 30) return 'region-kinki';
+    if (code >= 31 && code <= 35) return 'region-chugoku';
+    if (code >= 36 && code <= 39) return 'region-shikoku';
+    if (code >= 40 && code <= 46) return 'region-kyushu';
     return null;
 }
 
-// 🍏 空間計算核心：利用實體矩陣 CTM 取代字串偏誤，保證 100% 精準對齊
-function getRegionTrueCenter(regionClass) {
-    const svgEl = document.getElementById('japan-map');
-    const members = document.querySelectorAll(`.prefectures .${regionClass}`);
-    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-    
-    members.forEach(m => {
-        const box = m.getBBox();
-        if (box.width === 0 || box.height === 0) return;
-        
-        let matrix = svgEl.createSVGMatrix();
-        if (m.transform.baseVal.numItems > 0) {
-            matrix = m.transform.baseVal.consolidate().matrix;
+function setSvgMapClass(layerClass) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap) return;
+    svgMap.setAttribute('class', `geolonia-svg-map ${layerClass}`.trim());
+}
+
+function setViewBox(box) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap) return;
+
+    currentViewBox = { ...box };
+    svgMap.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+}
+
+function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+}
+
+function animateViewBox(targetBox, duration = 850) {
+    if (viewBoxAnimationId) cancelAnimationFrame(viewBoxAnimationId);
+
+    const startBox = { ...currentViewBox };
+    const startTime = performance.now();
+
+    function tick(now) {
+        const rawProgress = Math.min((now - startTime) / duration, 1);
+        const p = easeOutCubic(rawProgress);
+
+        const nextBox = {
+            x: startBox.x + (targetBox.x - startBox.x) * p,
+            y: startBox.y + (targetBox.y - startBox.y) * p,
+            width: startBox.width + (targetBox.width - startBox.width) * p,
+            height: startBox.height + (targetBox.height - startBox.height) * p
+        };
+
+        setViewBox(nextBox);
+
+        if (rawProgress < 1) {
+            viewBoxAnimationId = requestAnimationFrame(tick);
+        } else {
+            viewBoxAnimationId = null;
+            setViewBox(targetBox);
         }
+    }
+
+    viewBoxAnimationId = requestAnimationFrame(tick);
+}
+
+function getBoundsInSvg(elements) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap || !elements || !elements.length) return null;
+
+    const svgScreenMatrix = svgMap.getScreenCTM();
+    if (!svgScreenMatrix) return null;
+
+    const screenToSvg = svgScreenMatrix.inverse();
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    elements.forEach(el => {
+        if (!el || el.style.display === 'none') return;
+
+        let box;
+        try {
+            box = el.getBBox();
+        } catch (err) {
+            return;
+        }
+
+        if (!box || box.width === 0 || box.height === 0) return;
+
+        const localToScreen = el.getScreenCTM();
+        if (!localToScreen) return;
 
         const corners = [
             { x: box.x, y: box.y },
@@ -348,23 +440,106 @@ function getRegionTrueCenter(regionClass) {
             { x: box.x + box.width, y: box.y + box.height }
         ];
 
-        corners.forEach(c => {
-            const pt = svgEl.createSVGPoint();
-            pt.x = c.x; pt.y = c.y;
-            const globalPt = pt.matrixTransform(matrix);
-            
-            if (globalPt.x < minX) minX = globalPt.x;
-            if (globalPt.y < minY) minY = globalPt.y;
-            if (globalPt.x > maxX) maxX = globalPt.x;
-            if (globalPt.y > maxY) maxY = globalPt.y;
+        corners.forEach(corner => {
+            const point = svgMap.createSVGPoint();
+            point.x = corner.x;
+            point.y = corner.y;
+
+            const screenPoint = point.matrixTransform(localToScreen);
+            const svgPoint = screenPoint.matrixTransform(screenToSvg);
+
+            minX = Math.min(minX, svgPoint.x);
+            minY = Math.min(minY, svgPoint.y);
+            maxX = Math.max(maxX, svgPoint.x);
+            maxY = Math.max(maxY, svgPoint.y);
         });
     });
-    
-    if (minX === Infinity) return { x: 500, y: 500 }; 
+
+    if (!Number.isFinite(minX) || !Number.isFinite(minY) || !Number.isFinite(maxX) || !Number.isFinite(maxY)) {
+        return null;
+    }
+
     return {
-        x: (minX + maxX) / 2,
-        y: (minY + maxY) / 2
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
     };
+}
+
+function getRegionBounds(regionClass) {
+    const members = Array.from(document.querySelectorAll(`.prefectures .${regionClass}`));
+    return getBoundsInSvg(members);
+}
+
+function getPrefectureBounds(prefectureGroup) {
+    return getBoundsInSvg([prefectureGroup]);
+}
+
+function fitMapToBounds(bounds, options = {}) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap || !bounds) return;
+
+    const padding = options.padding ?? 1.45;
+    const minWidth = options.minWidth ?? 0;
+    const duration = options.duration ?? 850;
+
+    const svgWidth = svgMap.clientWidth || originalViewBox.width;
+    const svgHeight = svgMap.clientHeight || originalViewBox.height;
+    const viewportRatio = svgWidth / svgHeight;
+
+    let targetWidth = Math.max(bounds.width * padding, minWidth);
+    let targetHeight = bounds.height * padding;
+
+    if (targetWidth / targetHeight > viewportRatio) {
+        targetHeight = targetWidth / viewportRatio;
+    } else {
+        targetWidth = targetHeight * viewportRatio;
+    }
+
+    if (targetWidth < minWidth) {
+        targetWidth = minWidth;
+        targetHeight = targetWidth / viewportRatio;
+    }
+
+    const centerX = bounds.x + bounds.width / 2;
+    const centerY = bounds.y + bounds.height / 2;
+
+    const targetBox = {
+        x: centerX - targetWidth / 2,
+        y: centerY - targetHeight / 2,
+        width: targetWidth,
+        height: targetHeight
+    };
+
+    animateViewBox(targetBox, duration);
+}
+
+function resetMapView() {
+    animateViewBox(originalViewBox, 850);
+}
+
+function getCenterInsidePrefectureContainer(g) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap || !g) return { x: 500, y: 500 };
+
+    let box;
+    try {
+        box = g.getBBox();
+    } catch (err) {
+        return { x: 500, y: 500 };
+    }
+
+    let matrix = svgMap.createSVGMatrix();
+    if (g.transform && g.transform.baseVal && g.transform.baseVal.numItems > 0) {
+        matrix = g.transform.baseVal.consolidate().matrix;
+    }
+
+    const point = svgMap.createSVGPoint();
+    point.x = box.x + box.width / 2;
+    point.y = box.y + box.height / 2;
+
+    return point.matrixTransform(matrix);
 }
 
 function loadAndInitMap() {
@@ -372,23 +547,35 @@ function loadAndInitMap() {
         .then(response => response.text())
         .then(svgText => {
             const wrapper = document.getElementById('map-svg-wrapper');
-            if(!wrapper) return;
+            if (!wrapper) return;
+
             wrapper.innerHTML = svgText;
 
             const svgEl = wrapper.querySelector('svg');
-            if(!svgEl) return;
+            if (!svgEl) return;
+
             svgEl.setAttribute('id', 'japan-map');
-            svgEl.classList.add('map-layer-1'); 
+            svgEl.setAttribute('class', 'geolonia-svg-map map-layer-1');
+            svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+
+            const initialBox = svgEl.viewBox.baseVal;
+            originalViewBox = {
+                x: initialBox.x || 0,
+                y: initialBox.y || 0,
+                width: initialBox.width || 1000,
+                height: initialBox.height || 1000
+            };
+            currentViewBox = { ...originalViewBox };
 
             const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
-            if(zoomGroup) {
+            if (zoomGroup) {
                 zoomGroup.setAttribute('id', 'map-zoom-group');
+                zoomGroup.style.transform = 'none';
                 zoomGroup.style.transformOrigin = '0 0';
-                zoomGroup.style.transform = 'translate(0px, 0px) scale(1)';
             }
 
             const prefContainer = svgEl.querySelector('.prefectures');
-            if(!prefContainer) return;
+            if (!prefContainer) return;
 
             const prefGroups = prefContainer.querySelectorAll('g.prefecture');
             prefGroups.forEach(g => {
@@ -396,9 +583,9 @@ function loadAndInitMap() {
                 const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
                 dirtyClasses.forEach(c => g.classList.remove(c));
 
-                if(rClass) {
+                if (rClass) {
                     if (rClass === 'region-okinawa') {
-                        g.style.display = 'none'; // 維持沖繩本島層級的隱藏
+                        g.style.display = 'none';
                     } else {
                         g.classList.add(rClass);
                     }
@@ -407,85 +594,98 @@ function loadAndInitMap() {
 
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
+
             albums.forEach((album, idx) => {
-                spotsLayer.innerHTML += `
-                    <g class="map-pin spot-pin" data-album-index="${idx}" id="${album.spotId}">
-                        <g transform="translate(-12, -22)">
-                            <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
-                            <circle cx="12" cy="11" r="3" fill="#fff"/>
-                        </g>
-                        <text x="16" y="14" class="spot-label">${album.spotName}</text>
+                const pin = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                pin.setAttribute('class', 'map-pin spot-pin');
+                pin.setAttribute('data-album-index', String(idx));
+                pin.setAttribute('id', album.spotId);
+
+                pin.innerHTML = `
+                    <g transform="translate(-12, -22)">
+                        <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" fill="#2ed573"/>
+                        <circle cx="12" cy="11" r="3" fill="#fff"/>
                     </g>
+                    <text x="16" y="14" class="spot-label">${album.spotName}</text>
                 `;
+                spotsLayer.appendChild(pin);
             });
             prefContainer.appendChild(spotsLayer);
 
-            setTimeout(calculateGeometries, 150);
-            setupStageEvents();
+            requestAnimationFrame(() => {
+                calculateGeometries();
+                setupStageEvents();
+            });
         })
-        .catch(err => console.error("地圖加載失敗:", err));
+        .catch(err => console.error('地圖加載失敗:', err));
 }
 
-// 🍏 修正重點 2：【空間淨化演算法】強制尋找並斬殺幽靈畫中畫島嶼，保證 100% 幾何置中
 function calculateGeometries() {
     const svgEl = document.getElementById('japan-map');
     const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
-    
+    if (!svgEl) return;
+
     prefGroups.forEach(g => {
         if (g.style.display === 'none') return;
-        
-        const paths = Array.from(g.querySelectorAll('path, polygon'));
-        if (paths.length === 0) return;
+
+        const parts = Array.from(g.querySelectorAll('path, polygon'));
+        if (parts.length === 0) return;
 
         let matrix = svgEl.createSVGMatrix();
-        if (g.transform.baseVal.numItems > 0) {
+        if (g.transform && g.transform.baseVal && g.transform.baseVal.numItems > 0) {
             matrix = g.transform.baseVal.consolidate().matrix;
         }
 
-        // 1. 測量該縣市所有版塊，找出「面積最大的主島」
         let maxArea = 0;
         let mainlandCenter = { x: 0, y: 0 };
-        const pathData = paths.map(p => {
-            const box = p.getBBox();
-            const pt = svgEl.createSVGPoint();
-            pt.x = box.x + box.width / 2;
-            pt.y = box.y + box.height / 2;
-            const globalCenter = pt.matrixTransform(matrix);
-            return { p, area: box.width * box.height, cx: globalCenter.x, cy: globalCenter.y };
+
+        const partData = parts.map(part => {
+            const box = part.getBBox();
+            const point = svgEl.createSVGPoint();
+            point.x = box.x + box.width / 2;
+            point.y = box.y + box.height / 2;
+            const center = point.matrixTransform(matrix);
+            return {
+                part,
+                area: box.width * box.height,
+                cx: center.x,
+                cy: center.y
+            };
         });
 
-        pathData.forEach(d => {
+        partData.forEach(d => {
             if (d.area > maxArea) {
                 maxArea = d.area;
                 mainlandCenter = { x: d.cx, y: d.cy };
             }
         });
 
-        // 2. 空間淨化：任何距離本島中心大於 200 單位的碎片 (即是被排版亂貼的畫中畫) 直接物理刪除！
-        pathData.forEach(d => {
-            const distance = Math.sqrt(Math.pow(d.cx - mainlandCenter.x, 2) + Math.pow(d.cy - mainlandCenter.y, 2));
-            if (distance > 200) {
-                d.p.remove(); // 徹底斬除鹿兒島奄美、東京小笠原等幽靈碎片！
-            }
+        partData.forEach(d => {
+            const distance = Math.hypot(d.cx - mainlandCenter.x, d.cy - mainlandCenter.y);
+            if (distance > 220) d.part.remove();
         });
 
-        // 3. 碎片刪除後，重新取得乾淨的純淨中心點
-        const cleanBox = g.getBBox();
-        const pt = svgEl.createSVGPoint();
-        pt.x = cleanBox.x + cleanBox.width / 2;
-        pt.y = cleanBox.y + cleanBox.height / 2;
-        const finalCenter = pt.matrixTransform(matrix);
+        const bounds = getPrefectureBounds(g);
+        if (bounds) {
+            g.dataset.mapX = String(bounds.x);
+            g.dataset.mapY = String(bounds.y);
+            g.dataset.mapWidth = String(bounds.width);
+            g.dataset.mapHeight = String(bounds.height);
+        }
 
-        g.setAttribute('data-center-x', finalCenter.x);
-        g.setAttribute('data-center-y', finalCenter.y);
+        const center = getCenterInsidePrefectureContainer(g);
+        g.setAttribute('data-center-x', String(center.x));
+        g.setAttribute('data-center-y', String(center.y));
     });
 
-    albums.forEach((album) => {
+    albums.forEach(album => {
         const prefG = document.querySelector(`.prefectures ${album.selector}`);
         const spotPin = document.getElementById(album.spotId);
-        if (prefG && spotPin) {
-            const cx = parseFloat(prefG.getAttribute('data-center-x'));
-            const cy = parseFloat(prefG.getAttribute('data-center-y'));
+        if (!prefG || !spotPin) return;
+
+        const cx = parseFloat(prefG.getAttribute('data-center-x'));
+        const cy = parseFloat(prefG.getAttribute('data-center-y'));
+        if (Number.isFinite(cx) && Number.isFinite(cy)) {
             spotPin.setAttribute('transform', `translate(${cx}, ${cy})`);
         }
     });
@@ -493,38 +693,39 @@ function calculateGeometries() {
 
 function setupStageEvents() {
     const svgMap = document.getElementById('japan-map');
+    const backBtn = document.getElementById('back-to-map-btn');
+    if (!svgMap) return;
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
         g.addEventListener('mouseenter', () => {
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
+            const hint = document.getElementById('location-hint');
+
             if (currentLayer === 1) {
                 if (localRegion) {
-                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => {
-                        el.classList.add('region-hover-pulse');
-                    });
-                    document.getElementById('location-hint').innerHTML = `📍 探索 ➔ ${regionNames[localRegion]}`;
+                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => el.classList.add('region-hover-pulse'));
+                    if (hint) hint.innerHTML = `📍 探索 ➔ ${regionNames[localRegion]}`;
                 }
             } else if (currentLayer === 2) {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
-                    const title = g.querySelector('title') ? g.querySelector('title').textContent.split(' / ')[0] : '';
-                    document.getElementById('location-hint').innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${title}`;
+                    if (hint) hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${getPrefectureTitle(g)}`;
                 }
             }
         });
 
         g.addEventListener('mouseleave', () => {
             const localRegion = getRegionClass(g);
+
             if (currentLayer === 1) {
                 if (localRegion) {
-                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => {
-                        el.classList.remove('region-hover-pulse');
-                    });
+                    document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => el.classList.remove('region-hover-pulse'));
                 }
             } else if (currentLayer === 2) {
                 g.classList.remove('pref-hover-pulse');
             }
+
             updateLocationHintText();
         });
 
@@ -532,116 +733,119 @@ function setupStageEvents() {
             e.stopPropagation();
             if (g.style.display === 'none') return;
 
-            const zoomGroup = document.getElementById('map-zoom-group');
-            const vW = svgMap.viewBox.baseVal.width || 1000;
-            const vH = svgMap.viewBox.baseVal.height || 1000;
-            const viewCenterX = vW / 2;
-            const viewCenterY = vH / 2;
-
             if (currentLayer === 1) {
                 activeRegionClass = getRegionClass(g);
                 if (!activeRegionClass) return;
 
-                const rCenter = getRegionTrueCenter(activeRegionClass);
-                let scaleLevel = regionScales[activeRegionClass] || 2.5;
-                
-                const tx = viewCenterX - scaleLevel * rCenter.x;
-                const ty = viewCenterY - scaleLevel * rCenter.y;
-                
-                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+                const bounds = getRegionBounds(activeRegionClass);
+                fitMapToBounds(bounds, {
+                    padding: 1.42,
+                    minWidth: 300,
+                    duration: 900
+                });
 
                 currentLayer = 2;
-                svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
-                document.getElementById('back-to-map-btn').style.opacity = 1;
-                document.getElementById('back-to-map-btn').style.pointerEvents = 'auto';
-                updateLocationHintText();
+                activePrefectureGroup = null;
+                setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
 
+                if (backBtn) {
+                    backBtn.style.opacity = 1;
+                    backBtn.style.pointerEvents = 'auto';
+                }
+
+                updateLocationHintText();
             } else if (currentLayer === 2) {
                 if (!g.classList.contains(activeRegionClass)) return;
-                
-                const hasAlbum = albums.some(a => g.classList.contains(a.selector.replace('.','')));
+
+                const hasAlbum = albums.some(a => g.classList.contains(a.selector.replace('.', '')));
                 if (!hasAlbum) return;
 
                 activePrefectureGroup = g;
-                const pCenterX = parseFloat(g.getAttribute('data-center-x'));
-                const pCenterY = parseFloat(g.getAttribute('data-center-y'));
-                
-                const scaleLevel = 6.0; 
-                const tx = viewCenterX - scaleLevel * pCenterX;
-                const ty = viewCenterY - scaleLevel * pCenterY;
-                
-                zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+                const bounds = getPrefectureBounds(g);
+                fitMapToBounds(bounds, {
+                    padding: 3.2,
+                    minWidth: 155,
+                    duration: 900
+                });
 
                 currentLayer = 3;
-                svgMap.className = `geolonia-svg-map map-layer-3 ${activeRegionClass}`;
-                const title = g.querySelector('title') ? g.querySelector('title').textContent.split(' / ')[0] : '';
-                document.getElementById('location-hint').innerHTML = `📍 ${title} ． 請點擊綠色大頭針進入專題`;
+                setSvgMapClass(`map-layer-3 ${activeRegionClass}`);
+                updateLocationHintText();
             }
         });
     });
 
-    document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        const zoomGroup = document.getElementById('map-zoom-group');
-        const vW = svgMap.viewBox.baseVal.width || 1000;
-        const vH = svgMap.viewBox.baseVal.height || 1000;
-        const viewCenterX = vW / 2;
-        const viewCenterY = vH / 2;
+    if (backBtn) {
+        backBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
 
-        if (currentLayer === 3) {
-            const rCenter = getRegionTrueCenter(activeRegionClass);
-            let scaleLevel = regionScales[activeRegionClass] || 2.5;
-            const tx = viewCenterX - scaleLevel * rCenter.x;
-            const ty = viewCenterY - scaleLevel * rCenter.y;
-            
-            zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
+            if (currentLayer === 3) {
+                const bounds = getRegionBounds(activeRegionClass);
+                fitMapToBounds(bounds, {
+                    padding: 1.42,
+                    minWidth: 300,
+                    duration: 850
+                });
 
-            currentLayer = 2;
-            svgMap.className = `geolonia-svg-map map-layer-2 ${activeRegionClass}`;
-            updateLocationHintText();
-            hidePreview();
-        } else if (currentLayer === 2) {
-            zoomGroup.style.transform = `translate(0px, 0px) scale(1)`;
-            currentLayer = 1;
-            svgMap.className = `geolonia-svg-map map-layer-1`;
-            document.getElementById('back-to-map-btn').style.opacity = 0;
-            document.getElementById('back-to-map-btn').style.pointerEvents = 'none';
-            document.querySelectorAll('.prefectures g.prefecture').forEach(el => {
-                el.classList.remove('region-hover-pulse', 'pref-hover-pulse');
-            });
-            activeRegionClass = null;
-            updateLocationHintText();
-        }
-    });
+                currentLayer = 2;
+                activePrefectureGroup = null;
+                setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
+                hidePreview();
+                updateLocationHintText();
+            } else if (currentLayer === 2) {
+                resetMapView();
+                currentLayer = 1;
+                activeRegionClass = null;
+                activePrefectureGroup = null;
+                setSvgMapClass('map-layer-1');
+
+                backBtn.style.opacity = 0;
+                backBtn.style.pointerEvents = 'none';
+
+                document.querySelectorAll('.prefectures g.prefecture').forEach(el => {
+                    el.classList.remove('region-hover-pulse', 'pref-hover-pulse');
+                });
+
+                hidePreview();
+                updateLocationHintText();
+            }
+        });
+    }
 
     document.querySelectorAll('.spot-pin').forEach(pin => {
-        const albumIndex = parseInt(pin.getAttribute('data-album-index'));
+        const albumIndex = parseInt(pin.getAttribute('data-album-index'), 10);
         const album = albums[albumIndex];
-        
+
         pin.addEventListener('mousemove', (e) => {
             if (currentLayer !== 3) return;
+
             const previewCard = document.getElementById('map-preview-card');
             const previewImg = document.getElementById('map-preview-img');
             const previewTitle = document.getElementById('map-preview-title');
-            
+            if (!previewCard || !previewImg || !previewTitle) return;
+
             previewImg.src = album.photos[0];
             previewTitle.textContent = album.title;
             previewCard.style.left = `${e.clientX + 20}px`;
             previewCard.style.top = `${e.clientY + 20}px`;
             previewCard.style.opacity = 1;
         });
-        
+
         pin.addEventListener('mouseleave', () => hidePreview());
         pin.addEventListener('click', (e) => {
-            e.stopPropagation(); hidePreview();
+            e.stopPropagation();
+            hidePreview();
             openGalleryDirectly(albumIndex);
         });
     });
 }
 
-function hidePreview() { document.getElementById('map-preview-card').style.opacity = 0; }
+function hidePreview() {
+    const card = document.getElementById('map-preview-card');
+    if (card) card.style.opacity = 0;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
-    updateAlbumCover(true); 
-    loadAndInitMap(); 
+    updateAlbumCover(true);
+    loadAndInitMap();
 });
