@@ -40,7 +40,6 @@ const albums = [
     }
 ];
 
-// 🍏 修正重點 1：依據建議，暫時移除沖繩，維持地圖純粹與縮放精準度
 const regionNames = {
     'region-hokkaido': '北海道地方',
     'region-tohoku': '東北地方',
@@ -52,16 +51,16 @@ const regionNames = {
     'region-kyushu': '九州地方'
 };
 
-// 🍏 修正重點 2：大幅拉高精緻/寬幅型板塊的倍率，確保畫面飽滿不留過多白邊
+// 🍏 比例尺深度校準：配合絕對置中演算法，調校九大板塊的完美飽滿度
 const regionScales = {
-    'region-hokkaido': 2.5, 
-    'region-tohoku': 3.2,   
-    'region-kanto': 4.5,    
-    'region-chubu': 3.2,    
-    'region-kinki': 4.2,    
-    'region-chugoku': 4.5,  
-    'region-shikoku': 5.2,  
-    'region-kyushu': 4.2    
+    'region-hokkaido': 2.3, 
+    'region-tohoku': 2.6,   
+    'region-kanto': 4.0,    
+    'region-chubu': 3.4,    
+    'region-kinki': 4.0,    
+    'region-chugoku': 3.8,  
+    'region-shikoku': 4.8,  
+    'region-kyushu': 3.6    
 };
 
 let currentAlbumIndex = 0; 
@@ -72,22 +71,18 @@ let isThrottled = false;
 let currentLayer = 1; 
 let activeRegionClass = null;
 let activePrefectureGroup = null;
-let pinsDropped = false;
 
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
-
     if (isInitial) {
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
         bgPhotoEl.style.opacity = 1;
         bgPhotoEl.style.transition = 'none';
         return;
     }
-
     bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
     bgPhotoEl.style.opacity = 0;
-
     setTimeout(() => {
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
         bgPhotoEl.style.opacity = 1;
@@ -168,10 +163,7 @@ function openGalleryDirectly(albumIndex) {
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
     const bgPhotoEl = document.getElementById('bg-photo');
-    if(bgPhotoEl) {
-        bgPhotoEl.classList.add('gallery-layout');
-        bgPhotoEl.style.opacity = 1;
-    }
+    if(bgPhotoEl) { bgPhotoEl.classList.add('gallery-layout'); bgPhotoEl.style.opacity = 1; }
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -247,14 +239,6 @@ window.addEventListener('scroll', () => {
     const mapContainer = document.getElementById('map-container');
     const currentAlbum = albums[currentAlbumIndex];
 
-    if (progress < 0.2) {
-        if(btnPrev) { btnPrev.style.opacity = "1"; btnPrev.style.pointerEvents = "auto"; }
-        if(btnNext) { btnNext.style.opacity = "1"; btnNext.style.pointerEvents = "auto"; }
-    } else {
-        if(btnPrev) { btnPrev.style.opacity = "0"; btnPrev.style.pointerEvents = "none"; }
-        if(btnNext) { btnNext.style.opacity = "0"; btnNext.style.pointerEvents = "none"; }
-    }
-
     if (progress <= 1) {
         if (mainTitleContainer) {
             mainTitleContainer.style.opacity = 1 - progress;
@@ -277,7 +261,6 @@ window.addEventListener('scroll', () => {
         const stage3Progress = (progress - 2) / 2; 
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (mapContainer) {
             mapContainer.style.transition = 'none';
@@ -295,7 +278,7 @@ function updateLocationHintText() {
     if (!hint) return;
     hint.style.opacity = 1;
     if (currentLayer === 1) {
-        hint.innerHTML = "📍 🔍 請選擇日本八大地方板塊"; // 沖繩移除，剩八大
+        hint.innerHTML = "📍 🔍 請選擇日本八大地方板塊";
     } else if (currentLayer === 2) {
         hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ． 請選擇都道府縣`;
     }
@@ -306,7 +289,7 @@ function getRegionClass(gElement) {
     if (!codeAttr) return null;
     const code = parseInt(codeAttr, 10);
     
-    if (code === 47) return 'region-okinawa'; // 保留判定，用於徹底隱藏
+    if (code === 47) return 'region-okinawa'; 
     if (code === 1) return 'region-hokkaido'; 
     if (code >= 2 && code <= 7) return 'region-tohoku'; 
     if (code >= 8 && code <= 14) return 'region-kanto'; 
@@ -318,21 +301,22 @@ function getRegionClass(gElement) {
     return null;
 }
 
+// 🍏 新增：讀取真實無偏移的地方邊界極值，達成 100% 動態置中
 function getRegionTrueCenter(regionClass) {
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
     members.forEach(m => {
-        const rMinX = parseFloat(m.getAttribute('data-min-x'));
-        const rMinY = parseFloat(m.getAttribute('data-min-y'));
-        const rMaxX = parseFloat(m.getAttribute('data-max-x'));
-        const rMaxY = parseFloat(m.getAttribute('data-max-y'));
+        const pxMin = parseFloat(m.getAttribute('data-min-x'));
+        const pxMax = parseFloat(m.getAttribute('data-max-x'));
+        const pyMin = parseFloat(m.getAttribute('data-min-y'));
+        const pyMax = parseFloat(m.getAttribute('data-max-y'));
         
-        if (!isNaN(rMinX)) {
-            if (rMinX < minX) minX = rMinX;
-            if (rMinY < minY) minY = rMinY;
-            if (rMaxX > maxX) maxX = rMaxX;
-            if (rMaxY > maxY) maxY = rMaxY;
+        if (!isNaN(pxMin)) {
+            if (pxMin < minX) minX = pxMin;
+            if (pxMax > maxX) maxX = pxMax;
+            if (pyMin < minY) minY = pyMin;
+            if (pyMax > maxY) maxY = pyMax;
         }
     });
     
@@ -356,23 +340,41 @@ function loadAndInitMap() {
             svgEl.setAttribute('id', 'japan-map');
             svgEl.classList.add('map-layer-1'); 
 
+            // 動態抓取 viewBox 中心點，防範不同螢幕或 SVG 解析度干擾
+            const vW = svgEl.viewBox.baseVal.width || 1000;
+            const vH = svgEl.viewBox.baseVal.height || 1000;
+            svgEl.setAttribute('data-cx', vW / 2);
+            svgEl.setAttribute('data-cy', vH / 2);
+
             const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
-            if(zoomGroup) zoomGroup.setAttribute('id', 'map-zoom-group');
+            if(zoomGroup) {
+                zoomGroup.setAttribute('id', 'map-zoom-group');
+                zoomGroup.style.transformOrigin = '0 0';
+                zoomGroup.style.transform = 'translate(0px, 0px) scale(1)';
+            }
 
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
 
+            // 抓取 SVG 原生群組的位移誤差
+            let offX = 0, offY = 0;
+            const tAttr = prefContainer.getAttribute('transform');
+            if (tAttr) {
+                const matches = tAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || tAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
+                if (matches) { offX = parseFloat(matches[1]); offY = parseFloat(matches[2]); }
+            }
+            prefContainer.setAttribute('data-offset-x', offX);
+            prefContainer.setAttribute('data-offset-y', offY);
+
             const prefGroups = prefContainer.querySelectorAll('g.prefecture');
             prefGroups.forEach(g => {
                 const rClass = getRegionClass(g);
-                
-                // 🍏 修正重點 3：嚴格清洗原生 SVG 帶來的髒標籤 (防止莫名反灰與 CSS 污染)
                 const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
                 dirtyClasses.forEach(c => g.classList.remove(c));
 
                 if(rClass) {
                     if (rClass === 'region-okinawa') {
-                        g.style.display = 'none'; // 🍏 徹底切除沖繩，拯救九州的幾何中心點
+                        g.style.display = 'none'; // 沖繩全島隱藏
                     } else {
                         g.classList.add(rClass);
                     }
@@ -400,11 +402,12 @@ function loadAndInitMap() {
         .catch(err => console.error("地圖加載失敗:", err));
 }
 
+// 🍏 幾何運算核心：淨化空間，完全排除幽靈小島的干擾，找出真正的本島中心
 function calculateGeometries() {
     const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
     
     prefGroups.forEach(g => {
-        if (g.style.display === 'none') return; // 略過隱藏的沖繩
+        if (g.style.display === 'none') return; 
         
         let baseX = 0, baseY = 0;
         const transformAttr = g.getAttribute('transform');
@@ -412,25 +415,47 @@ function calculateGeometries() {
             const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
             if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
         }
+        
         const paths = g.querySelectorAll('path, polygon');
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        let maxArea = 0, prefCx = 0, prefCy = 0;
+
         paths.forEach(p => {
             const box = p.getBBox();
             if(box.width === 0 || box.height === 0) return;
-            if (box.x < minX) minX = box.x; if (box.y < minY) minY = box.y;
-            if (box.x + box.width > maxX) maxX = box.x + box.width; if (box.y + box.height > maxY) maxY = box.y + box.height;
+            
+            const absX = baseX + box.x;
+            const absY = baseY + box.y;
+            
+            // 🍏 空間淨化：如果座標落在北海道左側的虛空海域 (x < 350 且 y < 350)，這絕對是 Geolonia 的幽靈畫中畫！
+            // 強制將該碎片隱藏，絕對不計入邊界算式，還給九州與中國乾淨的中心點！
+            if (absX < 350 && absY < 350) {
+                p.style.display = 'none';
+                return;
+            }
+
+            if (absX < minX) minX = absX;
+            if (absY < minY) minY = absY;
+            if (absX + box.width > maxX) maxX = absX + box.width;
+            if (absY + box.height > maxY) maxY = absY + box.height;
+
+            // 尋找該縣市中面積最大的實體陸塊，作為縣市層級的精準聚焦中心
+            const area = box.width * box.height;
+            if (area > maxArea) {
+                maxArea = area;
+                prefCx = absX + box.width / 2;
+                prefCy = absY + box.height / 2;
+            }
         });
-        if(minX === Infinity) return;
 
-        g.setAttribute('data-min-x', baseX + minX);
-        g.setAttribute('data-min-y', baseY + minY);
-        g.setAttribute('data-max-x', baseX + maxX);
-        g.setAttribute('data-max-y', baseY + maxY);
-
-        const cx = baseX + (minX + maxX) / 2;
-        const cy = baseY + (minY + maxY) / 2;
-        g.setAttribute('data-center-x', cx);
-        g.setAttribute('data-center-y', cy);
+        if (minX !== Infinity) {
+            g.setAttribute('data-min-x', minX);
+            g.setAttribute('data-min-y', minY);
+            g.setAttribute('data-max-x', maxX);
+            g.setAttribute('data-max-y', maxY);
+            g.setAttribute('data-center-x', prefCx);
+            g.setAttribute('data-center-y', prefCy);
+        }
     });
 
     albums.forEach((album) => {
@@ -485,18 +510,25 @@ function setupStageEvents() {
             e.stopPropagation();
             if (g.style.display === 'none') return;
             
+            const vCx = parseFloat(svgMap.getAttribute('data-cx')) || 500;
+            const vCy = parseFloat(svgMap.getAttribute('data-cy')) || 500;
+            const prefContainer = document.querySelector('.prefectures');
+            const offX = parseFloat(prefContainer.getAttribute('data-offset-x')) || 0;
+            const offY = parseFloat(prefContainer.getAttribute('data-offset-y')) || 0;
+
+            const zoomGroup = document.getElementById('map-zoom-group');
+
             if (currentLayer === 1) {
                 activeRegionClass = getRegionClass(g);
                 if (!activeRegionClass) return;
 
                 const rCenter = getRegionTrueCenter(activeRegionClass);
-                const zoomGroup = document.getElementById('map-zoom-group');
-                
                 let scaleLevel = regionScales[activeRegionClass] || 2.5;
-                const tx = 500 - scaleLevel * rCenter.x;
-                const ty = 500 - scaleLevel * rCenter.y;
                 
-                // 🍏 修正重點 4：重拾 style.transform 解鎖 CSS 的 0.85s 完美平滑動畫！
+                // 動態計算絕對置中公式 (支援任何 Viewbox 長寬)
+                const tx = vCx - scaleLevel * (rCenter.x + offX);
+                const ty = vCy - scaleLevel * (rCenter.y + offY);
+                
                 zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
                 currentLayer = 2;
@@ -514,12 +546,10 @@ function setupStageEvents() {
                 activePrefectureGroup = g;
                 const pCenterX = parseFloat(g.getAttribute('data-center-x'));
                 const pCenterY = parseFloat(g.getAttribute('data-center-y'));
-
-                const zoomGroup = document.getElementById('map-zoom-group');
                 
-                const scaleLevel = 8.5; // 第三層聚焦拉高
-                const tx = 500 - scaleLevel * pCenterX;
-                const ty = 500 - scaleLevel * pCenterY;
+                const scaleLevel = 7.5; // 第三層聚焦再拉高
+                const tx = vCx - scaleLevel * (pCenterX + offX);
+                const ty = vCy - scaleLevel * (pCenterY + offY);
                 
                 zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
@@ -534,12 +564,17 @@ function setupStageEvents() {
     document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         const zoomGroup = document.getElementById('map-zoom-group');
+        const vCx = parseFloat(svgMap.getAttribute('data-cx')) || 500;
+        const vCy = parseFloat(svgMap.getAttribute('data-cy')) || 500;
+        const prefContainer = document.querySelector('.prefectures');
+        const offX = parseFloat(prefContainer.getAttribute('data-offset-x')) || 0;
+        const offY = parseFloat(prefContainer.getAttribute('data-offset-y')) || 0;
 
         if (currentLayer === 3) {
             const rCenter = getRegionTrueCenter(activeRegionClass);
             let scaleLevel = regionScales[activeRegionClass] || 2.5;
-            const tx = 500 - scaleLevel * rCenter.x;
-            const ty = 500 - scaleLevel * rCenter.y;
+            const tx = vCx - scaleLevel * (rCenter.x + offX);
+            const ty = vCy - scaleLevel * (rCenter.y + offY);
             
             zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
