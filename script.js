@@ -235,6 +235,19 @@ function openGalleryDirectly(albumIndex) {
         bgPhotoEl.style.opacity = 1;
     }
 
+    const mapContainer = document.getElementById('map-container');
+    if (mapContainer) {
+        mapContainer.style.opacity = 0;
+        mapContainer.style.pointerEvents = 'none';
+    }
+
+    const backToMapBtn = document.getElementById('back-to-map-btn');
+    if (backToMapBtn) {
+        backToMapBtn.style.opacity = 0;
+        backToMapBtn.style.pointerEvents = 'none';
+    }
+
+    hidePreview(true);
     document.getElementById('main-title-container').style.opacity = 0;
     document.getElementById('main-title-container').style.pointerEvents = 'none';
     document.getElementById('dark-overlay').style.opacity = 0;
@@ -399,8 +412,15 @@ function updateLocationHintText() {
 }
 
 function getPrefectureTitle(g) {
-    const titleEl = g ? g.querySelector('title') : null;
-    return titleEl ? titleEl.textContent.split(' / ')[0] : '';
+    if (!g) return '';
+    const rawTitle = g.dataset.prefTitle || '';
+    return rawTitle ? rawTitle.split(' / ')[0] : '';
+}
+
+function getPrefectureTitleForPin(pin) {
+    const prefClass = pin ? pin.getAttribute('data-pref-class') : '';
+    const pref = prefClass ? document.querySelector(`.prefectures g.prefecture.${prefClass}`) : null;
+    return getPrefectureTitle(pref);
 }
 
 function getRegionClass(gElement) {
@@ -652,6 +672,12 @@ function loadAndInitMap() {
 
             const prefGroups = prefContainer.querySelectorAll('g.prefecture');
             prefGroups.forEach(g => {
+                const titleEl = g.querySelector('title');
+                if (titleEl) {
+                    g.dataset.prefTitle = titleEl.textContent;
+                    titleEl.remove();
+                }
+
                 const rClass = getRegionClass(g);
                 const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
                 dirtyClasses.forEach(c => g.classList.remove(c));
@@ -664,6 +690,8 @@ function loadAndInitMap() {
                     }
                 }
             });
+
+            svgEl.querySelectorAll('title').forEach(title => title.remove());
 
             const regionBadgesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             regionBadgesLayer.setAttribute('id', 'region-badges-layer');
@@ -1003,14 +1031,14 @@ function setupStageEvents() {
 
         pin.addEventListener('mouseenter', () => {
             if (currentLayer !== 2 && currentLayer !== 3) return;
-            showAlbumPreview(pinAlbums, pinAlbums[0]?.spotName || '', pin);
+            showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
         });
         pin.addEventListener('mousemove', cancelPreviewHide);
 
         pin.addEventListener('mouseleave', schedulePreviewHide);
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
-            showAlbumPreview(pinAlbums, pinAlbums[0]?.spotName || '', pin);
+            showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
         });
     });
 }
@@ -1020,7 +1048,7 @@ function showAlbumPreview(albumList, heading, anchor = null) {
     if (!card || !albumList || albumList.length === 0) return;
     cancelPreviewHide();
 
-    const countText = albumList.length > 1 ? `共 ${albumList.length} 本相簿` : albumList[0].location.replace('📍 ', '');
+    const countText = albumList.length > 1 ? `共 ${albumList.length} 本相簿` : '1 本相簿';
     const coverStack = albumList.slice(0, 3).map((album, index) => `
         <img class="preview-stack-img preview-stack-${index}" src="${album.photos[0]}" alt="${album.spotName}">
     `).join('');
@@ -1038,8 +1066,8 @@ function showAlbumPreview(albumList, heading, anchor = null) {
     card.innerHTML = `
         <div class="preview-cover-stack">${coverStack}</div>
         <div class="preview-kicker">${countText}</div>
-        <div class="preview-title">${albumList.length === 1 ? albumList[0].spotName : (heading || albumList[0].spotName)}</div>
-        <div class="preview-subtitle">${albumList.length === 1 ? albumList[0].title : '選擇一本相簿開始回味'}</div>
+        <div class="preview-title">${heading || getPrefectureTitle(anchor) || '相簿'}</div>
+        <div class="preview-subtitle">選擇一本相簿開始回味</div>
         <div class="preview-album-list">${albumItems}</div>
     `;
 
