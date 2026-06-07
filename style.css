@@ -36,8 +36,20 @@ body {
 .arrow { color: white; font-size: 1.5rem; font-weight: 300; opacity: 0; transition: opacity 0.4s ease; }
 .side-click-zone:hover .arrow { opacity: 0.8; }
 
+/* 🍏 修正重點 3：解耦文字與白漸層底。照片狀態時保持純透明，文字套用黑色強陰影保證清晰度 */
 #location-hint {
-    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; color: rgba(0, 0, 0, 0.8); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 400; z-index: 10; opacity: 0; background: linear-gradient(to top, rgba(244, 243, 239, 1) 0%, rgba(244, 243, 239, 0.4) 60%, transparent 100%); transition: opacity 0.4s ease; pointer-events: none;
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; 
+    color: rgba(255, 255, 255, 0.95); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; 
+    z-index: 10; opacity: 0; pointer-events: none;
+    background: transparent;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.6);
+    transition: opacity 0.4s ease, color 0.4s ease, background 0.4s ease, text-shadow 0.4s ease; 
+}
+/* 🍏 新增日夜模式：當滑動進入第三幕和紙地圖時，才優雅淡入白漸層與深色字 */
+#location-hint.light-mode {
+    color: rgba(10, 10, 12, 0.85);
+    text-shadow: 0 1px 3px rgba(255,255,255,0.9);
+    background: linear-gradient(to top, rgba(244, 243, 239, 1) 0%, rgba(244, 243, 239, 0.4) 60%, transparent 100%);
 }
 
 #gallery-counter {
@@ -78,6 +90,7 @@ body {
 
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
+#map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
 @keyframes regionSolidBreathe {
     0% { fill: #dcdad2; }
@@ -90,28 +103,16 @@ body {
     100% { fill: #c4c2ba; }
 }
 
-/* 🍏 修正重點 5：強制死鎖 SVG 容器縮放中心於 0 0，搭配 JS math 完美還原無缺陷的過渡轉場 */
-#map-zoom-group { 
-    transform-origin: 0 0 !important;
-    transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); 
-}
-
 /* ------------------------------------------
    第一層：全局區域舞台
    ------------------------------------------ */
+/* 🍏 修正重點 4：洗除不該出現的反灰代碼，讓滑鼠未指向時的地圖顏色 100% 絕對乾淨統一 */
 #japan-map.map-layer-1 .prefecture path,
 #japan-map.map-layer-1 .prefecture polygon {
     fill: #dcdad2; 
     stroke: #f4f3ef; 
     stroke-width: 0.6px;
     transition: fill 0.3s ease;
-}
-
-/* 🍏 取代了有 Bug 的 .chubu 等舊標籤，全面改採精準的 .region-xxx 選取 */
-#japan-map.map-layer-1 .region-chubu path, #japan-map.map-layer-1 .region-chubu polygon,
-#japan-map.map-layer-1 .region-chugoku path, #japan-map.map-layer-1 .region-chugoku polygon {
-    fill: #b4b2aa; 
-    stroke: #f4f3ef;
 }
 
 #japan-map.map-layer-1 .region-hover-pulse path,

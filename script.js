@@ -51,16 +51,16 @@ const regionNames = {
     'region-kyushu': '九州地方'
 };
 
-// 🍏 比例尺深度校準：配合絕對置中演算法，調校九大板塊的完美飽滿度
+// 🍏 比例尺二次優化：配合純淨版邊界，提供極致飽滿的視覺放大率
 const regionScales = {
     'region-hokkaido': 2.3, 
-    'region-tohoku': 2.6,   
-    'region-kanto': 4.0,    
+    'region-tohoku': 2.8,   
+    'region-kanto': 4.2,    
     'region-chubu': 3.4,    
-    'region-kinki': 4.0,    
+    'region-kinki': 4.2,    
     'region-chugoku': 3.8,  
     'region-shikoku': 4.8,  
-    'region-kyushu': 3.6    
+    'region-kyushu': 3.8    
 };
 
 let currentAlbumIndex = 0; 
@@ -75,14 +75,17 @@ let activePrefectureGroup = null;
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
+
     if (isInitial) {
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
         bgPhotoEl.style.opacity = 1;
         bgPhotoEl.style.transition = 'none';
         return;
     }
+
     bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
     bgPhotoEl.style.opacity = 0;
+
     setTimeout(() => {
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
         bgPhotoEl.style.opacity = 1;
@@ -226,6 +229,7 @@ window.addEventListener('wheel', (e) => {
 
 function throttleScroll() { isThrottled = true; setTimeout(() => { isThrottled = false; }, 600); }
 
+// 🍏 修正重點 1：恢復照片完美的純粹過渡，透過切換 light-mode class 動態顯示白漸層
 window.addEventListener('scroll', () => {
     if (isGalleryMode) return; 
     const scrollY = window.scrollY;
@@ -239,6 +243,14 @@ window.addEventListener('scroll', () => {
     const mapContainer = document.getElementById('map-container');
     const currentAlbum = albums[currentAlbumIndex];
 
+    if (progress < 0.2) {
+        if(btnPrev) { btnPrev.style.opacity = "1"; btnPrev.style.pointerEvents = "auto"; }
+        if(btnNext) { btnNext.style.opacity = "1"; btnNext.style.pointerEvents = "auto"; }
+    } else {
+        if(btnPrev) { btnPrev.style.opacity = "0"; btnPrev.style.pointerEvents = "none"; }
+        if(btnNext) { btnNext.style.opacity = "0"; btnNext.style.pointerEvents = "none"; }
+    }
+
     if (progress <= 1) {
         if (mainTitleContainer) {
             mainTitleContainer.style.opacity = 1 - progress;
@@ -246,14 +258,22 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
         if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
-        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = Math.min(progress * 1.5, 1); }
+        if (locationHint) { 
+            locationHint.innerHTML = currentAlbum.location; 
+            locationHint.style.opacity = Math.min(progress * 1.5, 1); 
+            locationHint.classList.remove('light-mode'); // 看照片時關閉白底，還原深色通透
+        }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } 
     else if (progress > 1 && progress <= 2) {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (locationHint) { locationHint.innerHTML = currentAlbum.location; locationHint.style.opacity = 1; }
+        if (locationHint) { 
+            locationHint.innerHTML = currentAlbum.location; 
+            locationHint.style.opacity = 1; 
+            locationHint.classList.remove('light-mode');
+        }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     }
@@ -261,6 +281,7 @@ window.addEventListener('scroll', () => {
         const stage3Progress = (progress - 2) / 2; 
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
+        
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (mapContainer) {
             mapContainer.style.transition = 'none';
@@ -268,7 +289,11 @@ window.addEventListener('scroll', () => {
             if (stage3Progress > 0.02) { 
                 mapContainer.style.pointerEvents = 'auto'; 
                 updateLocationHintText();
-            } else { mapContainer.style.pointerEvents = 'none'; }
+                if(locationHint) locationHint.classList.add('light-mode'); // 進入地圖時才開啟和紙白底
+            } else { 
+                mapContainer.style.pointerEvents = 'none'; 
+                if(locationHint) locationHint.classList.remove('light-mode');
+            }
         }
     }
 });
@@ -301,26 +326,41 @@ function getRegionClass(gElement) {
     return null;
 }
 
-// 🍏 新增：讀取真實無偏移的地方邊界極值，達成 100% 動態置中
+// 🍏 空間計算核心：利用實體矩陣 CTM 取代字串偏誤，保證 100% 精準對齊
 function getRegionTrueCenter(regionClass) {
+    const svgEl = document.getElementById('japan-map');
     const members = document.querySelectorAll(`.prefectures .${regionClass}`);
     let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
     
     members.forEach(m => {
-        const pxMin = parseFloat(m.getAttribute('data-min-x'));
-        const pxMax = parseFloat(m.getAttribute('data-max-x'));
-        const pyMin = parseFloat(m.getAttribute('data-min-y'));
-        const pyMax = parseFloat(m.getAttribute('data-max-y'));
+        const box = m.getBBox();
+        if (box.width === 0 || box.height === 0) return;
         
-        if (!isNaN(pxMin)) {
-            if (pxMin < minX) minX = pxMin;
-            if (pxMax > maxX) maxX = pxMax;
-            if (pyMin < minY) minY = pyMin;
-            if (pyMax > maxY) maxY = pyMax;
+        let matrix = svgEl.createSVGMatrix();
+        if (m.transform.baseVal.numItems > 0) {
+            matrix = m.transform.baseVal.consolidate().matrix;
         }
+
+        const corners = [
+            { x: box.x, y: box.y },
+            { x: box.x + box.width, y: box.y },
+            { x: box.x, y: box.y + box.height },
+            { x: box.x + box.width, y: box.y + box.height }
+        ];
+
+        corners.forEach(c => {
+            const pt = svgEl.createSVGPoint();
+            pt.x = c.x; pt.y = c.y;
+            const globalPt = pt.matrixTransform(matrix);
+            
+            if (globalPt.x < minX) minX = globalPt.x;
+            if (globalPt.y < minY) minY = globalPt.y;
+            if (globalPt.x > maxX) maxX = globalPt.x;
+            if (globalPt.y > maxY) maxY = globalPt.y;
+        });
     });
     
-    if (minX === Infinity) return { x: 500, y: 500 };
+    if (minX === Infinity) return { x: 500, y: 500 }; 
     return {
         x: (minX + maxX) / 2,
         y: (minY + maxY) / 2
@@ -340,12 +380,6 @@ function loadAndInitMap() {
             svgEl.setAttribute('id', 'japan-map');
             svgEl.classList.add('map-layer-1'); 
 
-            // 動態抓取 viewBox 中心點，防範不同螢幕或 SVG 解析度干擾
-            const vW = svgEl.viewBox.baseVal.width || 1000;
-            const vH = svgEl.viewBox.baseVal.height || 1000;
-            svgEl.setAttribute('data-cx', vW / 2);
-            svgEl.setAttribute('data-cy', vH / 2);
-
             const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
             if(zoomGroup) {
                 zoomGroup.setAttribute('id', 'map-zoom-group');
@@ -356,16 +390,6 @@ function loadAndInitMap() {
             const prefContainer = svgEl.querySelector('.prefectures');
             if(!prefContainer) return;
 
-            // 抓取 SVG 原生群組的位移誤差
-            let offX = 0, offY = 0;
-            const tAttr = prefContainer.getAttribute('transform');
-            if (tAttr) {
-                const matches = tAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || tAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
-                if (matches) { offX = parseFloat(matches[1]); offY = parseFloat(matches[2]); }
-            }
-            prefContainer.setAttribute('data-offset-x', offX);
-            prefContainer.setAttribute('data-offset-y', offY);
-
             const prefGroups = prefContainer.querySelectorAll('g.prefecture');
             prefGroups.forEach(g => {
                 const rClass = getRegionClass(g);
@@ -374,7 +398,7 @@ function loadAndInitMap() {
 
                 if(rClass) {
                     if (rClass === 'region-okinawa') {
-                        g.style.display = 'none'; // 沖繩全島隱藏
+                        g.style.display = 'none'; // 維持沖繩本島層級的隱藏
                     } else {
                         g.classList.add(rClass);
                     }
@@ -402,60 +426,58 @@ function loadAndInitMap() {
         .catch(err => console.error("地圖加載失敗:", err));
 }
 
-// 🍏 幾何運算核心：淨化空間，完全排除幽靈小島的干擾，找出真正的本島中心
+// 🍏 修正重點 2：【空間淨化演算法】強制尋找並斬殺幽靈畫中畫島嶼，保證 100% 幾何置中
 function calculateGeometries() {
+    const svgEl = document.getElementById('japan-map');
     const prefGroups = document.querySelectorAll('.prefectures g.prefecture');
     
     prefGroups.forEach(g => {
-        if (g.style.display === 'none') return; 
+        if (g.style.display === 'none') return;
         
-        let baseX = 0, baseY = 0;
-        const transformAttr = g.getAttribute('transform');
-        if (transformAttr) {
-            const matches = transformAttr.match(/translate\(([^,]+)px?,\s*([^)]+)px?\)/) || transformAttr.match(/translate\(([^,\s]+)[\s,]+([^)]+)\)/);
-            if (matches) { baseX = parseFloat(matches[1]); baseY = parseFloat(matches[2]); }
+        const paths = Array.from(g.querySelectorAll('path, polygon'));
+        if (paths.length === 0) return;
+
+        let matrix = svgEl.createSVGMatrix();
+        if (g.transform.baseVal.numItems > 0) {
+            matrix = g.transform.baseVal.consolidate().matrix;
         }
-        
-        const paths = g.querySelectorAll('path, polygon');
-        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-        let maxArea = 0, prefCx = 0, prefCy = 0;
 
-        paths.forEach(p => {
+        // 1. 測量該縣市所有版塊，找出「面積最大的主島」
+        let maxArea = 0;
+        let mainlandCenter = { x: 0, y: 0 };
+        const pathData = paths.map(p => {
             const box = p.getBBox();
-            if(box.width === 0 || box.height === 0) return;
-            
-            const absX = baseX + box.x;
-            const absY = baseY + box.y;
-            
-            // 🍏 空間淨化：如果座標落在北海道左側的虛空海域 (x < 350 且 y < 350)，這絕對是 Geolonia 的幽靈畫中畫！
-            // 強制將該碎片隱藏，絕對不計入邊界算式，還給九州與中國乾淨的中心點！
-            if (absX < 350 && absY < 350) {
-                p.style.display = 'none';
-                return;
-            }
+            const pt = svgEl.createSVGPoint();
+            pt.x = box.x + box.width / 2;
+            pt.y = box.y + box.height / 2;
+            const globalCenter = pt.matrixTransform(matrix);
+            return { p, area: box.width * box.height, cx: globalCenter.x, cy: globalCenter.y };
+        });
 
-            if (absX < minX) minX = absX;
-            if (absY < minY) minY = absY;
-            if (absX + box.width > maxX) maxX = absX + box.width;
-            if (absY + box.height > maxY) maxY = absY + box.height;
-
-            // 尋找該縣市中面積最大的實體陸塊，作為縣市層級的精準聚焦中心
-            const area = box.width * box.height;
-            if (area > maxArea) {
-                maxArea = area;
-                prefCx = absX + box.width / 2;
-                prefCy = absY + box.height / 2;
+        pathData.forEach(d => {
+            if (d.area > maxArea) {
+                maxArea = d.area;
+                mainlandCenter = { x: d.cx, y: d.cy };
             }
         });
 
-        if (minX !== Infinity) {
-            g.setAttribute('data-min-x', minX);
-            g.setAttribute('data-min-y', minY);
-            g.setAttribute('data-max-x', maxX);
-            g.setAttribute('data-max-y', maxY);
-            g.setAttribute('data-center-x', prefCx);
-            g.setAttribute('data-center-y', prefCy);
-        }
+        // 2. 空間淨化：任何距離本島中心大於 200 單位的碎片 (即是被排版亂貼的畫中畫) 直接物理刪除！
+        pathData.forEach(d => {
+            const distance = Math.sqrt(Math.pow(d.cx - mainlandCenter.x, 2) + Math.pow(d.cy - mainlandCenter.y, 2));
+            if (distance > 200) {
+                d.p.remove(); // 徹底斬除鹿兒島奄美、東京小笠原等幽靈碎片！
+            }
+        });
+
+        // 3. 碎片刪除後，重新取得乾淨的純淨中心點
+        const cleanBox = g.getBBox();
+        const pt = svgEl.createSVGPoint();
+        pt.x = cleanBox.x + cleanBox.width / 2;
+        pt.y = cleanBox.y + cleanBox.height / 2;
+        const finalCenter = pt.matrixTransform(matrix);
+
+        g.setAttribute('data-center-x', finalCenter.x);
+        g.setAttribute('data-center-y', finalCenter.y);
     });
 
     albums.forEach((album) => {
@@ -509,14 +531,12 @@ function setupStageEvents() {
         g.addEventListener('click', (e) => {
             e.stopPropagation();
             if (g.style.display === 'none') return;
-            
-            const vCx = parseFloat(svgMap.getAttribute('data-cx')) || 500;
-            const vCy = parseFloat(svgMap.getAttribute('data-cy')) || 500;
-            const prefContainer = document.querySelector('.prefectures');
-            const offX = parseFloat(prefContainer.getAttribute('data-offset-x')) || 0;
-            const offY = parseFloat(prefContainer.getAttribute('data-offset-y')) || 0;
 
             const zoomGroup = document.getElementById('map-zoom-group');
+            const vW = svgMap.viewBox.baseVal.width || 1000;
+            const vH = svgMap.viewBox.baseVal.height || 1000;
+            const viewCenterX = vW / 2;
+            const viewCenterY = vH / 2;
 
             if (currentLayer === 1) {
                 activeRegionClass = getRegionClass(g);
@@ -525,9 +545,8 @@ function setupStageEvents() {
                 const rCenter = getRegionTrueCenter(activeRegionClass);
                 let scaleLevel = regionScales[activeRegionClass] || 2.5;
                 
-                // 動態計算絕對置中公式 (支援任何 Viewbox 長寬)
-                const tx = vCx - scaleLevel * (rCenter.x + offX);
-                const ty = vCy - scaleLevel * (rCenter.y + offY);
+                const tx = viewCenterX - scaleLevel * rCenter.x;
+                const ty = viewCenterY - scaleLevel * rCenter.y;
                 
                 zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
@@ -547,9 +566,9 @@ function setupStageEvents() {
                 const pCenterX = parseFloat(g.getAttribute('data-center-x'));
                 const pCenterY = parseFloat(g.getAttribute('data-center-y'));
                 
-                const scaleLevel = 7.5; // 第三層聚焦再拉高
-                const tx = vCx - scaleLevel * (pCenterX + offX);
-                const ty = vCy - scaleLevel * (pCenterY + offY);
+                const scaleLevel = 6.0; 
+                const tx = viewCenterX - scaleLevel * pCenterX;
+                const ty = viewCenterY - scaleLevel * pCenterY;
                 
                 zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
@@ -564,17 +583,16 @@ function setupStageEvents() {
     document.getElementById('back-to-map-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         const zoomGroup = document.getElementById('map-zoom-group');
-        const vCx = parseFloat(svgMap.getAttribute('data-cx')) || 500;
-        const vCy = parseFloat(svgMap.getAttribute('data-cy')) || 500;
-        const prefContainer = document.querySelector('.prefectures');
-        const offX = parseFloat(prefContainer.getAttribute('data-offset-x')) || 0;
-        const offY = parseFloat(prefContainer.getAttribute('data-offset-y')) || 0;
+        const vW = svgMap.viewBox.baseVal.width || 1000;
+        const vH = svgMap.viewBox.baseVal.height || 1000;
+        const viewCenterX = vW / 2;
+        const viewCenterY = vH / 2;
 
         if (currentLayer === 3) {
             const rCenter = getRegionTrueCenter(activeRegionClass);
             let scaleLevel = regionScales[activeRegionClass] || 2.5;
-            const tx = vCx - scaleLevel * (rCenter.x + offX);
-            const ty = vCy - scaleLevel * (rCenter.y + offY);
+            const tx = viewCenterX - scaleLevel * rCenter.x;
+            const ty = viewCenterY - scaleLevel * rCenter.y;
             
             zoomGroup.style.transform = `translate(${tx}px, ${ty}px) scale(${scaleLevel})`;
 
