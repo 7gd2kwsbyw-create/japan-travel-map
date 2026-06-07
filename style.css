@@ -13,9 +13,19 @@ body {
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background-size: cover; background-position: center; z-index: 2; will-change: opacity;
-    transition: none; opacity: 1; 
+    transition: none; opacity: 1;
 }
-#bg-photo.gallery-layout { background-size: contain; background-repeat: no-repeat; background-position: center; }
+#bg-photo.gallery-layout { background-size: cover; background-repeat: no-repeat; background-position: center; }
+
+#bg-photo.gallery-layout::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        linear-gradient(to right, rgba(0,0,0,0.24), transparent 18%, transparent 82%, rgba(0,0,0,0.24)),
+        linear-gradient(to bottom, rgba(0,0,0,0.18), transparent 28%, transparent 72%, rgba(0,0,0,0.2));
+}
 
 #dark-overlay {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
@@ -37,12 +47,12 @@ body {
 .side-click-zone:hover .arrow { opacity: 0.8; }
 
 #location-hint {
-    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center; 
-    color: rgba(255, 255, 255, 0.95); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300; 
+    position: fixed; bottom: 0; left: 0; width: 100vw; padding-bottom: 40px; padding-top: 80px; text-align: center;
+    color: rgba(255, 255, 255, 0.95); font-family: 'Noto Serif TC', serif; font-size: 0.85rem; letter-spacing: 0.35em; font-weight: 300;
     z-index: 10; opacity: 0; pointer-events: none;
     background: linear-gradient(to top, rgba(8, 8, 8, 0.58) 0%, rgba(8, 8, 8, 0.22) 48%, transparent 100%);
     text-shadow: 0 2px 8px rgba(0,0,0,0.8), 0 0 15px rgba(0,0,0,0.6);
-    transition: opacity 0.4s ease, color 0.4s ease, background 0.4s ease, text-shadow 0.4s ease; 
+    transition: opacity 0.4s ease, color 0.4s ease, background 0.4s ease, text-shadow 0.4s ease;
 }
 
 #location-hint.light-mode {
@@ -107,8 +117,8 @@ body {
    ------------------------------------------ */
 #japan-map.map-layer-1 .prefecture path,
 #japan-map.map-layer-1 .prefecture polygon {
-    fill: #dcdad2; 
-    stroke: #f4f3ef; 
+    fill: #dcdad2;
+    stroke: #f4f3ef;
     stroke-width: 0.6px;
     transition: fill 0.3s ease;
 }
@@ -123,8 +133,11 @@ body {
    ------------------------------------------ */
 #japan-map.map-layer-2 .prefecture path,
 #japan-map.map-layer-2 .prefecture polygon {
-    fill: #e8e6df; stroke: #f4f3ef; opacity: 0;
-    pointer-events: none;
+    fill: #e7e5dd;
+    stroke: #f8f7f2;
+    stroke-width: 0.42px;
+    opacity: 0.42;
+    pointer-events: auto;
 }
 
 #japan-map.map-layer-2.region-hokkaido .region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .region-hokkaido polygon,
@@ -139,18 +152,14 @@ body {
     pointer-events: auto;
 }
 
-#japan-map.map-layer-2.region-chubu .aichi path, #japan-map.map-layer-2.region-chubu .aichi polygon,
-#japan-map.map-layer-2.region-chugoku .shimane path, #japan-map.map-layer-2.region-chugoku .shimane polygon {
-    fill: #7e7a70; stroke: #f4f3ef; opacity: 1;
-}
-
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
     animation: prefSolidBreathe 1.5s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: none; fill: #5f5a50;
+    animation: none;
+    fill: #8f8b82;
 }
 
 /* ------------------------------------------
@@ -158,13 +167,16 @@ body {
    ------------------------------------------ */
 #japan-map.map-layer-3 .prefecture path,
 #japan-map.map-layer-3 .prefecture polygon {
-    fill: #e8e6df; stroke: #f4f3ef; opacity: 0;
+    fill: #e7e5dd;
+    stroke: #f8f7f2;
+    stroke-width: 0.42px;
+    opacity: 0.32;
     pointer-events: none;
 }
 
 #japan-map.map-layer-3 .prefecture.active-prefecture path,
 #japan-map.map-layer-3 .prefecture.active-prefecture polygon {
-    fill: #7e7a70;
+    fill: #b8b5ac;
     stroke: #f4f3ef;
     stroke-width: 0.35px;
     opacity: 1;

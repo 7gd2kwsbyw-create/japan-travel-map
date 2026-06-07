@@ -508,6 +508,7 @@ function fitMapToBounds(bounds, options = {}) {
 
     const padding = options.padding ?? 1.45;
     const minWidth = options.minWidth ?? 0;
+    const context = options.context ?? 0;
     const duration = options.duration ?? MAP_ANIMATION_FAST;
 
     const svgWidth = svgMap.clientWidth || originalViewBox.width;
@@ -531,12 +532,22 @@ function fitMapToBounds(bounds, options = {}) {
     const centerX = bounds.x + bounds.width / 2;
     const centerY = bounds.y + bounds.height / 2;
 
-    const targetBox = {
+    let targetBox = {
         x: centerX - targetWidth / 2,
         y: centerY - targetHeight / 2,
         width: targetWidth,
         height: targetHeight
     };
+
+    if (context > 0) {
+        const keep = Math.max(0, Math.min(context, 0.85));
+        targetBox = {
+            x: targetBox.x * (1 - keep) + originalViewBox.x * keep,
+            y: targetBox.y * (1 - keep) + originalViewBox.y * keep,
+            width: targetBox.width * (1 - keep) + originalViewBox.width * keep,
+            height: targetBox.height * (1 - keep) + originalViewBox.height * keep
+        };
+    }
 
     animateViewBox(targetBox, duration);
 }
@@ -768,6 +779,7 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: fit.padding,
                     minWidth: fit.minWidth,
+                    context: 0.18,
                     duration: MAP_ANIMATION_FAST
                 });
 
@@ -795,6 +807,7 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: 2.55,
                     minWidth: 105,
+                    context: 0.42,
                     duration: MAP_ANIMATION_FAST
                 });
 
@@ -815,6 +828,7 @@ function setupStageEvents() {
                 fitMapToBounds(bounds, {
                     padding: fit.padding,
                     minWidth: fit.minWidth,
+                    context: 0.18,
                     duration: MAP_ANIMATION_FAST
                 });
 
