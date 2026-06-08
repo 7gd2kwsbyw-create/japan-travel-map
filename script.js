@@ -172,6 +172,7 @@ function updateGalleryPhoto(index) {
     const counterEl = document.getElementById('gallery-counter');
     const locationHintEl = document.getElementById('location-hint');
     const album = albums[browsingAlbumIndex];
+    currentPhotoIndex = index;
 
     if (locationHintEl) {
         locationHintEl.innerHTML = galleryReturnContext === 'home'
@@ -247,8 +248,10 @@ if (btnNext) {
 function openGalleryDirectly(albumIndex, returnContext = 'home') {
     browsingAlbumIndex = albumIndex;
     currentAlbumIndex = albumIndex;
+    currentPhotoIndex = 0;
     isGalleryMode = true;
     galleryReturnContext = returnContext;
+    hideMapHoverLabel();
 
     const bgPhotoEl = document.getElementById('bg-photo');
     if (bgPhotoEl) {
@@ -343,6 +346,8 @@ function returnToMapAfterGallery() {
     const locationHint = document.getElementById('location-hint');
     const backBtn = document.getElementById('back-to-map-btn');
 
+    updateAlbumCover(true);
+
     if (mainTitleContainer) {
         mainTitleContainer.style.opacity = 0;
         mainTitleContainer.style.pointerEvents = 'none';
@@ -358,7 +363,8 @@ function returnToMapAfterGallery() {
     }
     if (locationHint) {
         locationHint.classList.add('light-mode');
-        locationHint.style.opacity = 1;
+        locationHint.innerHTML = '';
+        locationHint.style.opacity = 0;
     }
     if (backBtn && currentLayer > 1) {
         backBtn.style.opacity = 1;
@@ -426,6 +432,7 @@ window.addEventListener('scroll', () => {
     }
 
     if (progress <= 1) {
+        hideMapHoverLabel();
         if (mainTitleContainer) {
             mainTitleContainer.style.opacity = 1 - progress;
             mainTitleContainer.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
@@ -440,6 +447,7 @@ window.addEventListener('scroll', () => {
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } else if (progress > 1 && progress <= 2) {
+        hideMapHoverLabel();
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (locationHint) {
@@ -454,6 +462,10 @@ window.addEventListener('scroll', () => {
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
+        if (locationHint) {
+            locationHint.innerHTML = '';
+            locationHint.style.opacity = 0;
+        }
 
         if (mapContainer) {
             mapContainer.style.transition = 'none';
@@ -477,15 +489,8 @@ function updateLocationHintText() {
     const hint = document.getElementById('location-hint');
     if (!hint) return;
 
-    hint.style.opacity = 1;
-    if (currentLayer === 1) {
-        hint.innerHTML = '📍 🔍 請選擇日本八大地方板塊';
-    } else if (currentLayer === 2) {
-        hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ． 請選擇都道府縣`;
-    } else if (currentLayer === 3 && activePrefectureGroup) {
-        const title = getPrefectureTitle(activePrefectureGroup);
-        hint.innerHTML = `📍 ${title} ． 請點擊綠色大頭針進入專題`;
-    }
+    hint.innerHTML = '';
+    hint.style.opacity = 0;
 }
 
 function getPrefectureTitle(g) {
@@ -515,6 +520,68 @@ function getRegionClass(gElement) {
     if (code >= 36 && code <= 39) return 'region-shikoku';
     if (code >= 40 && code <= 46) return 'region-kyushu';
     return null;
+}
+
+function getCombinedScreenRect(elements) {
+    const visibleRects = elements
+        .filter(el => el && el.style.display !== 'none')
+        .map(el => (typeof el.getBoundingClientRect === 'function' ? el.getBoundingClientRect() : null))
+        .filter(rect => rect && rect.width > 0 && rect.height > 0);
+
+    if (visibleRects.length === 0) return null;
+
+    return visibleRects.reduce((merged, rect) => ({
+        left: Math.min(merged.left, rect.left),
+        top: Math.min(merged.top, rect.top),
+        right: Math.max(merged.right, rect.right),
+        bottom: Math.max(merged.bottom, rect.bottom),
+        width: Math.max(merged.right, rect.right) - Math.min(merged.left, rect.left),
+        height: Math.max(merged.bottom, rect.bottom) - Math.min(merged.top, rect.top)
+    }), {
+        left: visibleRects[0].left,
+        top: visibleRects[0].top,
+        right: visibleRects[0].right,
+        bottom: visibleRects[0].bottom,
+        width: visibleRects[0].width,
+        height: visibleRects[0].height
+    });
+}
+
+function showMapHoverLabel(text, anchor, hasAlbums = false, preferredSide = 'auto') {
+    const label = document.getElementById('map-hover-label');
+    if (!label || !text) return;
+
+    const rect = Array.isArray(anchor)
+        ? getCombinedScreenRect(anchor)
+        : (anchor && typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null);
+
+    if (!rect) return;
+
+    label.textContent = text;
+    label.classList.toggle('has-albums', hasAlbums);
+    label.classList.add('visible');
+
+    const gap = 14;
+    const labelWidth = label.offsetWidth || 120;
+    const labelHeight = label.offsetHeight || 32;
+    const placeLeft = preferredSide === 'left'
+        || (preferredSide !== 'right' && rect.right + gap + labelWidth > window.innerWidth - 16);
+    const x = placeLeft ? rect.left - labelWidth - gap : rect.right + gap;
+    const y = rect.top + rect.height / 2 - labelHeight / 2;
+
+    label.style.left = `${Math.max(16, Math.min(window.innerWidth - labelWidth - 16, x))}px`;
+    label.style.top = `${Math.max(16, Math.min(window.innerHeight - labelHeight - 16, y))}px`;
+}
+
+function hideMapHoverLabel() {
+    const label = document.getElementById('map-hover-label');
+    if (!label) return;
+
+    label.classList.remove('visible', 'has-albums');
+}
+
+function getRegionMembers(regionClass) {
+    return Array.from(document.querySelectorAll(`.prefectures g.prefecture.${regionClass}`));
 }
 
 function setSvgMapClass(layerClass) {
@@ -968,27 +1035,26 @@ function setupStageEvents() {
             if (isGalleryMode) return;
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
-            const hint = document.getElementById('location-hint');
 
             if (currentLayer === 1) {
                 if (localRegion) {
                     document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => el.classList.add('region-hover-pulse'));
                     const regionAlbums = getAlbumsForRegion(localRegion);
-                    if (hint) {
-                        hint.innerHTML = regionAlbums.length > 0
-                            ? `📍 ${regionNames[localRegion]} ． ${regionAlbums.length} 本相簿`
-                            : `📍 探索 ➔ ${regionNames[localRegion]}`;
-                    }
+                    const labelText = regionAlbums.length > 0
+                        ? `${regionNames[localRegion]} · ${regionAlbums.length} 本相簿`
+                        : regionNames[localRegion];
+                    showMapHoverLabel(labelText, getRegionMembers(localRegion), regionAlbums.length > 0);
                 }
             } else if (currentLayer === 2) {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
                     const prefAlbums = getAlbumsForPrefecture(g);
+                    const labelText = prefAlbums.length > 0
+                        ? `${getPrefectureTitle(g)} · ${prefAlbums.length} 本相簿`
+                        : getPrefectureTitle(g);
+                    showMapHoverLabel(labelText, g, prefAlbums.length > 0, prefAlbums.length > 0 ? 'left' : 'auto');
                     if (prefAlbums.length > 0) {
                         showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
-                        if (hint) hint.innerHTML = `📍 ${getPrefectureTitle(g)} ． ${prefAlbums.length} 本相簿`;
-                    } else if (hint) {
-                        hint.innerHTML = `📍 ${regionNames[activeRegionClass]} ➔ ${getPrefectureTitle(g)}`;
                     }
                 }
             }
@@ -1007,6 +1073,7 @@ function setupStageEvents() {
                 schedulePreviewHide();
             }
 
+            hideMapHoverLabel();
             updateLocationHintText();
         });
 
@@ -1020,6 +1087,7 @@ function setupStageEvents() {
             const prefAlbums = getAlbumsForPrefecture(g);
             if (prefAlbums.length === 0) return;
 
+            showMapHoverLabel(`${getPrefectureTitle(g)} · ${prefAlbums.length} 本相簿`, g, true, 'left');
             showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
         });
 
@@ -1044,6 +1112,7 @@ function setupStageEvents() {
                 activePrefectureGroup = null;
                 setActiveMapFocus();
                 setSvgMapClass(`map-layer-2 ${activeRegionClass}`);
+                hideMapHoverLabel();
 
                 if (backBtn) {
                     backBtn.style.opacity = 1;
@@ -1098,6 +1167,7 @@ function setupStageEvents() {
                 });
 
                 hidePreview(true);
+                hideMapHoverLabel();
                 updateLocationHintText();
             }
         });
