@@ -65,6 +65,8 @@ const regionFitOptions = {
 const MAP_ANIMATION_FAST = 520;
 const REGION_CLASSES = Object.keys(regionNames);
 
+let homeAlbumIndex = 0;
+let browsingAlbumIndex = 0;
 let currentAlbumIndex = 0;
 let currentPhotoIndex = 0;
 let isGalleryMode = false;
@@ -148,18 +150,34 @@ function changePhotoWithFade(newUrl, isInitial = false) {
 
 function updateAlbumCover(isInitial = false) {
     const titleEl = document.getElementById('main-title');
-    const album = albums[currentAlbumIndex];
+    currentAlbumIndex = homeAlbumIndex;
+    const album = albums[homeAlbumIndex];
     if (titleEl && !isGalleryMode) titleEl.textContent = album.title;
     changePhotoWithFade(album.photos[0], isInitial);
     currentPhotoIndex = 0;
 }
 
+function restoreHomeHint() {
+    const locationHintEl = document.getElementById('location-hint');
+    if (!locationHintEl) return;
+
+    const scrollY = window.scrollY;
+    const progress = Math.min(scrollY / window.innerHeight, 4);
+    locationHintEl.classList.remove('light-mode');
+    locationHintEl.innerHTML = albums[homeAlbumIndex].location;
+    locationHintEl.style.opacity = progress <= 1 ? Math.min(progress * 1.5, 1) : 1;
+}
+
 function updateGalleryPhoto(index) {
     const counterEl = document.getElementById('gallery-counter');
     const locationHintEl = document.getElementById('location-hint');
-    const album = albums[currentAlbumIndex];
+    const album = albums[browsingAlbumIndex];
 
-    if (locationHintEl) locationHintEl.innerHTML = `P. ${String(index + 1).padStart(2, '0')}`;
+    if (locationHintEl) {
+        locationHintEl.innerHTML = galleryReturnContext === 'home'
+            ? `P. ${String(index + 1).padStart(2, '0')}`
+            : '';
+    }
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
 
     changePhotoWithFade(album.photos[index], false);
@@ -170,7 +188,7 @@ function buildIndexGrid() {
     if (!gridContainer) return;
 
     gridContainer.innerHTML = '';
-    const album = albums[currentAlbumIndex];
+    const album = albums[browsingAlbumIndex];
 
     album.photos.forEach((url, i) => {
         const box = document.createElement('div');
@@ -202,10 +220,10 @@ if (btnPrev) {
     btnPrev.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!isGalleryMode) {
-            currentAlbumIndex = (currentAlbumIndex - 1 + albums.length) % albums.length;
+            homeAlbumIndex = (homeAlbumIndex - 1 + albums.length) % albums.length;
             updateAlbumCover(false);
         } else {
-            const album = albums[currentAlbumIndex];
+            const album = albums[browsingAlbumIndex];
             currentPhotoIndex = (currentPhotoIndex - 1 + album.photos.length) % album.photos.length;
             updateGalleryPhoto(currentPhotoIndex);
         }
@@ -216,10 +234,10 @@ if (btnNext) {
     btnNext.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!isGalleryMode) {
-            currentAlbumIndex = (currentAlbumIndex + 1) % albums.length;
+            homeAlbumIndex = (homeAlbumIndex + 1) % albums.length;
             updateAlbumCover(false);
         } else {
-            const album = albums[currentAlbumIndex];
+            const album = albums[browsingAlbumIndex];
             currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
             updateGalleryPhoto(currentPhotoIndex);
         }
@@ -227,6 +245,7 @@ if (btnNext) {
 }
 
 function openGalleryDirectly(albumIndex, returnContext = 'home') {
+    browsingAlbumIndex = albumIndex;
     currentAlbumIndex = albumIndex;
     isGalleryMode = true;
     galleryReturnContext = returnContext;
@@ -262,7 +281,7 @@ function openGalleryDirectly(albumIndex, returnContext = 'home') {
     const locationHint = document.getElementById('location-hint');
     if (locationHint) {
         locationHint.classList.remove('light-mode');
-        locationHint.style.opacity = 1;
+        locationHint.style.opacity = returnContext === 'home' ? 1 : 0;
     }
 
     const closeGalleryBtn = document.getElementById('close-gallery-mode-btn');
@@ -276,7 +295,7 @@ function openGalleryDirectly(albumIndex, returnContext = 'home') {
 }
 
 const mainTitleEl = document.getElementById('main-title');
-if (mainTitleEl) mainTitleEl.addEventListener('click', () => openGalleryDirectly(currentAlbumIndex));
+if (mainTitleEl) mainTitleEl.addEventListener('click', () => openGalleryDirectly(homeAlbumIndex));
 
 const closeGalleryBtnEl = document.getElementById('close-gallery-mode-btn');
 if (closeGalleryBtnEl) {
@@ -294,6 +313,7 @@ if (closeGalleryBtnEl) {
 
         document.getElementById('gallery-counter').style.opacity = 0;
         document.getElementById('open-index-btn').style.opacity = 0;
+        document.getElementById('gallery-index-panel').classList.remove('open');
         closeGalleryBtnEl.style.opacity = 0;
         closeGalleryBtnEl.style.pointerEvents = 'none';
         document.body.style.overflowY = 'scroll';
@@ -310,6 +330,7 @@ if (closeGalleryBtnEl) {
             if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
             if (btnNext) { btnNext.style.opacity = '1'; btnNext.style.pointerEvents = 'auto'; }
             updateAlbumCover(true);
+            restoreHomeHint();
         }
     });
 }
@@ -365,7 +386,7 @@ window.addEventListener('wheel', (e) => {
     if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
     if (isThrottled) return;
 
-    const album = albums[currentAlbumIndex];
+    const album = albums[browsingAlbumIndex];
     if (e.deltaY > 20) {
         currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
         updateGalleryPhoto(currentPhotoIndex);
@@ -394,7 +415,7 @@ window.addEventListener('scroll', () => {
     const locationHint = document.getElementById('location-hint');
     const bgPhoto = document.getElementById('bg-photo');
     const mapContainer = document.getElementById('map-container');
-    const currentAlbum = albums[currentAlbumIndex];
+    const currentAlbum = albums[homeAlbumIndex];
 
     if (progress < 0.2) {
         if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
@@ -944,6 +965,7 @@ function setupStageEvents() {
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
         g.addEventListener('mouseenter', (e) => {
+            if (isGalleryMode) return;
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
             const hint = document.getElementById('location-hint');
@@ -973,6 +995,7 @@ function setupStageEvents() {
         });
 
         g.addEventListener('mouseleave', () => {
+            if (isGalleryMode) return;
             const localRegion = getRegionClass(g);
 
             if (currentLayer === 1) {
@@ -988,6 +1011,7 @@ function setupStageEvents() {
         });
 
         g.addEventListener('mousemove', () => {
+            if (isGalleryMode) return;
             if (currentLayer !== 2 || g.style.display === 'none') return;
 
             const localRegion = getRegionClass(g);
@@ -1001,6 +1025,7 @@ function setupStageEvents() {
 
         g.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (isGalleryMode) return;
             if (g.style.display === 'none') return;
 
             if (currentLayer === 1) {
@@ -1086,14 +1111,20 @@ function setupStageEvents() {
         const pinAlbums = albumIndexes.map(index => ({ ...albums[index], albumIndex: index })).filter(Boolean);
 
         pin.addEventListener('mouseenter', () => {
+            if (isGalleryMode) return;
             if (currentLayer !== 2 && currentLayer !== 3) return;
             showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
         });
-        pin.addEventListener('mousemove', cancelPreviewHide);
+        pin.addEventListener('mousemove', () => {
+            if (!isGalleryMode) cancelPreviewHide();
+        });
 
-        pin.addEventListener('mouseleave', schedulePreviewHide);
+        pin.addEventListener('mouseleave', () => {
+            if (!isGalleryMode) schedulePreviewHide();
+        });
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (isGalleryMode) return;
             showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
         });
     });
