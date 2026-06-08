@@ -1049,12 +1049,11 @@ function setupStageEvents() {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
                     const prefAlbums = getAlbumsForPrefecture(g);
-                    const labelText = prefAlbums.length > 0
-                        ? `${getPrefectureTitle(g)} · ${prefAlbums.length} 本相簿`
-                        : getPrefectureTitle(g);
-                    showMapHoverLabel(labelText, g, prefAlbums.length > 0, prefAlbums.length > 0 ? 'left' : 'auto');
                     if (prefAlbums.length > 0) {
+                        hideMapHoverLabel();
                         showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
+                    } else {
+                        showMapHoverLabel(getPrefectureTitle(g), g);
                     }
                 }
             }
@@ -1087,7 +1086,7 @@ function setupStageEvents() {
             const prefAlbums = getAlbumsForPrefecture(g);
             if (prefAlbums.length === 0) return;
 
-            showMapHoverLabel(`${getPrefectureTitle(g)} · ${prefAlbums.length} 本相簿`, g, true, 'left');
+            hideMapHoverLabel();
             showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
         });
 
