@@ -86,6 +86,8 @@ const regionFitOptions = {
 };
 
 const MAP_ANIMATION_FAST = 520;
+const MAP_REVEAL_START = 2.75;
+const MAP_REVEAL_LENGTH = 1.25;
 const REGION_CLASSES = Object.keys(regionNames);
 
 let homeAlbumIndex = 0;
@@ -104,6 +106,7 @@ let viewBoxAnimationId = null;
 let previewHideTimer = null;
 let galleryReturnContext = 'home';
 let photoTransitionId = 0;
+let albumPreloadRunId = 0;
 
 const imagePreloadCache = new Map();
 
@@ -145,26 +148,64 @@ function preloadImage(url) {
 
     const img = new Image();
     img.decoding = 'async';
+    const entry = { img, promise: null, loaded: false };
 
     const promise = new Promise(resolve => {
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(img);
+        img.onload = () => {
+            entry.loaded = true;
+            resolve(img);
+        };
+        img.onerror = () => {
+            entry.loaded = true;
+            resolve(img);
+        };
     });
 
-    imagePreloadCache.set(url, { img, promise });
+    entry.promise = promise;
+    imagePreloadCache.set(url, entry);
     img.src = url;
     return promise;
+}
+
+function isImageReady(url) {
+    const cached = imagePreloadCache.get(url);
+    return Boolean(cached && cached.loaded);
 }
 
 function preloadPhotos(urls) {
     urls.forEach(url => preloadImage(url));
 }
 
-function preloadAlbumPhotos(albumIndex) {
+function preloadAlbumPhotos(albumIndex, startIndex = 0) {
     const album = albums[albumIndex];
     if (!album) return;
 
-    preloadPhotos(album.photos);
+    const runId = ++albumPreloadRunId;
+    const total = album.photos.length;
+    const preferred = [
+        startIndex,
+        (startIndex + 1) % total,
+        (startIndex - 1 + total) % total
+    ];
+    const rest = album.photos
+        .map((_, index) => index)
+        .filter(index => !preferred.includes(index));
+    const ordered = [...preferred, ...rest]
+        .filter((index, position, indexes) => indexes.indexOf(index) === position)
+        .map(index => album.photos[index]);
+
+    preloadPhotos(ordered.slice(0, 3));
+
+    let index = 3;
+    const loadNext = () => {
+        if (runId !== albumPreloadRunId || index >= ordered.length) return;
+        preloadImage(ordered[index]).then(() => {
+            index += 1;
+            setTimeout(loadNext, 90);
+        });
+    };
+
+    setTimeout(loadNext, 180);
 }
 
 function preloadAlbumCovers() {
@@ -209,9 +250,17 @@ function changePhotoWithFade(newUrl, isInitial = false) {
         return;
     }
 
+    const waitForImage = !isImageReady(newUrl);
+    if (waitForImage && isGalleryMode) {
+        bgPhotoEl.classList.add('photo-loading');
+        bgPhotoEl.style.transition = 'opacity 0.16s ease';
+        bgPhotoEl.style.opacity = 0.82;
+    }
+
     preloadImage(newUrl).then(img => {
         if (requestId !== photoTransitionId) return;
 
+        bgPhotoEl.classList.remove('photo-loading');
         bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
         bgPhotoEl.style.opacity = 0;
         setTimeout(() => {
@@ -372,7 +421,7 @@ function openGalleryDirectly(albumIndex, returnContext = 'home') {
     }
 
     document.body.style.overflowY = 'hidden';
-    preloadAlbumPhotos(albumIndex);
+    preloadAlbumPhotos(albumIndex, 0);
     updateGalleryPhoto(0);
 }
 
@@ -525,7 +574,7 @@ window.addEventListener('scroll', () => {
         }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
-    } else if (progress > 1 && progress <= 2) {
+    } else if (progress > 1 && progress <= MAP_REVEAL_START) {
         hideMapHoverLabel();
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
@@ -536,8 +585,8 @@ window.addEventListener('scroll', () => {
         }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
-    } else if (progress > 2) {
-        const stage3Progress = (progress - 2) / 2;
+    } else if (progress > MAP_REVEAL_START) {
+        const stage3Progress = Math.min((progress - MAP_REVEAL_START) / MAP_REVEAL_LENGTH, 1);
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
@@ -1090,9 +1139,9 @@ function positionRegionBadges() {
         badge.setAttribute('class', `region-album-badge ${regionClass}`);
         badge.setAttribute('transform', `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`);
         badge.innerHTML = `
-            <circle r="13" class="region-badge-halo"></circle>
-            <circle r="8" class="region-badge-dot"></circle>
-            <text y="3" class="region-badge-count">${regionAlbums.length}</text>
+            <circle r="19" class="region-badge-halo"></circle>
+            <circle r="12" class="region-badge-dot"></circle>
+            <text y="0" class="region-badge-count">${regionAlbums.length}</text>
         `;
         layer.appendChild(badge);
     });
