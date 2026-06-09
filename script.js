@@ -37,6 +37,29 @@ const albums = [
             "images/mihonoseki/semai_michi2.JPG",
             "images/mihonoseki/umi_no_keisiki.JPG"
         ]
+    },
+    {
+        title: "境港單車追日落，水木茂之道的日與夜",
+        location: "📍 鳥取縣 ． 境港與水木茂之道",
+        selector: ".tottori",
+        spotId: "spot-sakaiminato-mizuki",
+        spotName: "境港與水木茂之道",
+        photos: [
+            "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg",
+            "images/sakaiminato-mizuki/01_sakai_harbor_mountains_evening.jpg",
+            "images/sakaiminato-mizuki/02_fishing_boat_sunflare.jpg",
+            "images/sakaiminato-mizuki/04_stingray_under_harbor_water.jpg",
+            "images/sakaiminato-mizuki/05_vertical_sea_sunset_reflection.jpg",
+            "images/sakaiminato-mizuki/06_yokai_manju_night_street.jpg",
+            "images/sakaiminato-mizuki/07_night_vending_machine_and_dogs.jpg",
+            "images/sakaiminato-mizuki/08_red_signal_tatsumiya_shop.jpg",
+            "images/sakaiminato-mizuki/09_blue_signal_tatsumiya_shop.jpg",
+            "images/sakaiminato-mizuki/10_medama_oyaji_lantern.jpg",
+            "images/sakaiminato-mizuki/11_mizuki_shrine_entrance.jpg",
+            "images/sakaiminato-mizuki/12_market_delivery_van.jpg",
+            "images/sakaiminato-mizuki/13_mitsubishi_battery_vending.jpg",
+            "images/sakaiminato-mizuki/14_sakaiminato_street_cat.jpg"
+        ]
     }
 ];
 
@@ -155,6 +178,7 @@ function updateAlbumCover(isInitial = false) {
     if (titleEl && !isGalleryMode) titleEl.textContent = album.title;
     changePhotoWithFade(album.photos[0], isInitial);
     currentPhotoIndex = 0;
+    if (!isGalleryMode) restoreHomeHint();
 }
 
 function restoreHomeHint() {
