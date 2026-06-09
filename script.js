@@ -40,7 +40,7 @@ const albums = [
     },
     {
         title: "境港單車追日落，水木茂之道的日與夜",
-        location: "📍 鳥取縣 ． 境港與水木茂之道",
+        location: "📍 鳥取縣 ． 境港",
         selector: ".tottori",
         spotId: "spot-sakaiminato-mizuki",
         spotName: "境港與水木茂之道",
@@ -103,6 +103,9 @@ let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
 let previewHideTimer = null;
 let galleryReturnContext = 'home';
+let photoTransitionId = 0;
+
+const imagePreloadCache = new Map();
 
 function getPrefClassFromSelector(selector) {
     return selector ? selector.replace('.', '') : '';
@@ -134,41 +137,91 @@ function getAlbumsByPrefecture() {
     }, {});
 }
 
+function preloadImage(url) {
+    if (!url) return Promise.resolve(null);
+
+    const cached = imagePreloadCache.get(url);
+    if (cached) return cached.promise;
+
+    const img = new Image();
+    img.decoding = 'async';
+
+    const promise = new Promise(resolve => {
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(img);
+    });
+
+    imagePreloadCache.set(url, { img, promise });
+    img.src = url;
+    return promise;
+}
+
+function preloadPhotos(urls) {
+    urls.forEach(url => preloadImage(url));
+}
+
+function preloadAlbumPhotos(albumIndex) {
+    const album = albums[albumIndex];
+    if (!album) return;
+
+    preloadPhotos(album.photos);
+}
+
+function preloadAlbumCovers() {
+    preloadPhotos(albums.map(album => album.photos[0]));
+}
+
+function preloadGalleryNeighbors(album, index) {
+    if (!album || !album.photos.length) return;
+
+    const previousIndex = (index - 1 + album.photos.length) % album.photos.length;
+    const nextIndex = (index + 1) % album.photos.length;
+    preloadPhotos([
+        album.photos[previousIndex],
+        album.photos[index],
+        album.photos[nextIndex]
+    ]);
+}
+
 function changePhotoWithFade(newUrl, isInitial = false) {
     const bgPhotoEl = document.getElementById('bg-photo');
     if (!bgPhotoEl) return;
+    const requestId = ++photoTransitionId;
 
-    const applyPhoto = () => {
+    const applyPhoto = (img = null) => {
+        if (requestId !== photoTransitionId) return;
+
         bgPhotoEl.style.backgroundImage = `url('${newUrl}')`;
 
         if (bgPhotoEl.classList.contains('gallery-layout')) {
-            const probe = new Image();
-            probe.onload = () => {
-                bgPhotoEl.classList.toggle('portrait-layout', probe.naturalHeight > probe.naturalWidth);
-            };
-            probe.src = newUrl;
+            if (img && img.naturalWidth && img.naturalHeight) {
+                bgPhotoEl.classList.toggle('portrait-layout', img.naturalHeight > img.naturalWidth);
+            }
         } else {
             bgPhotoEl.classList.remove('portrait-layout');
         }
     };
 
     if (isInitial) {
-        applyPhoto();
+        preloadImage(newUrl).then(applyPhoto);
         bgPhotoEl.style.opacity = 1;
         bgPhotoEl.style.transition = 'none';
         return;
     }
 
-    bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
-    bgPhotoEl.style.opacity = 0;
+    preloadImage(newUrl).then(img => {
+        if (requestId !== photoTransitionId) return;
 
-    setTimeout(() => {
-        applyPhoto();
-        bgPhotoEl.style.opacity = 1;
+        bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
+        bgPhotoEl.style.opacity = 0;
         setTimeout(() => {
-            if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
-        }, 230);
-    }, 220);
+            applyPhoto(img);
+            bgPhotoEl.style.opacity = 1;
+            setTimeout(() => {
+                if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
+            }, 230);
+        }, 220);
+    });
 }
 
 function updateAlbumCover(isInitial = false) {
@@ -205,6 +258,7 @@ function updateGalleryPhoto(index) {
     }
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
 
+    preloadGalleryNeighbors(album, index);
     changePhotoWithFade(album.photos[index], false);
 }
 
@@ -318,6 +372,7 @@ function openGalleryDirectly(albumIndex, returnContext = 'home') {
     }
 
     document.body.style.overflowY = 'hidden';
+    preloadAlbumPhotos(albumIndex);
     updateGalleryPhoto(0);
 }
 
@@ -1300,6 +1355,7 @@ function hidePreview(force = false) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    preloadAlbumCovers();
     updateAlbumCover(true);
     loadAndInitMap();
 });
