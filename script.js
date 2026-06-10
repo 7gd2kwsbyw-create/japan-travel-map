@@ -33,20 +33,20 @@ const albums = [
     },
     {
         title: "深秋楓紅的下呂街道，在加恵瑠神社祈求無事帰る",
-        location: "📍 岐阜縣 ． 下呂溫泉與加恵瑠神社",
+        location: "📍 岐阜縣 ． 加恵瑠神社",
         selector: ".gifu",
         spotId: "spot-gero-kaeru-shrine",
         spotName: "下呂溫泉與加恵瑠神社",
         photos: [
             "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg",
-            "images/gero-kaeru-shrine/02_gero_onsen_street_shop.jpg",
-            "images/gero-kaeru-shrine/03_autumn_maple_lane.jpg",
-            "images/gero-kaeru-shrine/04_red_maple_closeup.jpg",
             "images/gero-kaeru-shrine/05_frog_chozu_water_basin.jpg",
             "images/gero-kaeru-shrine/06_kaeru_shrine_ema_rack.jpg",
             "images/gero-kaeru-shrine/07_frog_statue_under_tree.jpg",
-            "images/gero-kaeru-shrine/08_gero_pudding_shop.jpg",
             "images/gero-kaeru-shrine/09_frog_fire_hydrant_cover.jpg",
+            "images/gero-kaeru-shrine/02_gero_onsen_street_shop.jpg",
+            "images/gero-kaeru-shrine/08_gero_pudding_shop.jpg",
+            "images/gero-kaeru-shrine/03_autumn_maple_lane.jpg",
+            "images/gero-kaeru-shrine/04_red_maple_closeup.jpg",
             "images/gero-kaeru-shrine/10_autumn_river_maples.jpg"
         ]
     },
@@ -1437,6 +1437,7 @@ function hidePreview(force = false) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    homeAlbumIndex = Math.floor(Math.random() * albums.length);
     preloadAlbumCovers();
     updateAlbumCover(true);
     loadAndInitMap();

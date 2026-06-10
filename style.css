@@ -57,10 +57,10 @@ body {
 }
 
 #main-title-container {
-    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 1200px; z-index: 4; display: flex; justify-content: center; transition: opacity 0.4s ease, transform 0.4s ease;
+    position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); width: min(92vw, 1280px); z-index: 4; display: flex; justify-content: center; transition: opacity 0.4s ease, transform 0.4s ease;
 }
 #main-title {
-    margin: 0; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: 3.5rem; letter-spacing: 0.12em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: nowrap; cursor: pointer;
+    margin: 0; max-width: 100%; color: white; font-family: 'Iansui', 'Noto Serif TC', serif; font-weight: 400; font-size: clamp(2.35rem, 4.15vw, 3.5rem); line-height: 1.42; letter-spacing: 0.08em; text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); text-align: center; white-space: normal; overflow-wrap: anywhere; text-wrap: balance; cursor: pointer;
 }
 
 .side-click-zone {
@@ -421,7 +421,7 @@ body {
 .boundary-line { display: none; }
 
 @media (max-width: 768px) {
-    #main-title { font-size: 2rem; white-space: normal; }
+    #main-title { font-size: 2rem; line-height: 1.45; letter-spacing: 0.06em; }
     .masonry-grid { column-count: 1; }
     #map-svg-wrapper { width: 95vw; height: 70vh; }
 }
