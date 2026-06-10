@@ -18,6 +18,20 @@ const albums = [
         ]
     },
     {
+        title: "犬山城上望木曾川，午後光影裡的天守",
+        location: "📍 愛知縣 ． 犬山城",
+        selector: ".aichi",
+        spotId: "spot-inuyama-castle",
+        spotName: "犬山城",
+        photos: [
+            "images/inuyama-castle/01_inuyama_castle_keep.jpg",
+            "images/inuyama-castle/02_inuyama_castle_window_kiso_river.jpg",
+            "images/inuyama-castle/03_kiso_river_evening_bridge.jpg",
+            "images/inuyama-castle/04_inuyama_castle_town_riverside.jpg",
+            "images/inuyama-castle/05_kiso_river_city_panorama.jpg"
+        ]
+    },
+    {
         title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
         selector: ".shimane",
