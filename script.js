@@ -137,11 +137,35 @@ let currentViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
 let previewHideTimer = null;
+let previewContentKey = '';
 let galleryReturnContext = 'home';
 let photoTransitionId = 0;
 let albumPreloadRunId = 0;
 
 const imagePreloadCache = new Map();
+
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function setMainTitle(title) {
+    const titleEl = document.getElementById('main-title');
+    if (!titleEl) return;
+
+    const lines = String(title)
+        .split('，')
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    titleEl.innerHTML = lines.length > 1
+        ? lines.map(line => `<span class="title-line">${escapeHtml(line)}</span>`).join('')
+        : escapeHtml(title);
+}
 
 function getPrefClassFromSelector(selector) {
     return selector ? selector.replace('.', '') : '';
@@ -307,10 +331,9 @@ function changePhotoWithFade(newUrl, isInitial = false) {
 }
 
 function updateAlbumCover(isInitial = false) {
-    const titleEl = document.getElementById('main-title');
     currentAlbumIndex = homeAlbumIndex;
     const album = albums[homeAlbumIndex];
-    if (titleEl && !isGalleryMode) titleEl.textContent = album.title;
+    if (!isGalleryMode) setMainTitle(album.title);
     changePhotoWithFade(album.photos[0], isInitial);
     currentPhotoIndex = 0;
     if (!isGalleryMode) restoreHomeHint();
@@ -1365,37 +1388,44 @@ function showAlbumPreview(albumList, heading, anchor = null) {
     if (!card || !albumList || albumList.length === 0) return;
     cancelPreviewHide();
 
+    const key = `${heading || ''}:${albumList.map(album => album.albumIndex).join(',')}`;
     const countText = albumList.length > 1 ? `共 ${albumList.length} 本相簿` : '1 本相簿';
-    const coverStack = albumList.slice(0, 3).map((album, index) => `
-        <img class="preview-stack-img preview-stack-${index}" src="${album.photos[0]}" alt="${album.spotName}">
-    `).join('');
-    const albumItems = albumList.map(album => `
-        <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
-            <img src="${album.photos[0]}" alt="">
-            <span>
-                <strong>${album.spotName}</strong>
-                <small>${album.title}</small>
-            </span>
-        </button>
-    `).join('');
 
     card.classList.add('choice-mode');
-    card.innerHTML = `
-        <div class="preview-cover-stack">${coverStack}</div>
-        <div class="preview-kicker">${countText}</div>
-        <div class="preview-title">${heading || getPrefectureTitle(anchor) || '相簿'}</div>
-        <div class="preview-subtitle">選擇一本相簿開始回味</div>
-        <div class="preview-album-list">${albumItems}</div>
-    `;
 
-    card.querySelectorAll('.preview-album-btn').forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const albumIndex = parseInt(button.getAttribute('data-album-index'), 10);
-            hidePreview(true);
-            openGalleryDirectly(albumIndex, 'map');
+    if (previewContentKey !== key) {
+        const coverStack = albumList.slice(0, 3).map((album, index) => `
+            <img class="preview-stack-img preview-stack-${index}" src="${album.photos[0]}" alt="${album.spotName}">
+        `).join('');
+        const albumItems = albumList.map(album => `
+            <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
+                <img src="${album.photos[0]}" alt="">
+                <span>
+                    <strong>${album.spotName}</strong>
+                    <small>${album.title}</small>
+                </span>
+            </button>
+        `).join('');
+
+        card.innerHTML = `
+            <div class="preview-cover-stack">${coverStack}</div>
+            <div class="preview-kicker">${countText}</div>
+            <div class="preview-title">${heading || getPrefectureTitle(anchor) || '相簿'}</div>
+            <div class="preview-subtitle">選擇一本相簿開始回味</div>
+            <div class="preview-album-list">${albumItems}</div>
+        `;
+
+        card.querySelectorAll('.preview-album-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const albumIndex = parseInt(button.getAttribute('data-album-index'), 10);
+                hidePreview(true);
+                openGalleryDirectly(albumIndex, 'map');
+            });
         });
-    });
+
+        previewContentKey = key;
+    }
 
     if (anchor) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
@@ -1433,6 +1463,7 @@ function hidePreview(force = false) {
         if (card.classList.contains('choice-mode') && !force) return;
         card.style.opacity = 0;
         card.classList.remove('choice-mode');
+        previewContentKey = '';
     }
 }
 
