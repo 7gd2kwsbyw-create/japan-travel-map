@@ -96,6 +96,21 @@ const albums = [
     }
 ];
 
+const smallLights = [
+    {
+        title: "宍道湖的嫁島夕照",
+        location: "📍 島根縣 ． 宍道湖嫁島",
+        selector: ".shimane",
+        spotId: "spot-shinji-yomegashima",
+        spotName: "宍道湖嫁島夕照",
+        photos: [
+            "images/shinji-yomegashima/01_yomegashima_sunset_boat.jpg",
+            "images/shinji-yomegashima/02_yomegashima_sunset_wide.jpg",
+            "images/shinji-yomegashima/03_lake_shinji_sunset_reflection.jpg"
+        ]
+    }
+];
+
 const regionNames = {
     'region-hokkaido': '北海道地方',
     'region-tohoku': '東北地方',
@@ -138,6 +153,7 @@ let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
 let previewHideTimer = null;
 let previewContentKey = '';
+let expandedSmallLightIndex = null;
 let galleryReturnContext = 'home';
 let photoTransitionId = 0;
 let albumPreloadRunId = 0;
@@ -195,6 +211,65 @@ function getAlbumsByPrefecture() {
         groups[prefClass].push({ ...album, albumIndex: index });
         return groups;
     }, {});
+}
+
+function getSmallLightsForPrefecture(prefectureGroup) {
+    if (!prefectureGroup) return [];
+
+    return smallLights
+        .map((light, index) => ({ ...light, smallLightIndex: index }))
+        .filter(light => prefectureGroup.classList.contains(getPrefClassFromSelector(light.selector)));
+}
+
+function getSmallLightsForRegion(regionClass) {
+    return smallLights
+        .map((light, index) => ({ ...light, smallLightIndex: index }))
+        .filter(light => {
+            const pref = document.querySelector(`.prefectures g.prefecture${light.selector}`);
+            return pref && pref.classList.contains(regionClass);
+        });
+}
+
+function getSmallLightsByPrefecture() {
+    return smallLights.reduce((groups, light, index) => {
+        const prefClass = getPrefClassFromSelector(light.selector);
+        if (!groups[prefClass]) groups[prefClass] = [];
+        groups[prefClass].push({ ...light, smallLightIndex: index });
+        return groups;
+    }, {});
+}
+
+function getContentForPrefecture(prefectureGroup) {
+    return {
+        albums: getAlbumsForPrefecture(prefectureGroup),
+        smallLights: getSmallLightsForPrefecture(prefectureGroup)
+    };
+}
+
+function getContentForRegion(regionClass) {
+    const regionAlbums = getAlbumsForRegion(regionClass);
+    const regionSmallLights = getSmallLightsForRegion(regionClass);
+    return {
+        albums: regionAlbums,
+        smallLights: regionSmallLights,
+        count: regionAlbums.length + regionSmallLights.length
+    };
+}
+
+function getContentByPrefecture() {
+    const byPref = {};
+
+    Object.entries(getAlbumsByPrefecture()).forEach(([prefClass, prefAlbums]) => {
+        if (!byPref[prefClass]) byPref[prefClass] = { albums: [], smallLights: [] };
+        byPref[prefClass].albums = prefAlbums;
+    });
+
+    Object.entries(getSmallLightsByPrefecture()).forEach(([prefClass, prefSmallLights]) => {
+        if (!byPref[prefClass]) byPref[prefClass] = { albums: [], smallLights: [] };
+        byPref[prefClass].smallLights = prefSmallLights;
+    });
+
+    return byPref;
 }
 
 function preloadImage(url) {
@@ -689,6 +764,14 @@ function getPrefectureTitleForPin(pin) {
     return getPrefectureTitle(pref);
 }
 
+function getPrefectureGroupFromAnchor(anchor) {
+    if (!anchor) return null;
+    if (anchor.classList && anchor.classList.contains('prefecture')) return anchor;
+
+    const prefClass = typeof anchor.getAttribute === 'function' ? anchor.getAttribute('data-pref-class') : '';
+    return prefClass ? document.querySelector(`.prefectures g.prefecture.${prefClass}`) : null;
+}
+
 function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
@@ -1028,8 +1111,13 @@ function loadAndInitMap() {
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
 
-            Object.entries(getAlbumsByPrefecture()).forEach(([prefClass, prefAlbums]) => {
-                const representative = prefAlbums[0];
+            Object.entries(getContentByPrefecture()).forEach(([prefClass, prefContent]) => {
+                const prefAlbums = prefContent.albums || [];
+                const prefSmallLights = prefContent.smallLights || [];
+                const contentCount = prefAlbums.length + prefSmallLights.length;
+                const representative = prefAlbums[0] || prefSmallLights[0];
+                if (!representative) return;
+
                 const prefG = prefContainer.querySelector(`.${prefClass}`);
                 const regionClass = prefG ? getRegionClass(prefG) : '';
 
@@ -1037,6 +1125,7 @@ function loadAndInitMap() {
                 pin.setAttribute('class', `map-pin spot-pin ${regionClass} ${prefClass}`.trim());
                 pin.setAttribute('data-pref-class', prefClass);
                 pin.setAttribute('data-album-indexes', prefAlbums.map(album => album.albumIndex).join(','));
+                pin.setAttribute('data-small-light-indexes', prefSmallLights.map(light => light.smallLightIndex).join(','));
                 pin.setAttribute('id', representative.spotId);
 
                 pin.innerHTML = `
@@ -1044,7 +1133,7 @@ function loadAndInitMap() {
                         <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" class="pin-body"/>
                         <circle cx="12" cy="11" r="3" fill="#fff"/>
                     </g>
-                    ${prefAlbums.length > 1 ? `<circle cx="9" cy="-21" r="7" class="pin-count-bg"/><text x="9" y="-18.4" class="pin-count">${prefAlbums.length}</text>` : ''}
+                    ${contentCount > 1 ? `<circle cx="9" cy="-21" r="7" class="pin-count-bg"/><text x="9" y="-18.4" class="pin-count">${contentCount}</text>` : ''}
                 `;
                 spotsLayer.appendChild(pin);
             });
@@ -1127,13 +1216,13 @@ function calculateGeometries() {
         g.setAttribute('data-center-y', String(center.y));
     });
 
-    albums.forEach(album => {
-        const prefG = document.querySelector(`.prefectures g.prefecture${album.selector}`);
+    [...albums, ...smallLights].forEach(item => {
+        const prefG = document.querySelector(`.prefectures g.prefecture${item.selector}`);
         if (!prefG) return;
 
         const cx = parseFloat(prefG.getAttribute('data-center-x'));
         const cy = parseFloat(prefG.getAttribute('data-center-y'));
-        const prefClass = getPrefClassFromSelector(album.selector);
+        const prefClass = getPrefClassFromSelector(item.selector);
         const spotPin = document.querySelector(`.spot-pin[data-pref-class="${prefClass}"]`);
 
         if (Number.isFinite(cx) && Number.isFinite(cy)) {
@@ -1149,8 +1238,8 @@ function calculateGeometries() {
 function markAlbumRegions() {
     const albumRegionClasses = new Set();
 
-    albums.forEach(album => {
-        const prefG = document.querySelector(`.prefectures g.prefecture${album.selector}`);
+    [...albums, ...smallLights].forEach(item => {
+        const prefG = document.querySelector(`.prefectures g.prefecture${item.selector}`);
         if (!prefG) return;
 
         const regionClass = getRegionClass(prefG);
@@ -1166,7 +1255,7 @@ function markAlbumRegions() {
 }
 
 function positionAlbumPins() {
-    Object.entries(getAlbumsByPrefecture()).forEach(([prefClass]) => {
+    Object.entries(getContentByPrefecture()).forEach(([prefClass]) => {
         const prefG = document.querySelector(`.prefectures g.prefecture.${prefClass}`);
         const spotPin = document.querySelector(`.spot-pin[data-pref-class="${prefClass}"]`);
         if (!prefG || !spotPin) return;
@@ -1185,8 +1274,8 @@ function positionRegionBadges() {
     layer.innerHTML = '';
 
     REGION_CLASSES.forEach(regionClass => {
-        const regionAlbums = getAlbumsForRegion(regionClass);
-        if (regionAlbums.length === 0) return;
+        const regionContent = getContentForRegion(regionClass);
+        if (regionContent.count === 0) return;
 
         const bounds = getRegionBounds(regionClass);
         if (!bounds) return;
@@ -1197,7 +1286,7 @@ function positionRegionBadges() {
         badge.innerHTML = `
             <circle r="19" class="region-badge-halo"></circle>
             <circle r="12" class="region-badge-dot"></circle>
-            <text y="0" class="region-badge-count">${regionAlbums.length}</text>
+            <text y="0" class="region-badge-count">${regionContent.count}</text>
         `;
         layer.appendChild(badge);
     });
@@ -1217,25 +1306,26 @@ function setupStageEvents() {
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
         g.addEventListener('mouseenter', (e) => {
             if (isGalleryMode) return;
+            if (expandedSmallLightIndex !== null) return;
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
 
             if (currentLayer === 1) {
                 if (localRegion) {
                     document.querySelectorAll(`.prefectures .${localRegion}`).forEach(el => el.classList.add('region-hover-pulse'));
-                    const regionAlbums = getAlbumsForRegion(localRegion);
-                    const labelText = regionAlbums.length > 0
-                        ? `${regionNames[localRegion]} · ${regionAlbums.length} 本相簿`
+                    const regionContent = getContentForRegion(localRegion);
+                    const labelText = regionContent.count > 0
+                        ? `${regionNames[localRegion]} · ${regionContent.count} 則拾光`
                         : regionNames[localRegion];
-                    showMapHoverLabel(labelText, getRegionMembers(localRegion), regionAlbums.length > 0);
+                    showMapHoverLabel(labelText, getRegionMembers(localRegion), regionContent.count > 0);
                 }
             } else if (currentLayer === 2) {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     g.classList.add('pref-hover-pulse');
-                    const prefAlbums = getAlbumsForPrefecture(g);
-                    if (prefAlbums.length > 0) {
+                    const prefContent = getContentForPrefecture(g);
+                    if (prefContent.albums.length > 0 || prefContent.smallLights.length > 0) {
                         hideMapHoverLabel();
-                        showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
+                        showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
                     } else {
                         showMapHoverLabel(getPrefectureTitle(g), g);
                     }
@@ -1262,16 +1352,17 @@ function setupStageEvents() {
 
         g.addEventListener('mousemove', () => {
             if (isGalleryMode) return;
+            if (expandedSmallLightIndex !== null) return;
             if (currentLayer !== 2 || g.style.display === 'none') return;
 
             const localRegion = getRegionClass(g);
             if (!localRegion || !g.classList.contains(activeRegionClass)) return;
 
-            const prefAlbums = getAlbumsForPrefecture(g);
-            if (prefAlbums.length === 0) return;
+            const prefContent = getContentForPrefecture(g);
+            if (prefContent.albums.length === 0 && prefContent.smallLights.length === 0) return;
 
             hideMapHoverLabel();
-            showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
+            showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
         });
 
         g.addEventListener('click', (e) => {
@@ -1306,10 +1397,10 @@ function setupStageEvents() {
             } else if (currentLayer === 2) {
                 if (!g.classList.contains(activeRegionClass)) return;
 
-                const prefAlbums = getAlbumsForPrefecture(g);
-                if (prefAlbums.length === 0) return;
+                const prefContent = getContentForPrefecture(g);
+                if (prefContent.albums.length === 0 && prefContent.smallLights.length === 0) return;
 
-                showAlbumPreview(prefAlbums, getPrefectureTitle(g), g);
+                showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
                 return;
             }
         });
@@ -1362,86 +1453,182 @@ function setupStageEvents() {
             .map(value => parseInt(value, 10))
             .filter(Number.isFinite);
         const pinAlbums = albumIndexes.map(index => ({ ...albums[index], albumIndex: index })).filter(Boolean);
+        const smallLightIndexes = (pin.getAttribute('data-small-light-indexes') || '')
+            .split(',')
+            .map(value => parseInt(value, 10))
+            .filter(Number.isFinite);
+        const pinSmallLights = smallLightIndexes.map(index => ({ ...smallLights[index], smallLightIndex: index })).filter(Boolean);
 
         pin.addEventListener('mouseenter', () => {
             if (isGalleryMode) return;
+            if (expandedSmallLightIndex !== null) return;
             if (currentLayer !== 2 && currentLayer !== 3) return;
-            showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
+            showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin);
         });
         pin.addEventListener('mousemove', () => {
-            if (!isGalleryMode) cancelPreviewHide();
+            if (!isGalleryMode && expandedSmallLightIndex === null) cancelPreviewHide();
         });
 
         pin.addEventListener('mouseleave', () => {
-            if (!isGalleryMode) schedulePreviewHide();
+            if (!isGalleryMode && expandedSmallLightIndex === null) schedulePreviewHide();
         });
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isGalleryMode) return;
-            showAlbumPreview(pinAlbums, getPrefectureTitleForPin(pin), pin);
+            showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin);
         });
     });
 }
 
-function showAlbumPreview(albumList, heading, anchor = null) {
+function showContentPreview(albumList = [], smallLightList = [], heading, anchor = null) {
     const card = document.getElementById('map-preview-card');
-    if (!card || !albumList || albumList.length === 0) return;
+    const safeAlbums = albumList || [];
+    const safeSmallLights = smallLightList || [];
+    if (!card || (safeAlbums.length === 0 && safeSmallLights.length === 0)) return;
     cancelPreviewHide();
 
-    const key = `${heading || ''}:${albumList.map(album => album.albumIndex).join(',')}`;
-    const countText = albumList.length > 1 ? `共 ${albumList.length} 本相簿` : '1 本相簿';
+    expandedSmallLightIndex = null;
+    const key = `content:${heading || ''}:a${safeAlbums.map(album => album.albumIndex).join(',')}:s${safeSmallLights.map(light => light.smallLightIndex).join(',')}`;
+    const previewItems = [
+        ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: album.photos[0] })),
+        ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: light.photos[0] }))
+    ];
 
     card.classList.add('choice-mode');
+    card.classList.remove('expanded-light');
 
     if (previewContentKey !== key) {
-        const coverStack = albumList.slice(0, 3).map((album, index) => `
-            <img class="preview-stack-img preview-stack-${index}" src="${album.photos[0]}" alt="${album.spotName}">
+        const coverStack = previewItems.slice(0, 3).map((item, index) => `
+            <img class="preview-stack-img preview-stack-${index}" src="${item.image}" alt="${escapeHtml(item.title)}">
         `).join('');
-        const albumItems = albumList.map(album => `
+        const albumItems = safeAlbums.map(album => `
             <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
                 <img src="${album.photos[0]}" alt="">
                 <span>
-                    <strong>${album.spotName}</strong>
-                    <small>${album.title}</small>
+                    <strong>${escapeHtml(album.spotName)}</strong>
+                    <small>${escapeHtml(album.title)}</small>
+                </span>
+            </button>
+        `).join('');
+        const smallLightItems = safeSmallLights.map(light => `
+            <button class="preview-album-btn preview-small-light-btn" type="button" data-small-light-index="${light.smallLightIndex}">
+                <img src="${light.photos[0]}" alt="">
+                <span>
+                    <strong>${escapeHtml(light.spotName)}</strong>
+                    <small>${escapeHtml(light.title)}</small>
                 </span>
             </button>
         `).join('');
 
         card.innerHTML = `
             <div class="preview-cover-stack">${coverStack}</div>
-            <div class="preview-kicker">${countText}</div>
-            <div class="preview-title">${heading || getPrefectureTitle(anchor) || '相簿'}</div>
-            <div class="preview-subtitle">選擇一本相簿開始回味</div>
-            <div class="preview-album-list">${albumItems}</div>
+            <div class="preview-kicker">拾光索引</div>
+            <div class="preview-title">${escapeHtml(heading || getPrefectureTitle(anchor) || '相簿')}</div>
+            <div class="preview-subtitle">選擇一段拾光開始回味</div>
+            ${albumItems ? `<div class="preview-section-label">旅頁拾光</div><div class="preview-album-list">${albumItems}</div>` : ''}
+            ${smallLightItems ? `<div class="preview-section-label">小拾光</div><div class="preview-album-list">${smallLightItems}</div>` : ''}
         `;
 
         card.querySelectorAll('.preview-album-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const albumIndex = parseInt(button.getAttribute('data-album-index'), 10);
-                hidePreview(true);
-                openGalleryDirectly(albumIndex, 'map');
+                const smallLightIndex = parseInt(button.getAttribute('data-small-light-index'), 10);
+                if (Number.isFinite(albumIndex)) {
+                    hidePreview(true);
+                    openGalleryDirectly(albumIndex, 'map');
+                } else if (Number.isFinite(smallLightIndex)) {
+                    showSmallLightDetail(smallLightIndex, heading, anchor);
+                }
             });
         });
 
         previewContentKey = key;
     }
 
+    positionPreviewCard(card, anchor);
+    card.style.opacity = 1;
+}
+
+function positionPreviewCard(card, anchor = null, expanded = false) {
     if (anchor) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
         if (rect) {
-            const left = Math.min(rect.right + 18, window.innerWidth - 260);
-            const top = Math.min(rect.top + rect.height / 2 - 116, window.innerHeight - 250);
+            const cardWidth = expanded ? Math.min(460, window.innerWidth - 32) : 230;
+            const cardHeight = expanded ? Math.min(520, window.innerHeight - 40) : 250;
+            const left = expanded
+                ? Math.min(Math.max(rect.right + 22, window.innerWidth * 0.56), window.innerWidth - cardWidth - 18)
+                : Math.min(rect.right + 18, window.innerWidth - cardWidth - 18);
+            const top = expanded
+                ? window.innerHeight / 2 - cardHeight / 2
+                : Math.min(rect.top + rect.height / 2 - 116, window.innerHeight - cardHeight);
             card.style.left = `${Math.max(16, left)}px`;
             card.style.top = `${Math.max(16, top)}px`;
         }
     } else {
-        const left = Math.min(window.innerWidth * 0.62, window.innerWidth - 260);
-        const top = Math.min(window.innerHeight * 0.42, window.innerHeight - 250);
+        const cardWidth = expanded ? Math.min(460, window.innerWidth - 32) : 230;
+        const cardHeight = expanded ? Math.min(520, window.innerHeight - 40) : 250;
+        const left = Math.min(window.innerWidth * 0.62, window.innerWidth - cardWidth - 18);
+        const top = expanded
+            ? window.innerHeight / 2 - cardHeight / 2
+            : Math.min(window.innerHeight * 0.42, window.innerHeight - cardHeight);
         card.style.left = `${Math.max(16, left)}px`;
         card.style.top = `${Math.max(16, top)}px`;
     }
+}
 
+function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
+    const card = document.getElementById('map-preview-card');
+    const light = smallLights[smallLightIndex];
+    if (!card || !light) return;
+
+    cancelPreviewHide();
+    expandedSmallLightIndex = smallLightIndex;
+    previewContentKey = `small-light:${smallLightIndex}`;
+    card.classList.add('choice-mode', 'expanded-light');
+
+    const thumbs = light.photos.map((photo, index) => `
+        <button class="small-light-thumb ${index === 0 ? 'active' : ''}" type="button" data-photo-index="${index}">
+            <img src="${photo}" alt="">
+        </button>
+    `).join('');
+
+    card.innerHTML = `
+        <button class="small-light-back" type="button">← ${escapeHtml(heading || getPrefectureTitle(anchor) || '返回')}</button>
+        <div class="preview-kicker">小拾光</div>
+        <div class="small-light-title">${escapeHtml(light.title)}</div>
+        <img class="small-light-main" src="${light.photos[0]}" alt="${escapeHtml(light.spotName)}">
+        <div class="small-light-location">${escapeHtml(light.location)}</div>
+        <div class="small-light-thumbs">${thumbs}</div>
+    `;
+
+    card.querySelector('.small-light-back')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        expandedSmallLightIndex = null;
+        const prefGroup = getPrefectureGroupFromAnchor(anchor);
+        showContentPreview(
+            getAlbumsForPrefecture(prefGroup),
+            getSmallLightsForPrefecture(prefGroup),
+            heading,
+            anchor
+        );
+    });
+
+    card.querySelectorAll('.small-light-thumb').forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const photoIndex = parseInt(button.getAttribute('data-photo-index'), 10);
+            const mainImage = card.querySelector('.small-light-main');
+            if (!mainImage || !Number.isFinite(photoIndex) || !light.photos[photoIndex]) return;
+
+            mainImage.src = light.photos[photoIndex];
+            card.querySelectorAll('.small-light-thumb').forEach(thumb => thumb.classList.remove('active'));
+            button.classList.add('active');
+        });
+    });
+
+    light.photos.forEach(preloadImage);
+    positionPreviewCard(card, anchor, true);
     card.style.opacity = 1;
 }
 
@@ -1453,6 +1640,7 @@ function cancelPreviewHide() {
 }
 
 function schedulePreviewHide() {
+    if (expandedSmallLightIndex !== null) return;
     cancelPreviewHide();
     previewHideTimer = setTimeout(() => hidePreview(true), 320);
 }
@@ -1462,8 +1650,9 @@ function hidePreview(force = false) {
     if (card) {
         if (card.classList.contains('choice-mode') && !force) return;
         card.style.opacity = 0;
-        card.classList.remove('choice-mode');
+        card.classList.remove('choice-mode', 'expanded-light');
         previewContentKey = '';
+        expandedSmallLightIndex = null;
     }
 }
 
