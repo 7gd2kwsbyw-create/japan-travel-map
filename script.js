@@ -153,6 +153,8 @@ let originalViewBox = { x: 0, y: 0, width: 1000, height: 1000 };
 let viewBoxAnimationId = null;
 let previewHideTimer = null;
 let previewContentKey = '';
+let previewAnchorElement = null;
+let previewLockUntil = 0;
 let expandedSmallLightIndex = null;
 let galleryReturnContext = 'home';
 let photoTransitionId = 0;
@@ -1307,6 +1309,7 @@ function setupStageEvents() {
         g.addEventListener('mouseenter', (e) => {
             if (isGalleryMode) return;
             if (expandedSmallLightIndex !== null) return;
+            if (shouldHoldPreviewFor(g)) return;
             if (g.style.display === 'none') return;
             const localRegion = getRegionClass(g);
 
@@ -1353,6 +1356,7 @@ function setupStageEvents() {
         g.addEventListener('mousemove', () => {
             if (isGalleryMode) return;
             if (expandedSmallLightIndex !== null) return;
+            if (shouldHoldPreviewFor(g)) return;
             if (currentLayer !== 2 || g.style.display === 'none') return;
 
             const localRegion = getRegionClass(g);
@@ -1488,6 +1492,8 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
     cancelPreviewHide();
 
     expandedSmallLightIndex = null;
+    previewAnchorElement = anchor;
+    previewLockUntil = Date.now() + 1400;
     const key = `content:${heading || ''}:a${safeAlbums.map(album => album.albumIndex).join(',')}:s${safeSmallLights.map(light => light.smallLightIndex).join(',')}`;
     const previewItems = [
         ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: album.photos[0] })),
@@ -1546,34 +1552,47 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         previewContentKey = key;
     }
 
-    positionPreviewCard(card, anchor);
     card.style.opacity = 1;
+    requestAnimationFrame(() => positionPreviewCard(card, anchor));
 }
 
 function positionPreviewCard(card, anchor = null, expanded = false) {
+    card.classList.remove('placement-left', 'placement-right');
+
+    const measuredWidth = card.offsetWidth || (expanded ? Math.min(640, window.innerWidth - 32) : 260);
+    const measuredHeight = card.offsetHeight || (expanded ? Math.min(520, window.innerHeight - 40) : 250);
+    const cardWidth = Math.min(measuredWidth, window.innerWidth - 32);
+    const cardHeight = Math.min(measuredHeight, window.innerHeight - 32);
+    const clampX = value => Math.max(16, Math.min(value, window.innerWidth - cardWidth - 16));
+    const clampY = value => Math.max(16, Math.min(value, window.innerHeight - cardHeight - 16));
+
     if (anchor) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
         if (rect) {
-            const cardWidth = expanded ? Math.min(460, window.innerWidth - 32) : 230;
-            const cardHeight = expanded ? Math.min(520, window.innerHeight - 40) : 250;
-            const left = expanded
-                ? Math.min(Math.max(rect.right + 22, window.innerWidth * 0.56), window.innerWidth - cardWidth - 18)
-                : Math.min(rect.right + 18, window.innerWidth - cardWidth - 18);
+            const gap = expanded ? 28 : 18;
+            const shouldPlaceLeft = expanded || rect.left < window.innerWidth * 0.56;
+            const preferredLeft = shouldPlaceLeft ? rect.left - cardWidth - gap : rect.right + gap;
+            const fallbackLeft = shouldPlaceLeft ? rect.right + gap : rect.left - cardWidth - gap;
+            const hasPreferredRoom = shouldPlaceLeft
+                ? preferredLeft >= 16
+                : preferredLeft + cardWidth <= window.innerWidth - 16;
+            const left = hasPreferredRoom ? preferredLeft : fallbackLeft;
             const top = expanded
                 ? window.innerHeight / 2 - cardHeight / 2
-                : Math.min(rect.top + rect.height / 2 - 116, window.innerHeight - cardHeight);
-            card.style.left = `${Math.max(16, left)}px`;
-            card.style.top = `${Math.max(16, top)}px`;
+                : rect.top + rect.height / 2 - cardHeight / 2;
+
+            card.classList.add((hasPreferredRoom ? shouldPlaceLeft : !shouldPlaceLeft) ? 'placement-left' : 'placement-right');
+            card.style.left = `${clampX(left)}px`;
+            card.style.top = `${clampY(top)}px`;
         }
     } else {
-        const cardWidth = expanded ? Math.min(460, window.innerWidth - 32) : 230;
-        const cardHeight = expanded ? Math.min(520, window.innerHeight - 40) : 250;
         const left = Math.min(window.innerWidth * 0.62, window.innerWidth - cardWidth - 18);
         const top = expanded
             ? window.innerHeight / 2 - cardHeight / 2
             : Math.min(window.innerHeight * 0.42, window.innerHeight - cardHeight);
-        card.style.left = `${Math.max(16, left)}px`;
-        card.style.top = `${Math.max(16, top)}px`;
+        card.classList.add('placement-right');
+        card.style.left = `${clampX(left)}px`;
+        card.style.top = `${clampY(top)}px`;
     }
 }
 
@@ -1584,27 +1603,29 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
 
     cancelPreviewHide();
     expandedSmallLightIndex = smallLightIndex;
+    previewAnchorElement = anchor;
+    previewLockUntil = Number.POSITIVE_INFINITY;
     previewContentKey = `small-light:${smallLightIndex}`;
     card.classList.add('choice-mode', 'expanded-light');
 
-    const thumbs = light.photos.map((photo, index) => `
-        <button class="small-light-thumb ${index === 0 ? 'active' : ''}" type="button" data-photo-index="${index}">
-            <img src="${photo}" alt="">
-        </button>
+    const photoTiles = light.photos.map((photo, index) => `
+        <figure class="small-light-tile small-light-tile-${index + 1}">
+            <img src="${photo}" alt="${escapeHtml(`${light.spotName} ${index + 1}`)}">
+        </figure>
     `).join('');
 
     card.innerHTML = `
         <button class="small-light-back" type="button">← ${escapeHtml(heading || getPrefectureTitle(anchor) || '返回')}</button>
         <div class="preview-kicker">小拾光</div>
         <div class="small-light-title">${escapeHtml(light.title)}</div>
-        <img class="small-light-main" src="${light.photos[0]}" alt="${escapeHtml(light.spotName)}">
         <div class="small-light-location">${escapeHtml(light.location)}</div>
-        <div class="small-light-thumbs">${thumbs}</div>
+        <div class="small-light-grid">${photoTiles}</div>
     `;
 
     card.querySelector('.small-light-back')?.addEventListener('click', (e) => {
         e.stopPropagation();
         expandedSmallLightIndex = null;
+        previewLockUntil = Date.now() + 1400;
         const prefGroup = getPrefectureGroupFromAnchor(anchor);
         showContentPreview(
             getAlbumsForPrefecture(prefGroup),
@@ -1614,22 +1635,27 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
         );
     });
 
-    card.querySelectorAll('.small-light-thumb').forEach(button => {
-        button.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const photoIndex = parseInt(button.getAttribute('data-photo-index'), 10);
-            const mainImage = card.querySelector('.small-light-main');
-            if (!mainImage || !Number.isFinite(photoIndex) || !light.photos[photoIndex]) return;
-
-            mainImage.src = light.photos[photoIndex];
-            card.querySelectorAll('.small-light-thumb').forEach(thumb => thumb.classList.remove('active'));
-            button.classList.add('active');
-        });
+    card.querySelectorAll('.small-light-tile img').forEach(img => {
+        const markOrientation = () => {
+            if (img.naturalHeight > img.naturalWidth) {
+                img.closest('.small-light-tile')?.classList.add('is-portrait');
+            }
+        };
+        if (img.complete) markOrientation();
+        else img.addEventListener('load', markOrientation, { once: true });
     });
 
     light.photos.forEach(preloadImage);
-    positionPreviewCard(card, anchor, true);
     card.style.opacity = 1;
+    requestAnimationFrame(() => positionPreviewCard(card, anchor, true));
+}
+
+function shouldHoldPreviewFor(candidate) {
+    const card = document.getElementById('map-preview-card');
+    if (!card || card.style.opacity === '0') return false;
+    if (!previewAnchorElement || candidate === previewAnchorElement) return false;
+
+    return expandedSmallLightIndex !== null || card.matches(':hover') || Date.now() < previewLockUntil;
 }
 
 function cancelPreviewHide() {
@@ -1642,7 +1668,7 @@ function cancelPreviewHide() {
 function schedulePreviewHide() {
     if (expandedSmallLightIndex !== null) return;
     cancelPreviewHide();
-    previewHideTimer = setTimeout(() => hidePreview(true), 320);
+    previewHideTimer = setTimeout(() => hidePreview(true), 620);
 }
 
 function hidePreview(force = false) {
@@ -1651,7 +1677,10 @@ function hidePreview(force = false) {
         if (card.classList.contains('choice-mode') && !force) return;
         card.style.opacity = 0;
         card.classList.remove('choice-mode', 'expanded-light');
+        card.classList.remove('placement-left', 'placement-right');
         previewContentKey = '';
+        previewAnchorElement = null;
+        previewLockUntil = 0;
         expandedSmallLightIndex = null;
     }
 }
