@@ -157,6 +157,7 @@ body {
     fill: #dcdad2;
     stroke: #f4f3ef;
     stroke-width: 0.6px;
+    pointer-events: all;
     transition: fill 0.3s ease;
 }
 
@@ -198,7 +199,7 @@ body {
     stroke: #f8f7f2;
     stroke-width: 0.42px;
     opacity: 0.42;
-    pointer-events: auto;
+    pointer-events: all;
 }
 
 #japan-map.map-layer-2.region-hokkaido .region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .region-hokkaido polygon,
@@ -210,7 +211,7 @@ body {
 #japan-map.map-layer-2.region-shikoku .region-shikoku path, #japan-map.map-layer-2.region-shikoku .region-shikoku polygon,
 #japan-map.map-layer-2.region-kyushu .region-kyushu path, #japan-map.map-layer-2.region-kyushu .region-kyushu polygon {
     fill: #c4c2ba; stroke: #f4f3ef; stroke-width: 0.5px; opacity: 1;
-    pointer-events: auto;
+    pointer-events: all;
 }
 
 #japan-map.map-layer-2.region-hokkaido .prefecture.album-prefecture.region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .prefecture.album-prefecture.region-hokkaido polygon,
@@ -309,6 +310,17 @@ body {
     width: min(680px, calc(100vw - 32px));
     padding: 18px;
     overflow: visible;
+}
+#map-preview-bridge {
+    position: fixed;
+    z-index: 94;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+    background: transparent;
+}
+#map-preview-bridge.active {
+    pointer-events: auto;
 }
 #map-preview-card::before {
     content: "";
@@ -453,61 +465,140 @@ body {
     font-size: 0.66rem;
     line-height: 1.3;
 }
-.small-light-back {
-    border: 0;
-    background: transparent;
-    color: rgba(34, 30, 27, 0.54);
+#small-light-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        radial-gradient(circle at 50% 40%, rgba(255,255,255,0.12), transparent 34%),
+        rgba(15, 14, 13, 0.66);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    transition: opacity 0.26s ease;
+}
+#small-light-overlay.open {
+    pointer-events: auto;
+    opacity: 1;
+}
+#small-light-close {
+    position: fixed;
+    top: 38px;
+    left: 38px;
+    z-index: 132;
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 999px;
+    padding: 10px 18px;
+    color: rgba(255,255,255,0.82);
+    background: rgba(255,255,255,0.08);
     font-family: 'Noto Serif TC', serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    padding: 0 0 10px;
+    font-size: 0.74rem;
+    letter-spacing: 0.2em;
     cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: color 0.2s ease, background 0.2s ease;
 }
-.small-light-back:hover { color: rgba(34, 30, 27, 0.92); }
-.small-light-title {
-    color: #24211f;
+#small-light-close:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.16);
+}
+.small-light-overlay-copy {
+    position: absolute;
+    top: clamp(66px, 8vh, 96px);
+    left: 50%;
+    z-index: 131;
+    width: min(86vw, 980px);
+    transform: translateX(-50%);
+    color: #fff;
     font-family: 'Noto Serif TC', serif;
-    font-size: 1.12rem;
+    text-align: center;
+    text-shadow: 0 8px 30px rgba(0,0,0,0.38);
+}
+.small-light-overlay-kicker {
+    color: rgba(255,255,255,0.68);
+    font-size: 0.76rem;
+    letter-spacing: 0.24em;
+    margin-bottom: 8px;
+}
+#small-light-overlay-title {
+    margin: 0;
+    color: rgba(255,255,255,0.94);
+    font-size: clamp(1.35rem, 3vw, 2.45rem);
+    font-weight: 400;
     line-height: 1.45;
-    margin: 2px 0 8px;
+    letter-spacing: 0.06em;
 }
-.small-light-location {
-    color: rgba(34, 30, 27, 0.58);
-    font-family: 'Noto Serif TC', serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.08em;
-    margin: 0 0 13px;
+#small-light-overlay-location {
+    margin-top: 9px;
+    color: rgba(255,255,255,0.64);
+    font-size: 0.86rem;
+    letter-spacing: 0.14em;
 }
-.small-light-grid {
+#small-light-hand {
+    position: absolute;
+    left: 50%;
+    top: 54%;
+    z-index: 131;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-auto-rows: 116px;
-    gap: 10px;
+    width: min(88vw, 1120px);
+    max-height: 70vh;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: clamp(14px, 2.2vw, 28px);
+    align-items: center;
+    transform: translate(-50%, -42%);
 }
-.small-light-tile {
+#small-light-hand.count-1 {
+    width: min(76vw, 720px);
+    grid-template-columns: 1fr;
+}
+#small-light-hand.count-2 {
+    width: min(82vw, 880px);
+    grid-template-columns: repeat(2, 1fr);
+}
+#small-light-hand.count-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+.small-light-photo-card {
+    position: relative;
     margin: 0;
     min-width: 0;
-    overflow: hidden;
-    border-radius: 5px;
-    background: rgba(239, 236, 228, 0.85);
-    box-shadow: 0 14px 28px rgba(0,0,0,0.12);
+    padding: clamp(7px, 0.9vw, 10px) clamp(7px, 0.9vw, 10px) clamp(20px, 2vw, 30px);
+    border-radius: 7px;
+    background: rgba(248, 246, 241, 0.96);
+    box-shadow: 0 22px 62px rgba(0, 0, 0, 0.34);
+    transform: translateY(var(--lift, 0)) rotate(var(--rotate, 0deg));
+    transition: transform 0.26s ease, box-shadow 0.26s ease;
 }
-.small-light-tile:first-child {
-    grid-column: span 2;
-    grid-row: span 2;
+.small-light-photo-card:hover {
+    z-index: 5;
+    transform: translateY(calc(var(--lift, 0) - 18px)) rotate(0deg) scale(1.035);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.44);
 }
-.small-light-tile img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.small-light-photo-card img {
     display: block;
-}
-.small-light-tile:first-child img {
-    object-fit: cover;
-}
-.small-light-tile.is-portrait img {
+    width: 100%;
+    height: auto;
+    max-height: clamp(260px, 42vh, 440px);
     object-fit: contain;
-    background: #171614;
+    border-radius: 4px;
+    background: #141311;
+}
+#small-light-hand.count-1 .small-light-photo-card img {
+    max-height: min(58vh, 560px);
+}
+.small-light-photo-card.is-portrait img {
+    width: auto;
+    max-width: 100%;
+    height: min(58vh, 560px);
+    object-fit: contain;
+    margin: 0 auto;
+}
+body.small-light-open #map-preview-card,
+body.small-light-open #map-hover-label {
+    opacity: 0 !important;
 }
 
 .boundary-line { display: none; }
@@ -523,12 +614,44 @@ body {
         width: min(360px, calc(100vw - 32px));
         overflow-y: auto;
     }
-    .small-light-grid {
-        grid-template-columns: 1fr;
-        grid-auto-rows: 150px;
+    #small-light-overlay {
+        overflow-y: auto;
     }
-    .small-light-tile:first-child {
-        grid-column: auto;
-        grid-row: auto;
+    #small-light-close {
+        top: 18px;
+        left: 16px;
+    }
+    .small-light-overlay-copy {
+        position: relative;
+        top: auto;
+        left: auto;
+        width: calc(100vw - 32px);
+        margin: 74px auto 18px;
+        transform: none;
+    }
+    #small-light-hand,
+    #small-light-hand.count-1,
+    #small-light-hand.count-2,
+    #small-light-hand.count-3 {
+        position: relative;
+        left: auto;
+        top: auto;
+        width: calc(100vw - 32px);
+        max-height: none;
+        grid-template-columns: 1fr;
+        transform: none;
+        margin: 0 auto 32px;
+    }
+    .small-light-photo-card {
+        transform: none;
+    }
+    .small-light-photo-card:hover {
+        transform: translateY(-8px);
+    }
+    .small-light-photo-card img,
+    #small-light-hand.count-1 .small-light-photo-card img {
+        height: auto;
+        max-height: 62vh;
+        object-fit: contain;
     }
 }

@@ -154,7 +154,7 @@ let viewBoxAnimationId = null;
 let previewHideTimer = null;
 let previewContentKey = '';
 let previewAnchorElement = null;
-let previewLockUntil = 0;
+let previewInteractionLocked = false;
 let expandedSmallLightIndex = null;
 let galleryReturnContext = 'home';
 let photoTransitionId = 0;
@@ -1301,8 +1301,26 @@ function setupStageEvents() {
 
     const previewCard = document.getElementById('map-preview-card');
     if (previewCard) {
-        previewCard.addEventListener('mouseenter', cancelPreviewHide);
-        previewCard.addEventListener('mouseleave', schedulePreviewHide);
+        previewCard.addEventListener('mouseenter', () => {
+            previewInteractionLocked = true;
+            cancelPreviewHide();
+        });
+        previewCard.addEventListener('mouseleave', () => {
+            previewInteractionLocked = false;
+            schedulePreviewHide();
+        });
+    }
+
+    const previewBridge = document.getElementById('map-preview-bridge');
+    if (previewBridge) {
+        previewBridge.addEventListener('mouseenter', () => {
+            previewInteractionLocked = true;
+            cancelPreviewHide();
+        });
+        previewBridge.addEventListener('mouseleave', () => {
+            previewInteractionLocked = false;
+            schedulePreviewHide();
+        });
     }
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
@@ -1404,7 +1422,7 @@ function setupStageEvents() {
                 const prefContent = getContentForPrefecture(g);
                 if (prefContent.albums.length === 0 && prefContent.smallLights.length === 0) return;
 
-                showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
+                showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g, { lock: true });
                 return;
             }
         });
@@ -1479,12 +1497,12 @@ function setupStageEvents() {
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
             if (isGalleryMode) return;
-            showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin);
+            showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin, { lock: true });
         });
     });
 }
 
-function showContentPreview(albumList = [], smallLightList = [], heading, anchor = null) {
+function showContentPreview(albumList = [], smallLightList = [], heading, anchor = null, options = {}) {
     const card = document.getElementById('map-preview-card');
     const safeAlbums = albumList || [];
     const safeSmallLights = smallLightList || [];
@@ -1492,8 +1510,11 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
     cancelPreviewHide();
 
     expandedSmallLightIndex = null;
+    if (anchor !== previewAnchorElement && !options.lock) {
+        previewInteractionLocked = false;
+    }
     previewAnchorElement = anchor;
-    previewLockUntil = Date.now() + 1400;
+    previewInteractionLocked = previewInteractionLocked || Boolean(options.lock);
     const key = `content:${heading || ''}:a${safeAlbums.map(album => album.albumIndex).join(',')}:s${safeSmallLights.map(light => light.smallLightIndex).join(',')}`;
     const previewItems = [
         ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: album.photos[0] })),
@@ -1584,6 +1605,7 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
             card.classList.add((hasPreferredRoom ? shouldPlaceLeft : !shouldPlaceLeft) ? 'placement-left' : 'placement-right');
             card.style.left = `${clampX(left)}px`;
             card.style.top = `${clampY(top)}px`;
+            positionPreviewBridge(anchor, card);
         }
     } else {
         const left = Math.min(window.innerWidth * 0.62, window.innerWidth - cardWidth - 18);
@@ -1593,52 +1615,75 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
         card.classList.add('placement-right');
         card.style.left = `${clampX(left)}px`;
         card.style.top = `${clampY(top)}px`;
+        hidePreviewBridge();
     }
 }
 
+function positionPreviewBridge(anchor, card) {
+    const bridge = document.getElementById('map-preview-bridge');
+    if (!bridge || !anchor || !card || expandedSmallLightIndex !== null) {
+        hidePreviewBridge();
+        return;
+    }
+
+    const anchorRect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
+    const cardRect = card.getBoundingClientRect();
+    if (!anchorRect || card.style.opacity === '0') {
+        hidePreviewBridge();
+        return;
+    }
+
+    const anchorMidX = anchorRect.left + anchorRect.width / 2;
+    const cardMidX = cardRect.left + cardRect.width / 2;
+    const isCardRight = cardMidX > anchorMidX;
+    const leftEdge = isCardRight ? anchorRect.right : cardRect.right;
+    const rightEdge = isCardRight ? cardRect.left : anchorRect.left;
+    const left = Math.min(leftEdge, rightEdge) - 10;
+    const width = Math.max(18, Math.abs(rightEdge - leftEdge) + 20);
+    const top = Math.min(anchorRect.top, cardRect.top) - 10;
+    const bottom = Math.max(anchorRect.bottom, cardRect.bottom) + 10;
+
+    bridge.style.left = `${Math.max(0, left)}px`;
+    bridge.style.top = `${Math.max(0, top)}px`;
+    bridge.style.width = `${Math.min(window.innerWidth, width)}px`;
+    bridge.style.height = `${Math.min(window.innerHeight - Math.max(0, top), bottom - top)}px`;
+    bridge.classList.add('active');
+}
+
+function hidePreviewBridge() {
+    const bridge = document.getElementById('map-preview-bridge');
+    if (!bridge) return;
+    bridge.classList.remove('active');
+    bridge.style.width = '0px';
+    bridge.style.height = '0px';
+}
+
 function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
-    const card = document.getElementById('map-preview-card');
     const light = smallLights[smallLightIndex];
-    if (!card || !light) return;
+    const overlay = document.getElementById('small-light-overlay');
+    const title = document.getElementById('small-light-overlay-title');
+    const location = document.getElementById('small-light-overlay-location');
+    const hand = document.getElementById('small-light-hand');
+    if (!overlay || !title || !location || !hand || !light) return;
 
     cancelPreviewHide();
+    hidePreview(true);
     expandedSmallLightIndex = smallLightIndex;
     previewAnchorElement = anchor;
-    previewLockUntil = Number.POSITIVE_INFINITY;
-    previewContentKey = `small-light:${smallLightIndex}`;
-    card.classList.add('choice-mode', 'expanded-light');
 
-    const photoTiles = light.photos.map((photo, index) => `
-        <figure class="small-light-tile small-light-tile-${index + 1}">
+    title.textContent = light.title;
+    location.textContent = light.location;
+    hand.className = `small-light-hand count-${light.photos.length}`;
+    hand.innerHTML = light.photos.map((photo, index) => `
+        <figure class="small-light-photo-card small-light-photo-${index + 1}" style="--rotate:${getSmallLightCardRotation(index, light.photos.length)}deg; --lift:${getSmallLightCardLift(index, light.photos.length)}px;">
             <img src="${photo}" alt="${escapeHtml(`${light.spotName} ${index + 1}`)}">
         </figure>
     `).join('');
 
-    card.innerHTML = `
-        <button class="small-light-back" type="button">← ${escapeHtml(heading || getPrefectureTitle(anchor) || '返回')}</button>
-        <div class="preview-kicker">小拾光</div>
-        <div class="small-light-title">${escapeHtml(light.title)}</div>
-        <div class="small-light-location">${escapeHtml(light.location)}</div>
-        <div class="small-light-grid">${photoTiles}</div>
-    `;
-
-    card.querySelector('.small-light-back')?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        expandedSmallLightIndex = null;
-        previewLockUntil = Date.now() + 1400;
-        const prefGroup = getPrefectureGroupFromAnchor(anchor);
-        showContentPreview(
-            getAlbumsForPrefecture(prefGroup),
-            getSmallLightsForPrefecture(prefGroup),
-            heading,
-            anchor
-        );
-    });
-
-    card.querySelectorAll('.small-light-tile img').forEach(img => {
+    hand.querySelectorAll('.small-light-photo-card img').forEach(img => {
         const markOrientation = () => {
             if (img.naturalHeight > img.naturalWidth) {
-                img.closest('.small-light-tile')?.classList.add('is-portrait');
+                img.closest('.small-light-photo-card')?.classList.add('is-portrait');
             }
         };
         if (img.complete) markOrientation();
@@ -1646,8 +1691,42 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
     });
 
     light.photos.forEach(preloadImage);
-    card.style.opacity = 1;
-    requestAnimationFrame(() => positionPreviewCard(card, anchor, true));
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('small-light-open');
+}
+
+function getSmallLightCardRotation(index, count) {
+    const rotations = {
+        1: [0],
+        2: [-3, 3],
+        3: [-4, 1.8, 4],
+        4: [-4, 2, -2, 4]
+    };
+    return (rotations[count] || rotations[4])[index] || 0;
+}
+
+function getSmallLightCardLift(index, count) {
+    const lifts = {
+        1: [0],
+        2: [16, -10],
+        3: [18, -12, 14],
+        4: [18, -10, 8, 20]
+    };
+    return (lifts[count] || lifts[4])[index] || 0;
+}
+
+function closeSmallLightOverlay() {
+    const overlay = document.getElementById('small-light-overlay');
+    const hand = document.getElementById('small-light-hand');
+    if (!overlay) return;
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('small-light-open');
+    if (hand) hand.innerHTML = '';
+    expandedSmallLightIndex = null;
+    previewInteractionLocked = false;
+    previewAnchorElement = null;
 }
 
 function shouldHoldPreviewFor(candidate) {
@@ -1655,7 +1734,16 @@ function shouldHoldPreviewFor(candidate) {
     if (!card || card.style.opacity === '0') return false;
     if (!previewAnchorElement || candidate === previewAnchorElement) return false;
 
-    return expandedSmallLightIndex !== null || card.matches(':hover') || Date.now() < previewLockUntil;
+    if (expandedSmallLightIndex !== null) return true;
+
+    const bridge = document.getElementById('map-preview-bridge');
+    const isOperatingPreview = card.matches(':hover') || Boolean(bridge?.matches(':hover'));
+    if (!isOperatingPreview) {
+        previewInteractionLocked = false;
+        return false;
+    }
+
+    return previewInteractionLocked;
 }
 
 function cancelPreviewHide() {
@@ -1668,7 +1756,7 @@ function cancelPreviewHide() {
 function schedulePreviewHide() {
     if (expandedSmallLightIndex !== null) return;
     cancelPreviewHide();
-    previewHideTimer = setTimeout(() => hidePreview(true), 620);
+    previewHideTimer = setTimeout(() => hidePreview(true), 220);
 }
 
 function hidePreview(force = false) {
@@ -1680,8 +1768,9 @@ function hidePreview(force = false) {
         card.classList.remove('placement-left', 'placement-right');
         previewContentKey = '';
         previewAnchorElement = null;
-        previewLockUntil = 0;
+        previewInteractionLocked = false;
         expandedSmallLightIndex = null;
+        hidePreviewBridge();
     }
 }
 
@@ -1690,4 +1779,14 @@ document.addEventListener('DOMContentLoaded', () => {
     preloadAlbumCovers();
     updateAlbumCover(true);
     loadAndInitMap();
+
+    document.getElementById('small-light-close')?.addEventListener('click', closeSmallLightOverlay);
+    document.getElementById('small-light-overlay')?.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeSmallLightOverlay();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && expandedSmallLightIndex !== null) {
+            closeSmallLightOverlay();
+        }
+    });
 });
