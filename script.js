@@ -346,6 +346,29 @@ function preloadAlbumCovers() {
     preloadPhotos(albums.map(album => album.photos[0]));
 }
 
+function preloadSmallLightCovers() {
+    preloadPhotos(smallLights.map(light => light.photos[0]));
+}
+
+function preloadSmallLightPhotos(smallLightIndex) {
+    const light = smallLights[smallLightIndex];
+    if (!light) return;
+    preloadPhotos(light.photos);
+}
+
+function preloadSmallLights(lightList = []) {
+    lightList.forEach(light => preloadSmallLightPhotos(light.smallLightIndex));
+}
+
+function warmSmallLightPhotos() {
+    const warm = () => smallLights.forEach((_, index) => preloadSmallLightPhotos(index));
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(warm, { timeout: 1600 });
+    } else {
+        setTimeout(warm, 900);
+    }
+}
+
 function preloadGalleryNeighbors(album, index) {
     if (!album || !album.photos.length) return;
 
@@ -1521,6 +1544,8 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: light.photos[0] }))
     ];
 
+    preloadSmallLights(safeSmallLights);
+
     card.classList.add('choice-mode');
     card.classList.remove('expanded-light');
 
@@ -1539,7 +1564,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         `).join('');
         const smallLightItems = safeSmallLights.map(light => `
             <button class="preview-album-btn preview-small-light-btn" type="button" data-small-light-index="${light.smallLightIndex}">
-                <img src="${light.photos[0]}" alt="">
+                <img src="${light.photos[0]}" alt="" loading="eager" decoding="async">
                 <span>
                     <strong>${escapeHtml(light.spotName)}</strong>
                     <small>${escapeHtml(light.title)}</small>
@@ -1796,6 +1821,7 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
     if (!overlay || !title || !location || !hand || !light) return;
 
     cancelPreviewHide();
+    preloadSmallLightPhotos(smallLightIndex);
     hidePreview(true);
     expandedSmallLightIndex = smallLightIndex;
     previewAnchorElement = anchor;
@@ -1805,7 +1831,7 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
     hand.className = `small-light-hand count-${light.photos.length}`;
     hand.innerHTML = light.photos.map((photo, index) => `
         <figure class="small-light-photo-card small-light-photo-${index + 1}" style="--rotate:${getSmallLightCardRotation(index, light.photos.length)}deg; --lift:${getSmallLightCardLift(index, light.photos.length)}px;">
-            <img src="${photo}" alt="${escapeHtml(`${light.spotName} ${index + 1}`)}">
+            <img src="${photo}" alt="${escapeHtml(`${light.spotName} ${index + 1}`)}" loading="eager" decoding="async" fetchpriority="high">
         </figure>
     `).join('');
 
@@ -1819,7 +1845,6 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
         else img.addEventListener('load', markOrientation, { once: true });
     });
 
-    light.photos.forEach(preloadImage);
     overlay.classList.add('open');
     overlay.setAttribute('aria-hidden', 'false');
     document.body.classList.add('small-light-open');
@@ -1906,6 +1931,8 @@ function hidePreview(force = false) {
 document.addEventListener('DOMContentLoaded', () => {
     homeAlbumIndex = Math.floor(Math.random() * albums.length);
     preloadAlbumCovers();
+    preloadSmallLightCovers();
+    warmSmallLightPhotos();
     updateAlbumCover(true);
     loadAndInitMap();
 
