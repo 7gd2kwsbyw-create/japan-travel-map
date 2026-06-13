@@ -1578,7 +1578,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
 }
 
 function positionPreviewCard(card, anchor = null, expanded = false) {
-    card.classList.remove('placement-left', 'placement-right');
+    card.classList.remove('placement-left', 'placement-right', 'placement-top', 'placement-bottom');
 
     const measuredWidth = card.offsetWidth || (expanded ? Math.min(640, window.innerWidth - 32) : 260);
     const measuredHeight = card.offsetHeight || (expanded ? Math.min(520, window.innerHeight - 40) : 250);
@@ -1591,20 +1591,13 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
         if (rect) {
             const gap = expanded ? 28 : 18;
-            const shouldPlaceLeft = expanded || rect.left < window.innerWidth * 0.56;
-            const preferredLeft = shouldPlaceLeft ? rect.left - cardWidth - gap : rect.right + gap;
-            const fallbackLeft = shouldPlaceLeft ? rect.right + gap : rect.left - cardWidth - gap;
-            const hasPreferredRoom = shouldPlaceLeft
-                ? preferredLeft >= 16
-                : preferredLeft + cardWidth <= window.innerWidth - 16;
-            const left = hasPreferredRoom ? preferredLeft : fallbackLeft;
-            const top = expanded
-                ? window.innerHeight / 2 - cardHeight / 2
-                : rect.top + rect.height / 2 - cardHeight / 2;
+            const placement = expanded
+                ? getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap)
+                : getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor);
 
-            card.classList.add((hasPreferredRoom ? shouldPlaceLeft : !shouldPlaceLeft) ? 'placement-left' : 'placement-right');
-            card.style.left = `${clampX(left)}px`;
-            card.style.top = `${clampY(top)}px`;
+            card.classList.add(placement.className);
+            card.style.left = `${clampX(placement.left)}px`;
+            card.style.top = `${clampY(placement.top)}px`;
             positionPreviewBridge(anchor, card);
         }
     } else {
@@ -1617,6 +1610,138 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
         card.style.top = `${clampY(top)}px`;
         hidePreviewBridge();
     }
+}
+
+function getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap) {
+    const shouldPlaceLeft = rect.left < window.innerWidth * 0.56;
+    const preferredLeft = shouldPlaceLeft ? rect.left - cardWidth - gap : rect.right + gap;
+    const fallbackLeft = shouldPlaceLeft ? rect.right + gap : rect.left - cardWidth - gap;
+    const hasPreferredRoom = shouldPlaceLeft
+        ? preferredLeft >= 16
+        : preferredLeft + cardWidth <= window.innerWidth - 16;
+
+    return {
+        left: hasPreferredRoom ? preferredLeft : fallbackLeft,
+        top: window.innerHeight / 2 - cardHeight / 2,
+        className: (hasPreferredRoom ? shouldPlaceLeft : !shouldPlaceLeft) ? 'placement-left' : 'placement-right'
+    };
+}
+
+function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const mapRect = document.getElementById('map-svg-wrapper')?.getBoundingClientRect();
+    const mapCenterY = mapRect ? mapRect.top + mapRect.height / 2 : window.innerHeight / 2;
+    const clampX = value => Math.max(16, Math.min(value, window.innerWidth - cardWidth - 16));
+    const clampY = value => Math.max(16, Math.min(value, window.innerHeight - cardHeight - 16));
+    const blockingRects = getPreviewBlockingRects(anchor);
+
+    const candidates = [
+        {
+            name: 'top',
+            className: 'placement-bottom',
+            left: centerX - cardWidth / 2,
+            top: rect.top - cardHeight - gap,
+            bias: centerY < mapCenterY ? -28 : 10
+        },
+        {
+            name: 'bottom',
+            className: 'placement-top',
+            left: centerX - cardWidth / 2,
+            top: rect.bottom + gap,
+            bias: centerY >= mapCenterY ? -28 : 10
+        },
+        {
+            name: 'right',
+            className: 'placement-right',
+            left: rect.right + gap,
+            top: centerY - cardHeight / 2,
+            bias: 0
+        },
+        {
+            name: 'left',
+            className: 'placement-left',
+            left: rect.left - cardWidth - gap,
+            top: centerY - cardHeight / 2,
+            bias: 0
+        }
+    ];
+
+    const anchorPoint = { x: centerX, y: centerY };
+    let best = null;
+
+    candidates.forEach(candidate => {
+        const left = clampX(candidate.left);
+        const top = clampY(candidate.top);
+        const cardRect = { left, top, right: left + cardWidth, bottom: top + cardHeight };
+        const targetPoint = {
+            x: Math.max(cardRect.left, Math.min(anchorPoint.x, cardRect.right)),
+            y: Math.max(cardRect.top, Math.min(anchorPoint.y, cardRect.bottom))
+        };
+        const offscreenPenalty = Math.abs(left - candidate.left) + Math.abs(top - candidate.top);
+        const distancePenalty = Math.hypot(targetPoint.x - anchorPoint.x, targetPoint.y - anchorPoint.y) * 0.12;
+        const routePenalty = blockingRects.reduce((score, blocker) => (
+            score + (segmentIntersectsRect(anchorPoint, targetPoint, inflateRect(blocker, 10)) ? 1000 : 0)
+        ), 0);
+        const overlapPenalty = blockingRects.reduce((score, blocker) => (
+            score + (rectsOverlap(cardRect, inflateRect(blocker, 6)) ? 120 : 0)
+        ), 0);
+        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty;
+
+        if (!best || score < best.score) {
+            best = { ...candidate, left, top, score };
+        }
+    });
+
+    return best || candidates[0];
+}
+
+function getPreviewBlockingRects(anchor) {
+    if (currentLayer !== 2) return [];
+    if (!activeRegionClass) return [];
+    return [...document.querySelectorAll(`.prefectures g.prefecture.${activeRegionClass}`)]
+        .filter(group => group !== anchor)
+        .map(group => group.getBoundingClientRect())
+        .filter(rect => rect.width > 0 && rect.height > 0)
+        .map(rect => ({ left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom }));
+}
+
+function inflateRect(rect, amount) {
+    return {
+        left: rect.left - amount,
+        top: rect.top - amount,
+        right: rect.right + amount,
+        bottom: rect.bottom + amount
+    };
+}
+
+function rectsOverlap(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function segmentIntersectsRect(start, end, rect) {
+    if (pointInRect(start, rect) || pointInRect(end, rect)) return true;
+    const edges = [
+        [{ x: rect.left, y: rect.top }, { x: rect.right, y: rect.top }],
+        [{ x: rect.right, y: rect.top }, { x: rect.right, y: rect.bottom }],
+        [{ x: rect.right, y: rect.bottom }, { x: rect.left, y: rect.bottom }],
+        [{ x: rect.left, y: rect.bottom }, { x: rect.left, y: rect.top }]
+    ];
+    return edges.some(([edgeStart, edgeEnd]) => segmentsIntersect(start, end, edgeStart, edgeEnd));
+}
+
+function pointInRect(point, rect) {
+    return point.x >= rect.left && point.x <= rect.right && point.y >= rect.top && point.y <= rect.bottom;
+}
+
+function segmentsIntersect(a, b, c, d) {
+    const direction = (p, q, r) => ((r.x - p.x) * (q.y - p.y)) - ((q.x - p.x) * (r.y - p.y));
+    const d1 = direction(c, d, a);
+    const d2 = direction(c, d, b);
+    const d3 = direction(a, b, c);
+    const d4 = direction(a, b, d);
+    return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) &&
+        ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
 }
 
 function positionPreviewBridge(anchor, card) {
@@ -1633,20 +1758,24 @@ function positionPreviewBridge(anchor, card) {
         return;
     }
 
-    const anchorMidX = anchorRect.left + anchorRect.width / 2;
-    const cardMidX = cardRect.left + cardRect.width / 2;
-    const isCardRight = cardMidX > anchorMidX;
-    const leftEdge = isCardRight ? anchorRect.right : cardRect.right;
-    const rightEdge = isCardRight ? cardRect.left : anchorRect.left;
-    const left = Math.min(leftEdge, rightEdge) - 10;
-    const width = Math.max(18, Math.abs(rightEdge - leftEdge) + 20);
-    const top = Math.min(anchorRect.top, cardRect.top) - 10;
-    const bottom = Math.max(anchorRect.bottom, cardRect.bottom) + 10;
+    const anchorPoint = {
+        x: anchorRect.left + anchorRect.width / 2,
+        y: anchorRect.top + anchorRect.height / 2
+    };
+    const cardPoint = {
+        x: Math.max(cardRect.left, Math.min(anchorPoint.x, cardRect.right)),
+        y: Math.max(cardRect.top, Math.min(anchorPoint.y, cardRect.bottom))
+    };
+    const corridor = 42;
+    const left = Math.min(anchorPoint.x, cardPoint.x) - corridor / 2;
+    const width = Math.max(corridor, Math.abs(cardPoint.x - anchorPoint.x) + corridor);
+    const top = Math.min(anchorPoint.y, cardPoint.y) - corridor / 2;
+    const height = Math.max(corridor, Math.abs(cardPoint.y - anchorPoint.y) + corridor);
 
     bridge.style.left = `${Math.max(0, left)}px`;
     bridge.style.top = `${Math.max(0, top)}px`;
     bridge.style.width = `${Math.min(window.innerWidth, width)}px`;
-    bridge.style.height = `${Math.min(window.innerHeight - Math.max(0, top), bottom - top)}px`;
+    bridge.style.height = `${Math.min(window.innerHeight - Math.max(0, top), height)}px`;
     bridge.classList.add('active');
 }
 
