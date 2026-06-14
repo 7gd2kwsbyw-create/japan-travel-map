@@ -93,6 +93,26 @@ const albums = [
             "images/sakaiminato-mizuki/13_mitsubishi_battery_vending.jpg",
             "images/sakaiminato-mizuki/14_sakaiminato_street_cat.jpg"
         ]
+    },
+    {
+        title: "倉敷美觀地區，漫步在老街的悠閒",
+        location: "📍 岡山縣 ． 倉敷美觀地區",
+        selector: ".okayama",
+        spotId: "spot-kurashiki-bikan",
+        spotName: "倉敷美觀地區",
+        photos: [
+            "images/kurashiki-bikan/01_kurashiki_bikan_canal_twilight.jpg",
+            "images/kurashiki-bikan/02_kurashiki_station_sign_blue_sky.jpg",
+            "images/kurashiki-bikan/03_kurashiki_evening_street_sunlight.jpg",
+            "images/kurashiki-bikan/04_misty_bikan_canal_walk.jpg",
+            "images/kurashiki-bikan/05_canal_reflection_white_storehouses.jpg",
+            "images/kurashiki-bikan/06_white_wall_warehouse_detail.jpg",
+            "images/kurashiki-bikan/07_kurashiki_river_boat_under_branches.jpg",
+            "images/kurashiki-bikan/08_aibi_jizo_spring_blossoms.jpg",
+            "images/kurashiki-bikan/09_cafe_el_greco_ivy_facade.jpg",
+            "images/kurashiki-bikan/10_bicycle_and_woven_lamp_detail.jpg",
+            "images/kurashiki-bikan/11_bikan_night_street_bicycle_lamp.jpg"
+        ]
     }
 ];
 
