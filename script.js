@@ -113,6 +113,28 @@ const albums = [
             "images/kurashiki-bikan/10_bicycle_and_woven_lamp_detail.jpg",
             "images/kurashiki-bikan/11_bikan_night_street_bicycle_lamp.jpg"
         ]
+    },
+    {
+        title: "大久野島，海風裡的兔影與廢墟",
+        location: "📍 廣島縣 ． 大久野島",
+        selector: ".hiroshima",
+        spotId: "spot-okunoshima",
+        spotName: "大久野島",
+        photos: [
+            "images/okunoshima/01_rabbit_gathering_feeding_time.jpg",
+            "images/okunoshima/02_ferry_arrival_rainy_pier.jpg",
+            "images/okunoshima/03_rabbit_shuttle_bus_by_sea.jpg",
+            "images/okunoshima/04_power_tower_hillside.jpg",
+            "images/okunoshima/05_roadside_rabbit_on_moss.jpg",
+            "images/okunoshima/06_beachside_rabbit_closeup.jpg",
+            "images/okunoshima/07_sleeping_rabbit_palm_leaves.jpg",
+            "images/okunoshima/08_white_rabbit_portrait.jpg",
+            "images/okunoshima/09_soft_focus_white_rabbit.jpg",
+            "images/okunoshima/10_resting_rabbit_near_building.jpg",
+            "images/okunoshima/11_abandoned_factory_wall.jpg",
+            "images/okunoshima/12_factory_archway_ruins.jpg",
+            "images/okunoshima/13_blue_seto_sea_horizon.jpg"
+        ]
     }
 ];
 
