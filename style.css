@@ -252,26 +252,25 @@ body {
 .map-pin { cursor: pointer; will-change: transform, opacity; }
 
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
-.pin-shadow { fill: rgba(52, 46, 38, 0.18); }
 .pin-body {
-    filter: drop-shadow(0 3px 4px rgba(52, 46, 38, 0.22));
+    filter: drop-shadow(0 1.5px 2px rgba(52, 46, 38, 0.18));
     transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
 }
 .pin-album .pin-body {
-    fill: #715f4a;
-    stroke: #fffaf1;
-    stroke-width: 1.25px;
+    fill: #6d6356;
+    stroke: rgba(255, 252, 246, 0.96);
+    stroke-width: 1.15px;
 }
 .pin-small-light .pin-body {
-    fill: #2f6f72;
-    stroke: #fffaf1;
-    stroke-width: 1.3px;
+    fill: #4f7972;
+    stroke: rgba(255, 252, 246, 0.96);
+    stroke-width: 1.15px;
 }
-.pin-core { fill: #fffaf1; pointer-events: none; }
+.pin-core { fill: rgba(255, 252, 246, 0.92); pointer-events: none; }
 .spot-pin:hover .pin-album .pin-body,
-.spot-pin:hover.pin-album .pin-body { fill: #4f4133; }
+.spot-pin:hover.pin-album .pin-body { fill: #4f473d; }
 .spot-pin:hover .pin-small-light .pin-body,
-.spot-pin:hover.pin-small-light .pin-body { fill: #25575a; }
+.spot-pin:hover.pin-small-light .pin-body { fill: #365d58; }
 .pin-count-bg { fill: #f4f3ef; stroke: #746b5e; stroke-width: 1.2px; }
 .pin-count {
     fill: #575044;
@@ -304,7 +303,7 @@ body {
 #japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
     opacity: 1;
     pointer-events: auto;
-    animation: pinBreathe 1.8s infinite ease-in-out;
+    animation: pinBreathe 2.4s infinite ease-in-out;
 }
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }
@@ -446,19 +445,18 @@ body {
 }
 .legend-pin {
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     margin-right: 6px;
     vertical-align: -1px;
-    box-shadow: 0 1px 3px rgba(54, 47, 38, 0.2);
+    box-shadow: 0 1px 2px rgba(54, 47, 38, 0.16);
 }
 .legend-pin-album {
-    background: #715f4a;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
+    background: #6d6356;
+    border-radius: 50%;
 }
 .legend-pin-small-light {
-    background: #2f6f72;
+    background: #4f7972;
     transform: rotate(45deg);
 }
 .preview-cover-stack {

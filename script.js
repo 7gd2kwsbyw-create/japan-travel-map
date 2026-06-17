@@ -5,6 +5,8 @@ const albums = [
         selector: ".aichi",
         spotId: "spot-korankei",
         spotName: "香嵐溪巴川畔",
+        lat: 35.1304462,
+        lng: 137.3160731,
         photos: [
             "images/korankei/maple_light_road_2.JPG", 
             "images/korankei/cross_line.JPG",
@@ -23,6 +25,8 @@ const albums = [
         selector: ".aichi",
         spotId: "spot-inuyama-castle",
         spotName: "犬山城",
+        lat: 35.3883304,
+        lng: 136.9392776,
         photos: [
             "images/inuyama-castle/01_inuyama_castle_keep.jpg",
             "images/inuyama-castle/02_inuyama_castle_window_kiso_river.jpg",
@@ -37,6 +41,8 @@ const albums = [
         selector: ".gifu",
         spotId: "spot-gero-kaeru-shrine",
         spotName: "下呂溫泉與加恵瑠神社",
+        lat: 35.8133325,
+        lng: 137.2391001,
         photos: [
             "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg",
             "images/gero-kaeru-shrine/05_frog_chozu_water_basin.jpg",
@@ -56,6 +62,8 @@ const albums = [
         selector: ".shimane",
         spotId: "spot-miho",
         spotName: "美保神社",
+        lat: 35.5622413,
+        lng: 133.3067215,
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
@@ -77,6 +85,8 @@ const albums = [
         selector: ".tottori",
         spotId: "spot-sakaiminato-mizuki",
         spotName: "境港與水木茂之道",
+        lat: 35.5454253,
+        lng: 133.2251754,
         photos: [
             "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg",
             "images/sakaiminato-mizuki/01_sakai_harbor_mountains_evening.jpg",
@@ -100,6 +110,8 @@ const albums = [
         selector: ".okayama",
         spotId: "spot-kurashiki-bikan",
         spotName: "倉敷美觀地區",
+        lat: 34.596525,
+        lng: 133.7725863,
         photos: [
             "images/kurashiki-bikan/01_kurashiki_bikan_canal_twilight.jpg",
             "images/kurashiki-bikan/02_kurashiki_station_sign_blue_sky.jpg",
@@ -120,6 +132,8 @@ const albums = [
         selector: ".hiroshima",
         spotId: "spot-okunoshima",
         spotName: "大久野島",
+        lat: 34.3091206,
+        lng: 132.9937586,
         photos: [
             "images/okunoshima/01_rabbit_gathering_feeding_time.jpg",
             "images/okunoshima/02_ferry_arrival_rainy_pier.jpg",
@@ -145,6 +159,8 @@ const smallLights = [
         selector: ".shimane",
         spotId: "spot-shinji-yomegashima",
         spotName: "宍道湖嫁島夕照",
+        lat: 35.4561667,
+        lng: 133.0467126,
         photos: [
             "images/shinji-yomegashima/01_yomegashima_sunset_boat.jpg",
             "images/shinji-yomegashima/02_yomegashima_sunset_wide.jpg",
@@ -179,6 +195,15 @@ const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 2.75;
 const MAP_REVEAL_LENGTH = 1.25;
 const REGION_CLASSES = Object.keys(regionNames);
+
+const prefectureGeoBounds = {
+    aichi: { minLat: 34.57, maxLat: 35.43, minLng: 136.66, maxLng: 137.85 },
+    gifu: { minLat: 35.09, maxLat: 36.47, minLng: 136.27, maxLng: 137.66 },
+    shimane: { minLat: 34.30, maxLat: 35.64, minLng: 131.67, maxLng: 133.42 },
+    tottori: { minLat: 35.05, maxLat: 35.62, minLng: 133.13, maxLng: 134.52 },
+    okayama: { minLat: 34.30, maxLat: 35.36, minLng: 133.27, maxLng: 134.42 },
+    hiroshima: { minLat: 34.03, maxLat: 35.12, minLng: 132.04, maxLng: 133.47 }
+};
 
 let homeAlbumIndex = 0;
 let browsingAlbumIndex = 0;
@@ -834,12 +859,43 @@ function getPrefectureTitleForPin(pin) {
 function getPinOffset(order = 0, total = 1) {
     if (total <= 1) return { x: 0, y: 0 };
 
-    const radius = total <= 2 ? 18 : 22;
+    const radius = total <= 2 ? 9 : 12;
     const angle = (-90 + (360 / total) * order) * Math.PI / 180;
 
     return {
         x: Math.cos(angle) * radius,
         y: Math.sin(angle) * radius
+    };
+}
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function getProjectedSpotPoint(item, prefG, prefClass) {
+    const bounds = getPrefectureBounds(prefG);
+    const geo = prefectureGeoBounds[prefClass];
+    if (!bounds) return { x: 500, y: 500 };
+
+    const fallback = {
+        x: bounds.x + bounds.width / 2,
+        y: bounds.y + bounds.height / 2
+    };
+
+    if (!geo || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) {
+        return fallback;
+    }
+
+    const insetX = Math.min(bounds.width * 0.16, 12);
+    const insetY = Math.min(bounds.height * 0.16, 12);
+    const usableWidth = Math.max(bounds.width - insetX * 2, 1);
+    const usableHeight = Math.max(bounds.height - insetY * 2, 1);
+    const xRatio = clamp((item.lng - geo.minLng) / (geo.maxLng - geo.minLng), 0.08, 0.92);
+    const yRatio = clamp((geo.maxLat - item.lat) / (geo.maxLat - geo.minLat), 0.08, 0.92);
+
+    return {
+        x: bounds.x + insetX + usableWidth * xRatio,
+        y: bounds.y + insetY + usableHeight * yRatio
     };
 }
 
@@ -1205,23 +1261,23 @@ function loadAndInitMap() {
                     pin.setAttribute('data-pin-order', String(pinOrder));
                     pin.setAttribute('data-pin-total', String(prefPins.length));
                     pin.setAttribute('data-pin-type', pinData.pinType);
+                    pin.setAttribute('data-lat', String(pinData.lat ?? ''));
+                    pin.setAttribute('data-lng', String(pinData.lng ?? ''));
                     pin.setAttribute('data-album-indexes', pinData.albumIndexes.join(','));
                     pin.setAttribute('data-small-light-indexes', pinData.smallLightIndexes.join(','));
                     pin.setAttribute('id', pinData.pinId);
 
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
-                            <g transform="translate(-13, -22)">
-                                <ellipse cx="13" cy="25" rx="7" ry="3" class="pin-shadow"/>
-                                <path d="M13,1 L24,12 L13,23 L2,12 Z" class="pin-body"/>
-                                <path d="M13,6 L15.2,11 L20,12 L15.2,13 L13,18 L10.8,13 L6,12 L10.8,11 Z" class="pin-core"/>
+                            <g transform="translate(-6, -6)">
+                                <path d="M6,0.7 L11.3,6 L6,11.3 L0.7,6 Z" class="pin-body"/>
+                                <circle cx="6" cy="6" r="1.8" class="pin-core"/>
                             </g>
                         `
                         : `
-                            <g transform="translate(-12, -24)">
-                                <ellipse cx="12" cy="27" rx="7" ry="3" class="pin-shadow"/>
-                                <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,23 12,23 C12,23 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" class="pin-body"/>
-                                <circle cx="12" cy="11" r="3.2" class="pin-core"/>
+                            <g transform="translate(-5.5, -5.5)">
+                                <circle cx="5.5" cy="5.5" r="5" class="pin-body"/>
+                                <circle cx="5.5" cy="5.5" r="1.8" class="pin-core"/>
                             </g>
                         `;
                     spotsLayer.appendChild(pin);
@@ -1336,16 +1392,23 @@ function positionAlbumPins() {
         const spotPins = Array.from(document.querySelectorAll(`.spot-pin[data-pref-class="${prefClass}"]`));
         if (!prefG || spotPins.length === 0) return;
 
-        const center = getCenterInsidePrefectureContainer(prefG);
-        if (Number.isFinite(center.x) && Number.isFinite(center.y)) {
+        if (getPrefectureBounds(prefG)) {
             spotPins.forEach((spotPin, fallbackOrder) => {
                 const order = parseInt(spotPin.getAttribute('data-pin-order'), 10);
                 const total = parseInt(spotPin.getAttribute('data-pin-total'), 10);
+                const albumIndex = parseInt((spotPin.getAttribute('data-album-indexes') || '').split(',')[0], 10);
+                const smallLightIndex = parseInt((spotPin.getAttribute('data-small-light-indexes') || '').split(',')[0], 10);
+                const item = Number.isFinite(albumIndex)
+                    ? albums[albumIndex]
+                    : (Number.isFinite(smallLightIndex) ? smallLights[smallLightIndex] : null);
+                const point = item
+                    ? getProjectedSpotPoint(item, prefG, prefClass)
+                    : getCenterInsidePrefectureContainer(prefG);
                 const offset = getPinOffset(
                     Number.isFinite(order) ? order : fallbackOrder,
                     Number.isFinite(total) ? total : spotPins.length
                 );
-                spotPin.setAttribute('transform', `translate(${center.x + offset.x}, ${center.y + offset.y}) scale(1.18)`);
+                spotPin.setAttribute('transform', `translate(${point.x + offset.x}, ${point.y + offset.y})`);
             });
         }
     });
