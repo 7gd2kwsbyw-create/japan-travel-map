@@ -41,8 +41,8 @@ const albums = [
         selector: ".gifu",
         spotId: "spot-gero-kaeru-shrine",
         spotName: "下呂溫泉與加恵瑠神社",
-        lat: 35.8133325,
-        lng: 137.2391001,
+        lat: 35.810295,
+        lng: 137.241013,
         photos: [
             "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg",
             "images/gero-kaeru-shrine/05_frog_chozu_water_basin.jpg",
@@ -85,8 +85,8 @@ const albums = [
         selector: ".tottori",
         spotId: "spot-sakaiminato-mizuki",
         spotName: "境港與水木茂之道",
-        lat: 35.5454253,
-        lng: 133.2251754,
+        lat: 35.5457208,
+        lng: 133.2258081,
         photos: [
             "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg",
             "images/sakaiminato-mizuki/01_sakai_harbor_mountains_evening.jpg",
