@@ -184,17 +184,20 @@ const regionFitOptions = {
     'region-hokkaido': { padding: 1.35, minWidth: 360 },
     'region-tohoku': { padding: 1.45, minWidth: 270 },
     'region-kanto': { padding: 1.55, minWidth: 210 },
-    'region-chubu': { padding: 1.55, minWidth: 260 },
+    'region-chubu': { padding: 1.42, minWidth: 250 },
     'region-kinki': { padding: 1.65, minWidth: 210 },
     'region-chugoku': { padding: 1.3, minWidth: 210 },
     'region-shikoku': { padding: 1.45, minWidth: 185 },
     'region-kyushu': { padding: 1.12, minWidth: 165 }
 };
 
+const regionFocusPrefectureCodes = {
+    'region-chubu': new Set([21, 23])
+};
+
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 2.75;
 const MAP_REVEAL_LENGTH = 1.25;
-const SPOT_PIN_REFERENCE_VIEWBOX_WIDTH = 600;
 const REGION_CLASSES = Object.keys(regionNames);
 
 const prefectureClassByCode = {
@@ -990,9 +993,11 @@ function mergeMapBounds(current, incoming) {
 
 function createRegionFocusBounds(features) {
     return features.reduce((boundsByRegion, feature) => {
-        const regionClass = getRegionClassFromCode(feature.properties.id);
+        const code = feature.properties.id;
+        const regionClass = getRegionClassFromCode(code);
+        const focusCodes = regionFocusPrefectureCodes[regionClass];
         const primaryPolygon = getPrimaryGeoPolygon(feature);
-        if (!regionClass || !primaryPolygon) return boundsByRegion;
+        if (!regionClass || !primaryPolygon || (focusCodes && !focusCodes.has(code))) return boundsByRegion;
 
         const primaryBounds = getProjectedGeoBounds([primaryPolygon]);
         boundsByRegion[regionClass] = mergeMapBounds(boundsByRegion[regionClass], primaryBounds);
@@ -1181,11 +1186,19 @@ function setViewBox(box) {
 }
 
 function updateSpotPinScale(viewBoxWidth) {
-    const scale = clamp(viewBoxWidth / SPOT_PIN_REFERENCE_VIEWBOX_WIDTH, 0.25, 1.3);
+    const svgMap = document.getElementById('japan-map');
+    const renderedWidth = svgMap?.clientWidth || 1000;
 
     document.querySelectorAll('.pin-glyph').forEach(glyph => {
         const translateX = glyph.getAttribute('data-translate-x') || '0';
         const translateY = glyph.getAttribute('data-translate-y') || '0';
+        const baseSize = parseFloat(glyph.getAttribute('data-base-size')) || 18;
+        const targetSize = parseFloat(glyph.getAttribute('data-target-size')) || 22;
+        const scale = clamp(
+            targetSize * viewBoxWidth / (renderedWidth * baseSize),
+            0.28,
+            2.2
+        );
         glyph.setAttribute('transform', `scale(${scale}) translate(${translateX}, ${translateY})`);
     });
 }
@@ -1453,17 +1466,21 @@ function loadAndInitMap() {
 
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
-                            <g class="pin-glyph" data-translate-x="-4" data-translate-y="-4" transform="translate(-4, -4)">
-                                <circle cx="4" cy="4" r="8" class="pin-hit-area"/>
-                                <path d="M4,0.7 L7.3,4 L4,7.3 L0.7,4 Z" class="pin-body"/>
-                                <circle cx="4" cy="4" r="1.1" class="pin-core"/>
+                            <g class="pin-glyph" data-translate-x="-8" data-translate-y="-8"
+                                data-base-size="16" data-target-size="18" transform="translate(-8, -8)">
+                                <circle cx="8" cy="8" r="7" class="pin-hit-area"/>
+                                <path d="M8,0.8 L10.4,5.6 L15.2,8 L10.4,10.4 L8,15.2 L5.6,10.4 L0.8,8 L5.6,5.6 Z"
+                                    class="pin-body"/>
+                                <circle cx="8" cy="8" r="2.15" class="pin-core"/>
                             </g>
                         `
                         : `
-                            <g class="pin-glyph" data-translate-x="-3.8" data-translate-y="-3.8" transform="translate(-3.8, -3.8)">
-                                <circle cx="3.8" cy="3.8" r="8" class="pin-hit-area"/>
-                                <circle cx="3.8" cy="3.8" r="3.25" class="pin-body"/>
-                                <circle cx="3.8" cy="3.8" r="1.1" class="pin-core"/>
+                            <g class="pin-glyph" data-translate-x="-8" data-translate-y="-18"
+                                data-base-size="18" data-target-size="23" transform="translate(-8, -18)">
+                                <circle cx="8" cy="8" r="5.5" class="pin-hit-area"/>
+                                <path d="M8,18 C6.7,15.7 1.5,11.3 1.5,7.6 A6.5,6.5 0 1 1 14.5,7.6 C14.5,11.3 9.3,15.7 8,18 Z"
+                                    class="pin-body"/>
+                                <circle cx="8" cy="7.5" r="2.5" class="pin-core"/>
                             </g>
                         `;
                     spotsLayer.appendChild(pin);

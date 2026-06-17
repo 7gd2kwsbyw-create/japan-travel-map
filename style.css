@@ -254,24 +254,29 @@ body {
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
 .pin-hit-area { fill: transparent; stroke: transparent; pointer-events: all; }
 .pin-body {
-    filter: drop-shadow(0 1px 1.5px rgba(52, 46, 38, 0.12));
+    filter: drop-shadow(0 1.5px 1.5px rgba(52, 46, 38, 0.2));
     transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
 }
 .pin-album .pin-body {
-    fill: #6d6356;
-    stroke: rgba(255, 252, 246, 0.9);
-    stroke-width: 0.55px;
+    fill: #a64f45;
+    stroke: rgba(255, 250, 242, 0.96);
+    stroke-width: 0.7px;
 }
 .pin-small-light .pin-body {
-    fill: #4f7972;
-    stroke: rgba(255, 252, 246, 0.9);
-    stroke-width: 0.55px;
+    fill: #4f7c74;
+    stroke: rgba(255, 250, 242, 0.96);
+    stroke-width: 0.7px;
 }
-.pin-core { fill: rgba(255, 252, 246, 0.88); pointer-events: none; }
+.pin-core {
+    fill: rgba(255, 250, 242, 0.96);
+    stroke: rgba(92, 54, 48, 0.12);
+    stroke-width: 0.35px;
+    pointer-events: none;
+}
 .spot-pin:hover .pin-album .pin-body,
-.spot-pin:hover.pin-album .pin-body { fill: #4f473d; }
+.spot-pin:hover.pin-album .pin-body { fill: #873d36; }
 .spot-pin:hover .pin-small-light .pin-body,
-.spot-pin:hover.pin-small-light .pin-body { fill: #365d58; }
+.spot-pin:hover.pin-small-light .pin-body { fill: #37645d; }
 .pin-count-bg { fill: #f4f3ef; stroke: #746b5e; stroke-width: 1.2px; }
 .pin-count {
     fill: #575044;
@@ -415,50 +420,6 @@ body {
     color: rgba(42, 36, 30, 0.95);
     border-color: rgba(140, 124, 96, 0.24);
     box-shadow: 0 12px 30px rgba(44, 38, 31, 0.16), 0 0 0 1px rgba(255,255,255,0.72) inset;
-}
-#map-pin-legend {
-    position: fixed;
-    right: 36px;
-    bottom: 34px;
-    z-index: 92;
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    padding: 9px 12px;
-    border: 1px solid rgba(82, 72, 58, 0.12);
-    border-radius: 6px;
-    background: rgba(255, 252, 244, 0.78);
-    box-shadow: 0 10px 24px rgba(54, 47, 38, 0.12);
-    color: rgba(62, 54, 43, 0.72);
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 0.72rem;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    pointer-events: none;
-    opacity: 0;
-    transform: translateY(6px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-#map-container:has(#japan-map.map-layer-2) #map-pin-legend,
-#map-container:has(#japan-map.map-layer-3) #map-pin-legend {
-    opacity: 1;
-    transform: translateY(0);
-}
-.legend-pin {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    margin-right: 6px;
-    vertical-align: -1px;
-    box-shadow: 0 1px 2px rgba(54, 47, 38, 0.16);
-}
-.legend-pin-album {
-    background: #6d6356;
-    border-radius: 50%;
-}
-.legend-pin-small-light {
-    background: #4f7972;
-    transform: rotate(45deg);
 }
 .preview-cover-stack {
     position: relative;
