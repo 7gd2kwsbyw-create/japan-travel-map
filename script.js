@@ -194,6 +194,7 @@ const regionFitOptions = {
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 2.75;
 const MAP_REVEAL_LENGTH = 1.25;
+const SPOT_PIN_REFERENCE_VIEWBOX_WIDTH = 600;
 const REGION_CLASSES = Object.keys(regionNames);
 
 const prefectureClassByCode = {
@@ -208,6 +209,8 @@ const prefectureClassByCode = {
 };
 
 let mapProjection = null;
+let regionFocusBounds = {};
+let mapFeaturesByPrefecture = new Map();
 
 let homeAlbumIndex = 0;
 let browsingAlbumIndex = 0;
@@ -860,18 +863,6 @@ function getPrefectureTitleForPin(pin) {
     return getPrefectureTitle(pref);
 }
 
-function getPinOffset(order = 0, total = 1) {
-    if (total <= 1) return { x: 0, y: 0 };
-
-    const radius = total <= 2 ? 9 : 12;
-    const angle = (-90 + (360 / total) * order) * Math.PI / 180;
-
-    return {
-        x: Math.cos(angle) * radius,
-        y: Math.sin(angle) * radius
-    };
-}
-
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
@@ -928,6 +919,128 @@ function createMapProjection(features) {
     };
 }
 
+function getProjectedRingArea(ring) {
+    if (!mapProjection || ring.length < 3) return 0;
+
+    let area = 0;
+    for (let index = 0; index < ring.length; index += 1) {
+        const current = mapProjection(ring[index][0], ring[index][1]);
+        const nextCoordinate = ring[(index + 1) % ring.length];
+        const next = mapProjection(nextCoordinate[0], nextCoordinate[1]);
+        area += current.x * next.y - next.x * current.y;
+    }
+
+    return Math.abs(area / 2);
+}
+
+function getPrimaryGeoPolygon(feature) {
+    const polygons = feature?.geometry?.coordinates || [];
+    return polygons.reduce((largest, polygon) => {
+        if (!largest) return polygon;
+        return getProjectedRingArea(polygon[0]) > getProjectedRingArea(largest[0]) ? polygon : largest;
+    }, null);
+}
+
+function getProjectedGeoBounds(polygons) {
+    if (!mapProjection || !polygons.length) return null;
+
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    polygons.forEach(polygon => {
+        polygon.forEach(ring => {
+            ring.forEach(([lng, lat]) => {
+                const point = mapProjection(lng, lat);
+                minX = Math.min(minX, point.x);
+                minY = Math.min(minY, point.y);
+                maxX = Math.max(maxX, point.x);
+                maxY = Math.max(maxY, point.y);
+            });
+        });
+    });
+
+    if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
+
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
+
+function mergeMapBounds(current, incoming) {
+    if (!incoming) return current;
+    if (!current) return { ...incoming };
+
+    const minX = Math.min(current.x, incoming.x);
+    const minY = Math.min(current.y, incoming.y);
+    const maxX = Math.max(current.x + current.width, incoming.x + incoming.width);
+    const maxY = Math.max(current.y + current.height, incoming.y + incoming.height);
+
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
+
+function createRegionFocusBounds(features) {
+    return features.reduce((boundsByRegion, feature) => {
+        const regionClass = getRegionClassFromCode(feature.properties.id);
+        const primaryPolygon = getPrimaryGeoPolygon(feature);
+        if (!regionClass || !primaryPolygon) return boundsByRegion;
+
+        const primaryBounds = getProjectedGeoBounds([primaryPolygon]);
+        boundsByRegion[regionClass] = mergeMapBounds(boundsByRegion[regionClass], primaryBounds);
+        return boundsByRegion;
+    }, {});
+}
+
+function isPointInGeoRing(lng, lat, ring) {
+    let inside = false;
+
+    for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
+        const [currentLng, currentLat] = ring[index];
+        const [previousLng, previousLat] = ring[previous];
+        const crossesLatitude = (currentLat > lat) !== (previousLat > lat);
+        if (!crossesLatitude) continue;
+
+        const crossingLng = (previousLng - currentLng) * (lat - currentLat)
+            / (previousLat - currentLat) + currentLng;
+        if (lng < crossingLng) inside = !inside;
+    }
+
+    return inside;
+}
+
+function isCoordinateInsideFeature(item, feature) {
+    if (!feature || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) return false;
+
+    return feature.geometry.coordinates.some(polygon => {
+        const [outerRing, ...holes] = polygon;
+        return isPointInGeoRing(item.lng, item.lat, outerRing)
+            && !holes.some(hole => isPointInGeoRing(item.lng, item.lat, hole));
+    });
+}
+
+function validateSpotCoordinates() {
+    [...albums, ...smallLights].forEach(item => {
+        const prefClass = getPrefClassFromSelector(item.selector);
+        const feature = mapFeaturesByPrefecture.get(prefClass);
+        if (isCoordinateInsideFeature(item, feature)) return;
+
+        console.warn(`景點座標不在指定都道府縣範圍內: ${item.spotName}`, {
+            prefecture: prefClass,
+            lat: item.lat,
+            lng: item.lng
+        });
+    });
+}
+
 function geoRingToPath(ring) {
     if (!mapProjection || !ring.length) return '';
 
@@ -963,7 +1076,10 @@ function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
 
-    const code = parseInt(codeAttr, 10);
+    return getRegionClassFromCode(parseInt(codeAttr, 10));
+}
+
+function getRegionClassFromCode(code) {
     if (code === 47) return 'region-okinawa';
     if (code === 1) return 'region-hokkaido';
     if (code >= 2 && code <= 7) return 'region-tohoku';
@@ -1061,6 +1177,17 @@ function setViewBox(box) {
 
     currentViewBox = { ...box };
     svgMap.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
+    updateSpotPinScale(box.width);
+}
+
+function updateSpotPinScale(viewBoxWidth) {
+    const scale = clamp(viewBoxWidth / SPOT_PIN_REFERENCE_VIEWBOX_WIDTH, 0.25, 1.3);
+
+    document.querySelectorAll('.pin-glyph').forEach(glyph => {
+        const translateX = glyph.getAttribute('data-translate-x') || '0';
+        const translateY = glyph.getAttribute('data-translate-y') || '0';
+        glyph.setAttribute('transform', `scale(${scale}) translate(${translateX}, ${translateY})`);
+    });
 }
 
 function easeOutCubic(t) {
@@ -1160,6 +1287,8 @@ function getBoundsInSvg(elements) {
 }
 
 function getRegionBounds(regionClass) {
+    if (regionFocusBounds[regionClass]) return { ...regionFocusBounds[regionClass] };
+
     const members = Array.from(document.querySelectorAll(`.prefectures g.prefecture.${regionClass}`));
     return getBoundsInSvg(members);
 }
@@ -1230,6 +1359,12 @@ function loadAndInitMap() {
 
             const features = (geoData.features || []).sort((a, b) => a.properties.id - b.properties.id);
             mapProjection = createMapProjection(features);
+            mapFeaturesByPrefecture = new Map(features.map(feature => [
+                prefectureClassByCode[feature.properties.id],
+                feature
+            ]));
+            regionFocusBounds = createRegionFocusBounds(features);
+            validateSpotCoordinates();
 
             wrapper.innerHTML = '';
             const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -1318,14 +1453,14 @@ function loadAndInitMap() {
 
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
-                            <g transform="translate(-4, -4)">
+                            <g class="pin-glyph" data-translate-x="-4" data-translate-y="-4" transform="translate(-4, -4)">
                                 <circle cx="4" cy="4" r="8" class="pin-hit-area"/>
                                 <path d="M4,0.7 L7.3,4 L4,7.3 L0.7,4 Z" class="pin-body"/>
                                 <circle cx="4" cy="4" r="1.1" class="pin-core"/>
                             </g>
                         `
                         : `
-                            <g transform="translate(-3.8, -3.8)">
+                            <g class="pin-glyph" data-translate-x="-3.8" data-translate-y="-3.8" transform="translate(-3.8, -3.8)">
                                 <circle cx="3.8" cy="3.8" r="8" class="pin-hit-area"/>
                                 <circle cx="3.8" cy="3.8" r="3.25" class="pin-body"/>
                                 <circle cx="3.8" cy="3.8" r="1.1" class="pin-core"/>
@@ -1444,9 +1579,7 @@ function positionAlbumPins() {
         if (!prefG || spotPins.length === 0) return;
 
         if (getPrefectureBounds(prefG)) {
-            spotPins.forEach((spotPin, fallbackOrder) => {
-                const order = parseInt(spotPin.getAttribute('data-pin-order'), 10);
-                const total = parseInt(spotPin.getAttribute('data-pin-total'), 10);
+            spotPins.forEach(spotPin => {
                 const albumIndex = parseInt((spotPin.getAttribute('data-album-indexes') || '').split(',')[0], 10);
                 const smallLightIndex = parseInt((spotPin.getAttribute('data-small-light-indexes') || '').split(',')[0], 10);
                 const item = Number.isFinite(albumIndex)
@@ -1455,11 +1588,7 @@ function positionAlbumPins() {
                 const point = item
                     ? getProjectedSpotPoint(item, prefG)
                     : getCenterInsidePrefectureContainer(prefG);
-                const offset = getPinOffset(
-                    Number.isFinite(order) ? order : fallbackOrder,
-                    Number.isFinite(total) ? total : spotPins.length
-                );
-                spotPin.setAttribute('transform', `translate(${point.x + offset.x}, ${point.y + offset.y})`);
+                spotPin.setAttribute('transform', `translate(${point.x}, ${point.y})`);
             });
         }
     });
