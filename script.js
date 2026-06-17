@@ -186,7 +186,7 @@ const regionFitOptions = {
     'region-kanto': { padding: 1.55, minWidth: 210 },
     'region-chubu': { padding: 1.55, minWidth: 260 },
     'region-kinki': { padding: 1.65, minWidth: 210 },
-    'region-chugoku': { padding: 1.55, minWidth: 230 },
+    'region-chugoku': { padding: 1.3, minWidth: 210 },
     'region-shikoku': { padding: 1.45, minWidth: 185 },
     'region-kyushu': { padding: 1.12, minWidth: 165 }
 };
@@ -1319,12 +1319,14 @@ function loadAndInitMap() {
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
                             <g transform="translate(-4, -4)">
+                                <circle cx="4" cy="4" r="8" class="pin-hit-area"/>
                                 <path d="M4,0.7 L7.3,4 L4,7.3 L0.7,4 Z" class="pin-body"/>
                                 <circle cx="4" cy="4" r="1.1" class="pin-core"/>
                             </g>
                         `
                         : `
                             <g transform="translate(-3.8, -3.8)">
+                                <circle cx="3.8" cy="3.8" r="8" class="pin-hit-area"/>
                                 <circle cx="3.8" cy="3.8" r="3.25" class="pin-body"/>
                                 <circle cx="3.8" cy="3.8" r="1.1" class="pin-core"/>
                             </g>

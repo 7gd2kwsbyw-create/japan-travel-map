@@ -252,21 +252,22 @@ body {
 .map-pin { cursor: pointer; will-change: transform, opacity; }
 
 #spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+.pin-hit-area { fill: transparent; stroke: transparent; pointer-events: all; }
 .pin-body {
-    filter: drop-shadow(0 1.5px 2px rgba(52, 46, 38, 0.18));
+    filter: drop-shadow(0 1px 1.5px rgba(52, 46, 38, 0.12));
     transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
 }
 .pin-album .pin-body {
     fill: #6d6356;
-    stroke: rgba(255, 252, 246, 0.96);
-    stroke-width: 0.9px;
+    stroke: rgba(255, 252, 246, 0.9);
+    stroke-width: 0.55px;
 }
 .pin-small-light .pin-body {
     fill: #4f7972;
-    stroke: rgba(255, 252, 246, 0.96);
-    stroke-width: 0.9px;
+    stroke: rgba(255, 252, 246, 0.9);
+    stroke-width: 0.55px;
 }
-.pin-core { fill: rgba(255, 252, 246, 0.92); pointer-events: none; }
+.pin-core { fill: rgba(255, 252, 246, 0.88); pointer-events: none; }
 .spot-pin:hover .pin-album .pin-body,
 .spot-pin:hover.pin-album .pin-body { fill: #4f473d; }
 .spot-pin:hover .pin-small-light .pin-body,
