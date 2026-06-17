@@ -196,14 +196,18 @@ const MAP_REVEAL_START = 2.75;
 const MAP_REVEAL_LENGTH = 1.25;
 const REGION_CLASSES = Object.keys(regionNames);
 
-const prefectureGeoBounds = {
-    aichi: { minLat: 34.57, maxLat: 35.43, minLng: 136.66, maxLng: 137.85 },
-    gifu: { minLat: 35.09, maxLat: 36.47, minLng: 136.27, maxLng: 137.66 },
-    shimane: { minLat: 34.30, maxLat: 35.64, minLng: 131.67, maxLng: 133.42 },
-    tottori: { minLat: 35.05, maxLat: 35.62, minLng: 133.13, maxLng: 134.52 },
-    okayama: { minLat: 34.30, maxLat: 35.36, minLng: 133.27, maxLng: 134.42 },
-    hiroshima: { minLat: 34.03, maxLat: 35.12, minLng: 132.04, maxLng: 133.47 }
+const prefectureClassByCode = {
+    1: 'hokkaido', 2: 'aomori', 3: 'iwate', 4: 'miyagi', 5: 'akita', 6: 'yamagata', 7: 'fukushima',
+    8: 'ibaraki', 9: 'tochigi', 10: 'gunma', 11: 'saitama', 12: 'chiba', 13: 'tokyo', 14: 'kanagawa',
+    15: 'niigata', 16: 'toyama', 17: 'ishikawa', 18: 'fukui', 19: 'yamanashi', 20: 'nagano',
+    21: 'gifu', 22: 'shizuoka', 23: 'aichi', 24: 'mie',
+    25: 'shiga', 26: 'kyoto', 27: 'osaka', 28: 'hyogo', 29: 'nara', 30: 'wakayama',
+    31: 'tottori', 32: 'shimane', 33: 'okayama', 34: 'hiroshima', 35: 'yamaguchi',
+    36: 'tokushima', 37: 'kagawa', 38: 'ehime', 39: 'kochi',
+    40: 'fukuoka', 41: 'saga', 42: 'nagasaki', 43: 'kumamoto', 44: 'oita', 45: 'miyazaki', 46: 'kagoshima'
 };
+
+let mapProjection = null;
 
 let homeAlbumIndex = 0;
 let browsingAlbumIndex = 0;
@@ -872,31 +876,79 @@ function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
-function getProjectedSpotPoint(item, prefG, prefClass) {
-    const bounds = getPrefectureBounds(prefG);
-    const geo = prefectureGeoBounds[prefClass];
-    if (!bounds) return { x: 500, y: 500 };
-
-    const fallback = {
-        x: bounds.x + bounds.width / 2,
-        y: bounds.y + bounds.height / 2
+function mercatorRaw(lng, lat) {
+    const latRad = clamp(lat, -85, 85) * Math.PI / 180;
+    return {
+        x: lng,
+        y: Math.log(Math.tan(Math.PI / 4 + latRad / 2)) * 180 / Math.PI
     };
+}
 
-    if (!geo || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) {
-        return fallback;
+function forEachGeoCoordinate(features, callback) {
+    features.forEach(feature => {
+        const polys = feature.geometry?.coordinates || [];
+        polys.forEach(poly => {
+            poly.forEach(ring => {
+                ring.forEach(([lng, lat]) => callback(lng, lat));
+            });
+        });
+    });
+}
+
+function createMapProjection(features) {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+
+    forEachGeoCoordinate(features, (lng, lat) => {
+        const p = mercatorRaw(lng, lat);
+        minX = Math.min(minX, p.x);
+        minY = Math.min(minY, p.y);
+        maxX = Math.max(maxX, p.x);
+        maxY = Math.max(maxY, p.y);
+    });
+
+    const padding = 54;
+    const scale = Math.min(
+        (1000 - padding * 2) / (maxX - minX),
+        (1000 - padding * 2) / (maxY - minY)
+    );
+    const drawnWidth = (maxX - minX) * scale;
+    const drawnHeight = (maxY - minY) * scale;
+    const offsetX = (1000 - drawnWidth) / 2;
+    const offsetY = (1000 - drawnHeight) / 2;
+
+    return function project(lng, lat) {
+        const p = mercatorRaw(lng, lat);
+        return {
+            x: offsetX + (p.x - minX) * scale,
+            y: offsetY + (maxY - p.y) * scale
+        };
+    };
+}
+
+function geoRingToPath(ring) {
+    if (!mapProjection || !ring.length) return '';
+
+    return ring.map(([lng, lat], index) => {
+        const p = mapProjection(lng, lat);
+        return `${index === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`;
+    }).join(' ') + ' Z';
+}
+
+function geoFeatureToPath(feature) {
+    return feature.geometry.coordinates
+        .map(poly => poly.map(geoRingToPath).join(' '))
+        .join(' ');
+}
+
+function getProjectedSpotPoint(item, prefG) {
+    if (mapProjection && Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
+        return mapProjection(item.lng, item.lat);
     }
 
-    const insetX = Math.min(bounds.width * 0.16, 12);
-    const insetY = Math.min(bounds.height * 0.16, 12);
-    const usableWidth = Math.max(bounds.width - insetX * 2, 1);
-    const usableHeight = Math.max(bounds.height - insetY * 2, 1);
-    const xRatio = clamp((item.lng - geo.minLng) / (geo.maxLng - geo.minLng), 0.08, 0.92);
-    const yRatio = clamp((geo.maxLat - item.lat) / (geo.maxLat - geo.minLat), 0.08, 0.92);
-
-    return {
-        x: bounds.x + insetX + usableWidth * xRatio,
-        y: bounds.y + insetY + usableHeight * yRatio
-    };
+    return getCenterInsidePrefectureContainer(prefG);
 }
 
 function getPrefectureGroupFromAnchor(anchor) {
@@ -1170,62 +1222,59 @@ function getCenterInsidePrefectureContainer(g) {
 }
 
 function loadAndInitMap() {
-    fetch('japan-map.svg')
-        .then(response => response.text())
-        .then(svgText => {
+    fetch('japan-prefectures.geojson')
+        .then(response => response.json())
+        .then(geoData => {
             const wrapper = document.getElementById('map-svg-wrapper');
             if (!wrapper) return;
 
-            wrapper.innerHTML = svgText;
+            const features = (geoData.features || []).sort((a, b) => a.properties.id - b.properties.id);
+            mapProjection = createMapProjection(features);
 
-            const svgEl = wrapper.querySelector('svg');
-            if (!svgEl) return;
-
+            wrapper.innerHTML = '';
+            const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
             svgEl.setAttribute('id', 'japan-map');
             svgEl.setAttribute('class', 'geolonia-svg-map map-layer-1');
+            svgEl.setAttribute('viewBox', '0 0 1000 1000');
             svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+            svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            wrapper.appendChild(svgEl);
 
-            const initialBox = svgEl.viewBox.baseVal;
             originalViewBox = {
-                x: initialBox.x || 0,
-                y: initialBox.y || 0,
-                width: initialBox.width || 1000,
-                height: initialBox.height || 1000
+                x: 0,
+                y: 0,
+                width: 1000,
+                height: 1000
             };
             currentViewBox = { ...originalViewBox };
 
-            const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
-            if (zoomGroup) {
-                zoomGroup.setAttribute('id', 'map-zoom-group');
-                zoomGroup.style.transform = 'none';
-                zoomGroup.style.transformOrigin = '0 0';
-            }
+            const zoomGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            zoomGroup.setAttribute('id', 'map-zoom-group');
+            zoomGroup.setAttribute('class', 'svg-map');
+            svgEl.appendChild(zoomGroup);
 
-            const prefContainer = svgEl.querySelector('.prefectures');
-            if (!prefContainer) return;
+            const prefContainer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            prefContainer.setAttribute('class', 'prefectures');
+            zoomGroup.appendChild(prefContainer);
 
-            const prefGroups = prefContainer.querySelectorAll('g.prefecture');
-            prefGroups.forEach(g => {
-                const titleEl = g.querySelector('title');
-                if (titleEl) {
-                    g.dataset.prefTitle = titleEl.textContent;
-                    titleEl.remove();
-                }
+            features.forEach(feature => {
+                const code = feature.properties.id;
+                const prefClass = prefectureClassByCode[code];
+                if (!prefClass) return;
 
-                const rClass = getRegionClass(g);
-                const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
-                dirtyClasses.forEach(c => g.classList.remove(c));
+                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                g.setAttribute('class', `${prefClass} prefecture`);
+                g.setAttribute('data-code', String(code));
+                g.dataset.prefTitle = feature.properties.name;
 
-                if (rClass) {
-                    if (rClass === 'region-okinawa') {
-                        g.style.display = 'none';
-                    } else {
-                        g.classList.add(rClass);
-                    }
-                }
+                const regionClass = getRegionClass(g);
+                if (regionClass) g.classList.add(regionClass);
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', geoFeatureToPath(feature));
+                g.appendChild(path);
+                prefContainer.appendChild(g);
             });
-
-            svgEl.querySelectorAll('title').forEach(title => title.remove());
 
             const regionBadgesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             regionBadgesLayer.setAttribute('id', 'region-badges-layer');
@@ -1269,15 +1318,15 @@ function loadAndInitMap() {
 
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
-                            <g transform="translate(-6, -6)">
-                                <path d="M6,0.7 L11.3,6 L6,11.3 L0.7,6 Z" class="pin-body"/>
-                                <circle cx="6" cy="6" r="1.8" class="pin-core"/>
+                            <g transform="translate(-4, -4)">
+                                <path d="M4,0.7 L7.3,4 L4,7.3 L0.7,4 Z" class="pin-body"/>
+                                <circle cx="4" cy="4" r="1.1" class="pin-core"/>
                             </g>
                         `
                         : `
-                            <g transform="translate(-5.5, -5.5)">
-                                <circle cx="5.5" cy="5.5" r="5" class="pin-body"/>
-                                <circle cx="5.5" cy="5.5" r="1.8" class="pin-core"/>
+                            <g transform="translate(-3.8, -3.8)">
+                                <circle cx="3.8" cy="3.8" r="3.25" class="pin-body"/>
+                                <circle cx="3.8" cy="3.8" r="1.1" class="pin-core"/>
                             </g>
                         `;
                     spotsLayer.appendChild(pin);
@@ -1402,7 +1451,7 @@ function positionAlbumPins() {
                     ? albums[albumIndex]
                     : (Number.isFinite(smallLightIndex) ? smallLights[smallLightIndex] : null);
                 const point = item
-                    ? getProjectedSpotPoint(item, prefG, prefClass)
+                    ? getProjectedSpotPoint(item, prefG)
                     : getCenterInsidePrefectureContainer(prefG);
                 const offset = getPinOffset(
                     Number.isFinite(order) ? order : fallbackOrder,

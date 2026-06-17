@@ -259,12 +259,12 @@ body {
 .pin-album .pin-body {
     fill: #6d6356;
     stroke: rgba(255, 252, 246, 0.96);
-    stroke-width: 1.15px;
+    stroke-width: 0.9px;
 }
 .pin-small-light .pin-body {
     fill: #4f7972;
     stroke: rgba(255, 252, 246, 0.96);
-    stroke-width: 1.15px;
+    stroke-width: 0.9px;
 }
 .pin-core { fill: rgba(255, 252, 246, 0.92); pointer-events: none; }
 .spot-pin:hover .pin-album .pin-body,
