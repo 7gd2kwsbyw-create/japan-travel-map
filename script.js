@@ -1779,7 +1779,7 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
     if (anchor) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
         if (rect) {
-            const gap = expanded ? 28 : 18;
+            const gap = expanded ? 34 : 28;
             const placement = expanded
                 ? getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap)
                 : getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor);
@@ -1819,6 +1819,12 @@ function getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap) {
 function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
+    const protectedAnchorRect = inflateRect({
+        left: rect.left,
+        top: rect.top,
+        right: rect.right,
+        bottom: rect.bottom
+    }, 16);
     const mapRect = document.getElementById('map-svg-wrapper')?.getBoundingClientRect();
     const mapCenterY = mapRect ? mapRect.top + mapRect.height / 2 : window.innerHeight / 2;
     const clampX = value => Math.max(16, Math.min(value, window.innerWidth - cardWidth - 16));
@@ -1875,7 +1881,8 @@ function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
         const overlapPenalty = blockingRects.reduce((score, blocker) => (
             score + (rectsOverlap(cardRect, inflateRect(blocker, 6)) ? 120 : 0)
         ), 0);
-        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty;
+        const anchorOverlapPenalty = rectsOverlap(cardRect, protectedAnchorRect) ? 10000 : 0;
+        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty + anchorOverlapPenalty;
 
         if (!best || score < best.score) {
             best = { ...candidate, left, top, score };
