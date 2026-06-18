@@ -134,9 +134,14 @@ body {
     100% { fill: #dcdad2; }
 }
 @keyframes prefSolidBreathe {
-    0% { opacity: 0.58; }
-    50% { opacity: 0.82; }
-    100% { opacity: 0.58; }
+    0% { fill: #c4c2ba; }
+    50% { fill: #9e9c94; } 
+    100% { fill: #c4c2ba; }
+}
+@keyframes albumPrefBreathe {
+    0% { fill: #bdb5a6; }
+    50% { fill: #a69d8f; }
+    100% { fill: #bdb5a6; }
 }
 @keyframes pinBreathe {
     0% { opacity: 0.92; }
@@ -197,14 +202,14 @@ body {
     pointer-events: all;
 }
 
-#japan-map.map-layer-2.region-hokkaido .prefecture.region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .prefecture.region-hokkaido polygon,
-#japan-map.map-layer-2.region-tohoku .prefecture.region-tohoku path, #japan-map.map-layer-2.region-tohoku .prefecture.region-tohoku polygon,
-#japan-map.map-layer-2.region-kanto .prefecture.region-kanto path, #japan-map.map-layer-2.region-kanto .prefecture.region-kanto polygon,
-#japan-map.map-layer-2.region-chubu .prefecture.region-chubu path, #japan-map.map-layer-2.region-chubu .prefecture.region-chubu polygon,
-#japan-map.map-layer-2.region-kinki .prefecture.region-kinki path, #japan-map.map-layer-2.region-kinki .prefecture.region-kinki polygon,
-#japan-map.map-layer-2.region-chugoku .prefecture.region-chugoku path, #japan-map.map-layer-2.region-chugoku .prefecture.region-chugoku polygon,
-#japan-map.map-layer-2.region-shikoku .prefecture.region-shikoku path, #japan-map.map-layer-2.region-shikoku .prefecture.region-shikoku polygon,
-#japan-map.map-layer-2.region-kyushu .prefecture.region-kyushu path, #japan-map.map-layer-2.region-kyushu .prefecture.region-kyushu polygon {
+#japan-map.map-layer-2.region-hokkaido .region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .region-hokkaido polygon,
+#japan-map.map-layer-2.region-tohoku .region-tohoku path, #japan-map.map-layer-2.region-tohoku .region-tohoku polygon,
+#japan-map.map-layer-2.region-kanto .region-kanto path, #japan-map.map-layer-2.region-kanto .region-kanto polygon,
+#japan-map.map-layer-2.region-chubu .region-chubu path, #japan-map.map-layer-2.region-chubu .region-chubu polygon,
+#japan-map.map-layer-2.region-kinki .region-kinki path, #japan-map.map-layer-2.region-kinki .region-kinki polygon,
+#japan-map.map-layer-2.region-chugoku .region-chugoku path, #japan-map.map-layer-2.region-chugoku .region-chugoku polygon,
+#japan-map.map-layer-2.region-shikoku .region-shikoku path, #japan-map.map-layer-2.region-shikoku .region-shikoku polygon,
+#japan-map.map-layer-2.region-kyushu .region-kyushu path, #japan-map.map-layer-2.region-kyushu .region-kyushu polygon {
     fill: #c4c2ba; stroke: #f4f3ef; stroke-width: 0.5px; opacity: 1;
     pointer-events: all;
 }
@@ -217,8 +222,8 @@ body {
 #japan-map.map-layer-2.region-chugoku .prefecture.album-prefecture.region-chugoku path, #japan-map.map-layer-2.region-chugoku .prefecture.album-prefecture.region-chugoku polygon,
 #japan-map.map-layer-2.region-shikoku .prefecture.album-prefecture.region-shikoku path, #japan-map.map-layer-2.region-shikoku .prefecture.album-prefecture.region-shikoku polygon,
 #japan-map.map-layer-2.region-kyushu .prefecture.album-prefecture.region-kyushu path, #japan-map.map-layer-2.region-kyushu .prefecture.album-prefecture.region-kyushu polygon {
-    fill: #c4c2ba;
-    stroke: #f4f3ef;
+    fill: #bdb5a6;
+    stroke: #f6f4ee;
     stroke-width: 0.5px;
     opacity: 1;
 }
@@ -227,57 +232,41 @@ body {
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
     animation: prefSolidBreathe 1.5s infinite ease-in-out;
 }
+#japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
+#japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
+    animation: albumPrefBreathe 1.4s infinite ease-in-out;
+}
+#japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse path,
+#japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse polygon {
+    animation: albumPrefBreathe 1.4s infinite ease-in-out;
+}
 
 /* ------------------------------------------
    第三層：特定縣市聚焦舞台
    ------------------------------------------ */
 #japan-map.map-layer-3 .prefecture path,
 #japan-map.map-layer-3 .prefecture polygon {
-    fill: #d9d6cd;
-    stroke: #f2f0e9;
-    stroke-width: 0.4px;
-    opacity: 0.58;
+    fill: #e7e5dd;
+    stroke: #f8f7f2;
+    stroke-width: 0.42px;
+    opacity: 0.32;
     pointer-events: none;
 }
 
 #japan-map.map-layer-3 .prefecture.active-prefecture path,
 #japan-map.map-layer-3 .prefecture.active-prefecture polygon {
-    fill: #c4bfb4;
-    stroke: #fffdf8;
-    stroke-width: 0.52px;
-    opacity: 0.92;
+    fill: #b8b5ac;
+    stroke: #f4f3ef;
+    stroke-width: 0.35px;
+    opacity: 1;
     pointer-events: auto;
 }
 
 .map-pin { cursor: pointer; will-change: transform, opacity; }
 
-#spots-layer,
-#prefecture-clusters-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
-.pin-hit-area { fill: transparent; stroke: transparent; pointer-events: all; }
-.pin-body {
-    filter: drop-shadow(0 1.5px 1.5px rgba(52, 46, 38, 0.2));
-    transition: fill 0.25s ease, stroke 0.25s ease, transform 0.25s ease;
-}
-.pin-album .pin-body {
-    fill: #a64f45;
-    stroke: rgba(255, 250, 242, 0.96);
-    stroke-width: 0.7px;
-}
-.pin-small-light .pin-body {
-    fill: #4f7c74;
-    stroke: rgba(255, 250, 242, 0.96);
-    stroke-width: 0.7px;
-}
-.pin-core {
-    fill: rgba(255, 250, 242, 0.96);
-    stroke: rgba(92, 54, 48, 0.12);
-    stroke-width: 0.35px;
-    pointer-events: none;
-}
-.spot-pin:hover .pin-album .pin-body,
-.spot-pin:hover.pin-album .pin-body { fill: #873d36; }
-.spot-pin:hover .pin-small-light .pin-body,
-.spot-pin:hover.pin-small-light .pin-body { fill: #37645d; }
+#spots-layer { opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+.pin-body { fill: #746b5e; stroke: #f4f3ef; stroke-width: 1.1px; filter: drop-shadow(0 3px 4px rgba(52, 46, 38, 0.22)); transition: fill 0.25s ease, transform 0.25s ease; }
+.spot-pin:hover .pin-body { fill: #575044; }
 .pin-count-bg { fill: #f4f3ef; stroke: #746b5e; stroke-width: 1.2px; }
 .pin-count {
     fill: #575044;
@@ -287,60 +276,24 @@ body {
     text-anchor: middle;
     pointer-events: none;
 }
-.pin-kind {
-    fill: #fffaf1;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 7px;
-    font-weight: 800;
-    text-anchor: middle;
-    dominant-baseline: central;
-    pointer-events: none;
-}
 
-#japan-map.map-layer-3 #spots-layer,
-#japan-map.map-layer-2 #prefecture-clusters-layer { opacity: 1; pointer-events: auto; }
+#japan-map.map-layer-2 #spots-layer,
+#japan-map.map-layer-3 #spots-layer { opacity: 1; pointer-events: auto; }
 #japan-map.map-layer-2 .spot-pin { opacity: 0; pointer-events: none; }
-#japan-map.map-layer-2 .prefecture-cluster { opacity: 0; pointer-events: none; }
-#japan-map.map-layer-2.region-hokkaido .prefecture-cluster.region-hokkaido,
-#japan-map.map-layer-2.region-tohoku .prefecture-cluster.region-tohoku,
-#japan-map.map-layer-2.region-kanto .prefecture-cluster.region-kanto,
-#japan-map.map-layer-2.region-chubu .prefecture-cluster.region-chubu,
-#japan-map.map-layer-2.region-kinki .prefecture-cluster.region-kinki,
-#japan-map.map-layer-2.region-chugoku .prefecture-cluster.region-chugoku,
-#japan-map.map-layer-2.region-shikoku .prefecture-cluster.region-shikoku,
-#japan-map.map-layer-2.region-kyushu .prefecture-cluster.region-kyushu {
+#japan-map.map-layer-2.region-hokkaido .spot-pin.region-hokkaido,
+#japan-map.map-layer-2.region-tohoku .spot-pin.region-tohoku,
+#japan-map.map-layer-2.region-kanto .spot-pin.region-kanto,
+#japan-map.map-layer-2.region-chubu .spot-pin.region-chubu,
+#japan-map.map-layer-2.region-kinki .spot-pin.region-kinki,
+#japan-map.map-layer-2.region-chugoku .spot-pin.region-chugoku,
+#japan-map.map-layer-2.region-shikoku .spot-pin.region-shikoku,
+#japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
     opacity: 1;
     pointer-events: auto;
+    animation: pinBreathe 1.8s infinite ease-in-out;
 }
-#japan-map.map-layer-3 #prefecture-clusters-layer { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
-#japan-map.map-layer-3 .spot-pin.active-spot {
-    opacity: 1;
-    pointer-events: auto;
-    animation: pinBreathe 2.4s infinite ease-in-out;
-}
-
-.cluster-hit-area { fill: transparent; pointer-events: all; }
-.cluster-halo {
-    fill: rgba(248, 246, 240, 0.9);
-    stroke: rgba(105, 91, 74, 0.16);
-    stroke-width: 0.65px;
-    filter: drop-shadow(0 1px 2px rgba(49, 42, 34, 0.14));
-}
-.cluster-body {
-    fill: #776f64;
-    transition: fill 0.2s ease;
-}
-.cluster-count {
-    fill: #fffaf2;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 6.8px;
-    font-weight: 600;
-    text-anchor: middle;
-    dominant-baseline: central;
-    pointer-events: none;
-}
-.prefecture-cluster:hover .cluster-body { fill: #a64f45; }
+#japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }
 
 #back-to-map-btn {
     position: fixed; top: 40px; left: 40px; z-index: 95; color: rgba(0, 0, 0, 0.6); font-family: 'Noto Serif TC', serif; font-size: 0.8rem; letter-spacing: 0.2em; font-weight: 400; cursor: pointer; opacity: 0; pointer-events: none; background: rgba(0, 0, 0, 0.05); padding: 10px 20px; border-radius: 20px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity 0.4s ease, color 0.3s ease;

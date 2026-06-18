@@ -5,8 +5,6 @@ const albums = [
         selector: ".aichi",
         spotId: "spot-korankei",
         spotName: "香嵐溪巴川畔",
-        lat: 35.1304462,
-        lng: 137.3160731,
         photos: [
             "images/korankei/maple_light_road_2.JPG", 
             "images/korankei/cross_line.JPG",
@@ -25,8 +23,6 @@ const albums = [
         selector: ".aichi",
         spotId: "spot-inuyama-castle",
         spotName: "犬山城",
-        lat: 35.3883304,
-        lng: 136.9392776,
         photos: [
             "images/inuyama-castle/01_inuyama_castle_keep.jpg",
             "images/inuyama-castle/02_inuyama_castle_window_kiso_river.jpg",
@@ -41,8 +37,6 @@ const albums = [
         selector: ".gifu",
         spotId: "spot-gero-kaeru-shrine",
         spotName: "下呂溫泉與加恵瑠神社",
-        lat: 35.810295,
-        lng: 137.241013,
         photos: [
             "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg",
             "images/gero-kaeru-shrine/05_frog_chozu_water_basin.jpg",
@@ -62,8 +56,6 @@ const albums = [
         selector: ".shimane",
         spotId: "spot-miho",
         spotName: "美保神社",
-        lat: 35.5622413,
-        lng: 133.3067215,
         photos: [
             "images/mihonoseki/jinjyadoa.JPG", 
             "images/mihonoseki/basketball_bet.JPG",
@@ -85,8 +77,6 @@ const albums = [
         selector: ".tottori",
         spotId: "spot-sakaiminato-mizuki",
         spotName: "境港與水木茂之道",
-        lat: 35.5457208,
-        lng: 133.2258081,
         photos: [
             "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg",
             "images/sakaiminato-mizuki/01_sakai_harbor_mountains_evening.jpg",
@@ -110,8 +100,6 @@ const albums = [
         selector: ".okayama",
         spotId: "spot-kurashiki-bikan",
         spotName: "倉敷美觀地區",
-        lat: 34.596525,
-        lng: 133.7725863,
         photos: [
             "images/kurashiki-bikan/01_kurashiki_bikan_canal_twilight.jpg",
             "images/kurashiki-bikan/02_kurashiki_station_sign_blue_sky.jpg",
@@ -132,8 +120,6 @@ const albums = [
         selector: ".hiroshima",
         spotId: "spot-okunoshima",
         spotName: "大久野島",
-        lat: 34.3091206,
-        lng: 132.9937586,
         photos: [
             "images/okunoshima/01_rabbit_gathering_feeding_time.jpg",
             "images/okunoshima/02_ferry_arrival_rainy_pier.jpg",
@@ -159,8 +145,6 @@ const smallLights = [
         selector: ".shimane",
         spotId: "spot-shinji-yomegashima",
         spotName: "宍道湖嫁島夕照",
-        lat: 35.4561667,
-        lng: 133.0467126,
         photos: [
             "images/shinji-yomegashima/01_yomegashima_sunset_boat.jpg",
             "images/shinji-yomegashima/02_yomegashima_sunset_wide.jpg",
@@ -184,36 +168,17 @@ const regionFitOptions = {
     'region-hokkaido': { padding: 1.35, minWidth: 360 },
     'region-tohoku': { padding: 1.45, minWidth: 270 },
     'region-kanto': { padding: 1.55, minWidth: 210 },
-    'region-chubu': { padding: 1.42, minWidth: 250 },
+    'region-chubu': { padding: 1.55, minWidth: 260 },
     'region-kinki': { padding: 1.65, minWidth: 210 },
-    'region-chugoku': { padding: 1.3, minWidth: 210 },
+    'region-chugoku': { padding: 1.55, minWidth: 230 },
     'region-shikoku': { padding: 1.45, minWidth: 185 },
     'region-kyushu': { padding: 1.12, minWidth: 165 }
-};
-
-const regionFocusPrefectureCodes = {
-    'region-chubu': new Set([21, 23])
 };
 
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 2.75;
 const MAP_REVEAL_LENGTH = 1.25;
 const REGION_CLASSES = Object.keys(regionNames);
-
-const prefectureClassByCode = {
-    1: 'hokkaido', 2: 'aomori', 3: 'iwate', 4: 'miyagi', 5: 'akita', 6: 'yamagata', 7: 'fukushima',
-    8: 'ibaraki', 9: 'tochigi', 10: 'gunma', 11: 'saitama', 12: 'chiba', 13: 'tokyo', 14: 'kanagawa',
-    15: 'niigata', 16: 'toyama', 17: 'ishikawa', 18: 'fukui', 19: 'yamanashi', 20: 'nagano',
-    21: 'gifu', 22: 'shizuoka', 23: 'aichi', 24: 'mie',
-    25: 'shiga', 26: 'kyoto', 27: 'osaka', 28: 'hyogo', 29: 'nara', 30: 'wakayama',
-    31: 'tottori', 32: 'shimane', 33: 'okayama', 34: 'hiroshima', 35: 'yamaguchi',
-    36: 'tokushima', 37: 'kagawa', 38: 'ehime', 39: 'kochi',
-    40: 'fukuoka', 41: 'saga', 42: 'nagasaki', 43: 'kumamoto', 44: 'oita', 45: 'miyazaki', 46: 'kagoshima'
-};
-
-let mapProjection = null;
-let regionFocusBounds = {};
-let mapFeaturesByPrefecture = new Map();
 
 let homeAlbumIndex = 0;
 let browsingAlbumIndex = 0;
@@ -866,209 +831,6 @@ function getPrefectureTitleForPin(pin) {
     return getPrefectureTitle(pref);
 }
 
-function clamp(value, min, max) {
-    return Math.max(min, Math.min(max, value));
-}
-
-function mercatorRaw(lng, lat) {
-    const latRad = clamp(lat, -85, 85) * Math.PI / 180;
-    return {
-        x: lng,
-        y: Math.log(Math.tan(Math.PI / 4 + latRad / 2)) * 180 / Math.PI
-    };
-}
-
-function forEachGeoCoordinate(features, callback) {
-    features.forEach(feature => {
-        const polys = feature.geometry?.coordinates || [];
-        polys.forEach(poly => {
-            poly.forEach(ring => {
-                ring.forEach(([lng, lat]) => callback(lng, lat));
-            });
-        });
-    });
-}
-
-function createMapProjection(features) {
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    forEachGeoCoordinate(features, (lng, lat) => {
-        const p = mercatorRaw(lng, lat);
-        minX = Math.min(minX, p.x);
-        minY = Math.min(minY, p.y);
-        maxX = Math.max(maxX, p.x);
-        maxY = Math.max(maxY, p.y);
-    });
-
-    const padding = 54;
-    const scale = Math.min(
-        (1000 - padding * 2) / (maxX - minX),
-        (1000 - padding * 2) / (maxY - minY)
-    );
-    const drawnWidth = (maxX - minX) * scale;
-    const drawnHeight = (maxY - minY) * scale;
-    const offsetX = (1000 - drawnWidth) / 2;
-    const offsetY = (1000 - drawnHeight) / 2;
-
-    return function project(lng, lat) {
-        const p = mercatorRaw(lng, lat);
-        return {
-            x: offsetX + (p.x - minX) * scale,
-            y: offsetY + (maxY - p.y) * scale
-        };
-    };
-}
-
-function getProjectedRingArea(ring) {
-    if (!mapProjection || ring.length < 3) return 0;
-
-    let area = 0;
-    for (let index = 0; index < ring.length; index += 1) {
-        const current = mapProjection(ring[index][0], ring[index][1]);
-        const nextCoordinate = ring[(index + 1) % ring.length];
-        const next = mapProjection(nextCoordinate[0], nextCoordinate[1]);
-        area += current.x * next.y - next.x * current.y;
-    }
-
-    return Math.abs(area / 2);
-}
-
-function getPrimaryGeoPolygon(feature) {
-    const polygons = feature?.geometry?.coordinates || [];
-    return polygons.reduce((largest, polygon) => {
-        if (!largest) return polygon;
-        return getProjectedRingArea(polygon[0]) > getProjectedRingArea(largest[0]) ? polygon : largest;
-    }, null);
-}
-
-function getProjectedGeoBounds(polygons) {
-    if (!mapProjection || !polygons.length) return null;
-
-    let minX = Infinity;
-    let minY = Infinity;
-    let maxX = -Infinity;
-    let maxY = -Infinity;
-
-    polygons.forEach(polygon => {
-        polygon.forEach(ring => {
-            ring.forEach(([lng, lat]) => {
-                const point = mapProjection(lng, lat);
-                minX = Math.min(minX, point.x);
-                minY = Math.min(minY, point.y);
-                maxX = Math.max(maxX, point.x);
-                maxY = Math.max(maxY, point.y);
-            });
-        });
-    });
-
-    if (![minX, minY, maxX, maxY].every(Number.isFinite)) return null;
-
-    return {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY
-    };
-}
-
-function mergeMapBounds(current, incoming) {
-    if (!incoming) return current;
-    if (!current) return { ...incoming };
-
-    const minX = Math.min(current.x, incoming.x);
-    const minY = Math.min(current.y, incoming.y);
-    const maxX = Math.max(current.x + current.width, incoming.x + incoming.width);
-    const maxY = Math.max(current.y + current.height, incoming.y + incoming.height);
-
-    return {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY
-    };
-}
-
-function createRegionFocusBounds(features) {
-    return features.reduce((boundsByRegion, feature) => {
-        const code = feature.properties.id;
-        const regionClass = getRegionClassFromCode(code);
-        const focusCodes = regionFocusPrefectureCodes[regionClass];
-        const primaryPolygon = getPrimaryGeoPolygon(feature);
-        if (!regionClass || !primaryPolygon || (focusCodes && !focusCodes.has(code))) return boundsByRegion;
-
-        const primaryBounds = getProjectedGeoBounds([primaryPolygon]);
-        boundsByRegion[regionClass] = mergeMapBounds(boundsByRegion[regionClass], primaryBounds);
-        return boundsByRegion;
-    }, {});
-}
-
-function isPointInGeoRing(lng, lat, ring) {
-    let inside = false;
-
-    for (let index = 0, previous = ring.length - 1; index < ring.length; previous = index, index += 1) {
-        const [currentLng, currentLat] = ring[index];
-        const [previousLng, previousLat] = ring[previous];
-        const crossesLatitude = (currentLat > lat) !== (previousLat > lat);
-        if (!crossesLatitude) continue;
-
-        const crossingLng = (previousLng - currentLng) * (lat - currentLat)
-            / (previousLat - currentLat) + currentLng;
-        if (lng < crossingLng) inside = !inside;
-    }
-
-    return inside;
-}
-
-function isCoordinateInsideFeature(item, feature) {
-    if (!feature || !Number.isFinite(item.lat) || !Number.isFinite(item.lng)) return false;
-
-    return feature.geometry.coordinates.some(polygon => {
-        const [outerRing, ...holes] = polygon;
-        return isPointInGeoRing(item.lng, item.lat, outerRing)
-            && !holes.some(hole => isPointInGeoRing(item.lng, item.lat, hole));
-    });
-}
-
-function validateSpotCoordinates() {
-    [...albums, ...smallLights].forEach(item => {
-        const prefClass = getPrefClassFromSelector(item.selector);
-        const feature = mapFeaturesByPrefecture.get(prefClass);
-        if (isCoordinateInsideFeature(item, feature)) return;
-
-        console.warn(`景點座標不在指定都道府縣範圍內: ${item.spotName}`, {
-            prefecture: prefClass,
-            lat: item.lat,
-            lng: item.lng
-        });
-    });
-}
-
-function geoRingToPath(ring) {
-    if (!mapProjection || !ring.length) return '';
-
-    return ring.map(([lng, lat], index) => {
-        const p = mapProjection(lng, lat);
-        return `${index === 0 ? 'M' : 'L'}${p.x.toFixed(2)},${p.y.toFixed(2)}`;
-    }).join(' ') + ' Z';
-}
-
-function geoFeatureToPath(feature) {
-    return feature.geometry.coordinates
-        .map(poly => poly.map(geoRingToPath).join(' '))
-        .join(' ');
-}
-
-function getProjectedSpotPoint(item, prefG) {
-    if (mapProjection && Number.isFinite(item.lat) && Number.isFinite(item.lng)) {
-        return mapProjection(item.lng, item.lat);
-    }
-
-    return getCenterInsidePrefectureContainer(prefG);
-}
-
 function getPrefectureGroupFromAnchor(anchor) {
     if (!anchor) return null;
     if (anchor.classList && anchor.classList.contains('prefecture')) return anchor;
@@ -1081,10 +843,7 @@ function getRegionClass(gElement) {
     const codeAttr = gElement.getAttribute('data-code');
     if (!codeAttr) return null;
 
-    return getRegionClassFromCode(parseInt(codeAttr, 10));
-}
-
-function getRegionClassFromCode(code) {
+    const code = parseInt(codeAttr, 10);
     if (code === 47) return 'region-okinawa';
     if (code === 1) return 'region-hokkaido';
     if (code >= 2 && code <= 7) return 'region-tohoku';
@@ -1170,13 +929,8 @@ function setActiveMapFocus(prefectureGroup = null, albumIndex = null) {
         el.classList.toggle('active-prefecture', el === prefectureGroup);
     });
 
-    const activePrefClass = prefectureGroup?.classList[0] || '';
     document.querySelectorAll('.spot-pin').forEach(pin => {
-        const albumIndexes = (pin.getAttribute('data-album-indexes') || '').split(',');
-        const belongsToPrefecture = activePrefClass
-            && pin.getAttribute('data-pref-class') === activePrefClass;
-        const isSelectedAlbum = Number.isFinite(albumIndex) && albumIndexes.includes(String(albumIndex));
-        pin.classList.toggle('active-spot', Boolean(belongsToPrefecture || isSelectedAlbum));
+        pin.classList.toggle('active-spot', pin.getAttribute('data-album-index') === String(albumIndex));
     });
 }
 
@@ -1186,25 +940,6 @@ function setViewBox(box) {
 
     currentViewBox = { ...box };
     svgMap.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
-    updateSpotPinScale(box.width);
-}
-
-function updateSpotPinScale(viewBoxWidth) {
-    const svgMap = document.getElementById('japan-map');
-    const renderedWidth = svgMap?.clientWidth || 1000;
-
-    document.querySelectorAll('.map-marker-glyph').forEach(glyph => {
-        const translateX = glyph.getAttribute('data-translate-x') || '0';
-        const translateY = glyph.getAttribute('data-translate-y') || '0';
-        const baseSize = parseFloat(glyph.getAttribute('data-base-size')) || 18;
-        const targetSize = parseFloat(glyph.getAttribute('data-target-size')) || 22;
-        const scale = clamp(
-            targetSize * viewBoxWidth / (renderedWidth * baseSize),
-            0.08,
-            2.2
-        );
-        glyph.setAttribute('transform', `scale(${scale}) translate(${translateX}, ${translateY})`);
-    });
 }
 
 function easeOutCubic(t) {
@@ -1304,8 +1039,6 @@ function getBoundsInSvg(elements) {
 }
 
 function getRegionBounds(regionClass) {
-    if (regionFocusBounds[regionClass]) return { ...regionFocusBounds[regionClass] };
-
     const members = Array.from(document.querySelectorAll(`.prefectures g.prefecture.${regionClass}`));
     return getBoundsInSvg(members);
 }
@@ -1358,75 +1091,85 @@ function resetMapView() {
 }
 
 function getCenterInsidePrefectureContainer(g) {
-    const bounds = getPrefectureBounds(g);
-    if (!bounds) return { x: 500, y: 500 };
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap || !g) return { x: 500, y: 500 };
 
-    return {
-        x: bounds.x + bounds.width / 2,
-        y: bounds.y + bounds.height / 2
-    };
+    let box;
+    try {
+        box = g.getBBox();
+    } catch (err) {
+        return { x: 500, y: 500 };
+    }
+
+    let matrix = svgMap.createSVGMatrix();
+    if (g.transform && g.transform.baseVal && g.transform.baseVal.numItems > 0) {
+        matrix = g.transform.baseVal.consolidate().matrix;
+    }
+
+    const point = svgMap.createSVGPoint();
+    point.x = box.x + box.width / 2;
+    point.y = box.y + box.height / 2;
+
+    return point.matrixTransform(matrix);
 }
 
 function loadAndInitMap() {
-    fetch('japan-prefectures.geojson')
-        .then(response => response.json())
-        .then(geoData => {
+    fetch('japan-map.svg')
+        .then(response => response.text())
+        .then(svgText => {
             const wrapper = document.getElementById('map-svg-wrapper');
             if (!wrapper) return;
 
-            const features = (geoData.features || []).sort((a, b) => a.properties.id - b.properties.id);
-            mapProjection = createMapProjection(features);
-            mapFeaturesByPrefecture = new Map(features.map(feature => [
-                prefectureClassByCode[feature.properties.id],
-                feature
-            ]));
-            regionFocusBounds = createRegionFocusBounds(features);
-            validateSpotCoordinates();
+            wrapper.innerHTML = svgText;
 
-            wrapper.innerHTML = '';
-            const svgEl = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            const svgEl = wrapper.querySelector('svg');
+            if (!svgEl) return;
+
             svgEl.setAttribute('id', 'japan-map');
             svgEl.setAttribute('class', 'geolonia-svg-map map-layer-1');
-            svgEl.setAttribute('viewBox', '0 0 1000 1000');
             svgEl.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-            svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            wrapper.appendChild(svgEl);
 
+            const initialBox = svgEl.viewBox.baseVal;
             originalViewBox = {
-                x: 0,
-                y: 0,
-                width: 1000,
-                height: 1000
+                x: initialBox.x || 0,
+                y: initialBox.y || 0,
+                width: initialBox.width || 1000,
+                height: initialBox.height || 1000
             };
             currentViewBox = { ...originalViewBox };
 
-            const zoomGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            zoomGroup.setAttribute('id', 'map-zoom-group');
-            zoomGroup.setAttribute('class', 'svg-map');
-            svgEl.appendChild(zoomGroup);
+            const zoomGroup = svgEl.querySelector('#map-zoom-group') || svgEl.querySelector('.svg-map');
+            if (zoomGroup) {
+                zoomGroup.setAttribute('id', 'map-zoom-group');
+                zoomGroup.style.transform = 'none';
+                zoomGroup.style.transformOrigin = '0 0';
+            }
 
-            const prefContainer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            prefContainer.setAttribute('class', 'prefectures');
-            zoomGroup.appendChild(prefContainer);
+            const prefContainer = svgEl.querySelector('.prefectures');
+            if (!prefContainer) return;
 
-            features.forEach(feature => {
-                const code = feature.properties.id;
-                const prefClass = prefectureClassByCode[code];
-                if (!prefClass) return;
+            const prefGroups = prefContainer.querySelectorAll('g.prefecture');
+            prefGroups.forEach(g => {
+                const titleEl = g.querySelector('title');
+                if (titleEl) {
+                    g.dataset.prefTitle = titleEl.textContent;
+                    titleEl.remove();
+                }
 
-                const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                g.setAttribute('class', `${prefClass} prefecture`);
-                g.setAttribute('data-code', String(code));
-                g.dataset.prefTitle = feature.properties.name;
+                const rClass = getRegionClass(g);
+                const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
+                dirtyClasses.forEach(c => g.classList.remove(c));
 
-                const regionClass = getRegionClass(g);
-                if (regionClass) g.classList.add(regionClass);
-
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', geoFeatureToPath(feature));
-                g.appendChild(path);
-                prefContainer.appendChild(g);
+                if (rClass) {
+                    if (rClass === 'region-okinawa') {
+                        g.style.display = 'none';
+                    } else {
+                        g.classList.add(rClass);
+                    }
+                }
             });
+
+            svgEl.querySelectorAll('title').forEach(title => title.remove());
 
             const regionBadgesLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             regionBadgesLayer.setAttribute('id', 'region-badges-layer');
@@ -1434,86 +1177,37 @@ function loadAndInitMap() {
 
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
-            const prefectureClustersLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-            prefectureClustersLayer.setAttribute('id', 'prefecture-clusters-layer');
 
             Object.entries(getContentByPrefecture()).forEach(([prefClass, prefContent]) => {
+                const prefAlbums = prefContent.albums || [];
+                const prefSmallLights = prefContent.smallLights || [];
+                const contentCount = prefAlbums.length + prefSmallLights.length;
+                const representative = prefAlbums[0] || prefSmallLights[0];
+                if (!representative) return;
+
                 const prefG = prefContainer.querySelector(`.${prefClass}`);
                 const regionClass = prefG ? getRegionClass(prefG) : '';
-                const prefAlbums = (prefContent.albums || []).map(album => ({
-                    ...album,
-                    pinType: 'album',
-                    pinId: album.spotId,
-                    albumIndexes: [album.albumIndex],
-                    smallLightIndexes: []
-                }));
-                const prefSmallLights = (prefContent.smallLights || []).map(light => ({
-                    ...light,
-                    pinType: 'small-light',
-                    pinId: light.spotId,
-                    albumIndexes: [],
-                    smallLightIndexes: [light.smallLightIndex]
-                }));
-                const prefPins = [...prefAlbums, ...prefSmallLights];
-                if (prefPins.length === 0) return;
 
-                prefPins.forEach((pinData, pinOrder) => {
-                    const pin = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    pin.setAttribute('class', `map-pin spot-pin pin-${pinData.pinType} ${regionClass} ${prefClass}`.trim());
-                    pin.setAttribute('data-pref-class', prefClass);
-                    pin.setAttribute('data-pin-order', String(pinOrder));
-                    pin.setAttribute('data-pin-total', String(prefPins.length));
-                    pin.setAttribute('data-pin-type', pinData.pinType);
-                    pin.setAttribute('data-lat', String(pinData.lat ?? ''));
-                    pin.setAttribute('data-lng', String(pinData.lng ?? ''));
-                    pin.setAttribute('data-album-indexes', pinData.albumIndexes.join(','));
-                    pin.setAttribute('data-small-light-indexes', pinData.smallLightIndexes.join(','));
-                    pin.setAttribute('id', pinData.pinId);
+                const pin = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                pin.setAttribute('class', `map-pin spot-pin ${regionClass} ${prefClass}`.trim());
+                pin.setAttribute('data-pref-class', prefClass);
+                pin.setAttribute('data-album-indexes', prefAlbums.map(album => album.albumIndex).join(','));
+                pin.setAttribute('data-small-light-indexes', prefSmallLights.map(light => light.smallLightIndex).join(','));
+                pin.setAttribute('id', representative.spotId);
 
-                    pin.innerHTML = pinData.pinType === 'small-light'
-                        ? `
-                            <g class="map-marker-glyph pin-glyph" data-translate-x="-8" data-translate-y="-8"
-                                data-base-size="16" data-target-size="18" transform="translate(-8, -8)">
-                                <circle cx="8" cy="8" r="7" class="pin-hit-area"/>
-                                <path d="M8,0.8 L10.4,5.6 L15.2,8 L10.4,10.4 L8,15.2 L5.6,10.4 L0.8,8 L5.6,5.6 Z"
-                                    class="pin-body"/>
-                                <circle cx="8" cy="8" r="2.15" class="pin-core"/>
-                            </g>
-                        `
-                        : `
-                            <g class="map-marker-glyph pin-glyph" data-translate-x="-8" data-translate-y="-18"
-                                data-base-size="18" data-target-size="23" transform="translate(-8, -18)">
-                                <circle cx="8" cy="8" r="5.5" class="pin-hit-area"/>
-                                <path d="M8,18 C6.7,15.7 1.5,11.3 1.5,7.6 A6.5,6.5 0 1 1 14.5,7.6 C14.5,11.3 9.3,15.7 8,18 Z"
-                                    class="pin-body"/>
-                                <circle cx="8" cy="7.5" r="2.5" class="pin-core"/>
-                            </g>
-                        `;
-                    spotsLayer.appendChild(pin);
-                });
-
-                const cluster = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                cluster.setAttribute('class', `map-pin prefecture-cluster ${regionClass} ${prefClass}`.trim());
-                cluster.setAttribute('data-pref-class', prefClass);
-                cluster.setAttribute('data-album-indexes', prefAlbums.flatMap(pin => pin.albumIndexes).join(','));
-                cluster.setAttribute('data-small-light-indexes', prefSmallLights.flatMap(pin => pin.smallLightIndexes).join(','));
-                cluster.innerHTML = `
-                    <g class="map-marker-glyph cluster-glyph" data-translate-x="-10" data-translate-y="-10"
-                        data-base-size="20" data-target-size="24" transform="translate(-10, -10)">
-                        <circle cx="10" cy="10" r="11" class="cluster-hit-area"/>
-                        <circle cx="10" cy="10" r="8.5" class="cluster-halo"/>
-                        <circle cx="10" cy="10" r="6.3" class="cluster-body"/>
-                        <text x="10" y="10" class="cluster-count">${prefPins.length}</text>
+                pin.innerHTML = `
+                    <g transform="translate(-12, -22)">
+                        <path d="M12,2 C7.03,2 3,6.03 3,11 C3,16.55 12,22 12,22 C12,22 21,16.55 21,11 C21,6.03 16.97,2 12,2 Z" class="pin-body"/>
+                        <circle cx="12" cy="11" r="3" fill="#fff"/>
                     </g>
+                    ${contentCount > 1 ? `<circle cx="9" cy="-21" r="7" class="pin-count-bg"/><text x="9" y="-18.4" class="pin-count">${contentCount}</text>` : ''}
                 `;
-                prefectureClustersLayer.appendChild(cluster);
+                spotsLayer.appendChild(pin);
             });
             prefContainer.appendChild(spotsLayer);
-            prefContainer.appendChild(prefectureClustersLayer);
 
             markAlbumRegions();
             positionAlbumPins();
-            positionPrefectureClusters();
             positionRegionBadges();
 
             requestAnimationFrame(() => {
@@ -1523,7 +1217,6 @@ function loadAndInitMap() {
                     console.warn('地圖標記定位略過，保留基本相簿提示:', err);
                     markAlbumRegions();
                     positionAlbumPins();
-                    positionPrefectureClusters();
                     positionRegionBadges();
                 }
                 setupStageEvents();
@@ -1590,9 +1283,22 @@ function calculateGeometries() {
         g.setAttribute('data-center-y', String(center.y));
     });
 
+    [...albums, ...smallLights].forEach(item => {
+        const prefG = document.querySelector(`.prefectures g.prefecture${item.selector}`);
+        if (!prefG) return;
+
+        const cx = parseFloat(prefG.getAttribute('data-center-x'));
+        const cy = parseFloat(prefG.getAttribute('data-center-y'));
+        const prefClass = getPrefClassFromSelector(item.selector);
+        const spotPin = document.querySelector(`.spot-pin[data-pref-class="${prefClass}"]`);
+
+        if (Number.isFinite(cx) && Number.isFinite(cy)) {
+            if (spotPin) spotPin.setAttribute('transform', `translate(${cx}, ${cy}) scale(1.18)`);
+        }
+    });
+
     markAlbumRegions();
     positionAlbumPins();
-    positionPrefectureClusters();
     positionRegionBadges();
 }
 
@@ -1618,86 +1324,14 @@ function markAlbumRegions() {
 function positionAlbumPins() {
     Object.entries(getContentByPrefecture()).forEach(([prefClass]) => {
         const prefG = document.querySelector(`.prefectures g.prefecture.${prefClass}`);
-        const spotPins = Array.from(document.querySelectorAll(`.spot-pin[data-pref-class="${prefClass}"]`));
-        if (!prefG || spotPins.length === 0) return;
+        const spotPin = document.querySelector(`.spot-pin[data-pref-class="${prefClass}"]`);
+        if (!prefG || !spotPin) return;
 
-        if (getPrefectureBounds(prefG)) {
-            spotPins.forEach(spotPin => {
-                const albumIndex = parseInt((spotPin.getAttribute('data-album-indexes') || '').split(',')[0], 10);
-                const smallLightIndex = parseInt((spotPin.getAttribute('data-small-light-indexes') || '').split(',')[0], 10);
-                const item = Number.isFinite(albumIndex)
-                    ? albums[albumIndex]
-                    : (Number.isFinite(smallLightIndex) ? smallLights[smallLightIndex] : null);
-                const point = item
-                    ? getProjectedSpotPoint(item, prefG)
-                    : getCenterInsidePrefectureContainer(prefG);
-                spotPin.setAttribute('transform', `translate(${point.x}, ${point.y})`);
-            });
+        const center = getCenterInsidePrefectureContainer(prefG);
+        if (Number.isFinite(center.x) && Number.isFinite(center.y)) {
+            spotPin.setAttribute('transform', `translate(${center.x}, ${center.y}) scale(1.18)`);
         }
     });
-}
-
-function getContentItemsForPrefecture(prefClass) {
-    const content = getContentByPrefecture()[prefClass] || { albums: [], smallLights: [] };
-    return [...(content.albums || []), ...(content.smallLights || [])];
-}
-
-function positionPrefectureClusters() {
-    document.querySelectorAll('.prefecture-cluster').forEach(cluster => {
-        const prefClass = cluster.getAttribute('data-pref-class');
-        const feature = mapFeaturesByPrefecture.get(prefClass);
-        const primaryPolygon = getPrimaryGeoPolygon(feature);
-        const bounds = primaryPolygon ? getProjectedGeoBounds([primaryPolygon]) : null;
-        if (!bounds) return;
-
-        cluster.setAttribute(
-            'transform',
-            `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`
-        );
-    });
-}
-
-function getPrefectureContentBounds(prefClass) {
-    const points = getContentItemsForPrefecture(prefClass)
-        .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng))
-        .map(item => mapProjection(item.lng, item.lat));
-    if (points.length === 0) return null;
-
-    const xs = points.map(point => point.x);
-    const ys = points.map(point => point.y);
-    const margin = 14;
-    const minX = Math.min(...xs) - margin;
-    const maxX = Math.max(...xs) + margin;
-    const minY = Math.min(...ys) - margin;
-    const maxY = Math.max(...ys) + margin;
-
-    return {
-        x: minX,
-        y: minY,
-        width: maxX - minX,
-        height: maxY - minY
-    };
-}
-
-function openPrefectureDetail(prefectureGroup) {
-    if (!prefectureGroup) return;
-    const prefClass = prefectureGroup.classList[0];
-    const content = getContentForPrefecture(prefectureGroup);
-    if (content.albums.length === 0 && content.smallLights.length === 0) return;
-
-    const bounds = getPrefectureContentBounds(prefClass) || getPrefectureBounds(prefectureGroup);
-    fitMapToBounds(bounds, {
-        padding: 1.7,
-        minWidth: 125,
-        duration: MAP_ANIMATION_FAST
-    });
-
-    currentLayer = 3;
-    activePrefectureGroup = prefectureGroup;
-    setActiveMapFocus(prefectureGroup);
-    setSvgMapClass(`map-layer-3 ${activeRegionClass} ${prefClass}`);
-    hidePreview(true);
-    hideMapHoverLabel();
 }
 
 function positionRegionBadges() {
@@ -1773,9 +1407,11 @@ function setupStageEvents() {
                 }
             } else if (currentLayer === 2) {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
+                    g.classList.add('pref-hover-pulse');
                     const prefContent = getContentForPrefecture(g);
                     if (prefContent.albums.length > 0 || prefContent.smallLights.length > 0) {
-                        showMapHoverLabel(`${getPrefectureTitle(g)} · ${prefContent.albums.length + prefContent.smallLights.length} 則拾光`, g, true);
+                        hideMapHoverLabel();
+                        showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
                     } else {
                         showMapHoverLabel(getPrefectureTitle(g), g);
                     }
@@ -1793,6 +1429,7 @@ function setupStageEvents() {
                 }
             } else if (currentLayer === 2) {
                 g.classList.remove('pref-hover-pulse');
+                schedulePreviewHide();
             }
 
             hideMapHoverLabel();
@@ -1809,10 +1446,10 @@ function setupStageEvents() {
             if (!localRegion || !g.classList.contains(activeRegionClass)) return;
 
             const prefContent = getContentForPrefecture(g);
-            const labelText = prefContent.albums.length > 0 || prefContent.smallLights.length > 0
-                ? `${getPrefectureTitle(g)} · ${prefContent.albums.length + prefContent.smallLights.length} 則拾光`
-                : getPrefectureTitle(g);
-            showMapHoverLabel(labelText, g, prefContent.albums.length > 0 || prefContent.smallLights.length > 0);
+            if (prefContent.albums.length === 0 && prefContent.smallLights.length === 0) return;
+
+            hideMapHoverLabel();
+            showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g);
         });
 
         g.addEventListener('click', (e) => {
@@ -1845,7 +1482,13 @@ function setupStageEvents() {
 
                 updateLocationHintText();
             } else if (currentLayer === 2) {
-                openPrefectureDetail(g);
+                if (!g.classList.contains(activeRegionClass)) return;
+
+                const prefContent = getContentForPrefecture(g);
+                if (prefContent.albums.length === 0 && prefContent.smallLights.length === 0) return;
+
+                showContentPreview(prefContent.albums, prefContent.smallLights, getPrefectureTitle(g), g, { lock: true });
+                return;
             }
         });
     });
@@ -1890,25 +1533,6 @@ function setupStageEvents() {
             }
         });
     }
-
-    document.querySelectorAll('.prefecture-cluster').forEach(cluster => {
-        const prefClass = cluster.getAttribute('data-pref-class');
-        const prefG = document.querySelector(`.prefectures g.prefecture.${prefClass}`);
-        const count = getContentItemsForPrefecture(prefClass).length;
-
-        cluster.addEventListener('mouseenter', () => {
-            if (isGalleryMode || currentLayer !== 2) return;
-            showMapHoverLabel(`${getPrefectureTitle(prefG)} · ${count} 則拾光`, cluster, true);
-        });
-        cluster.addEventListener('mouseleave', () => {
-            if (!isGalleryMode) hideMapHoverLabel();
-        });
-        cluster.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (isGalleryMode || currentLayer !== 2) return;
-            openPrefectureDetail(prefG);
-        });
-    });
 
     document.querySelectorAll('.spot-pin').forEach(pin => {
         const albumIndexes = (pin.getAttribute('data-album-indexes') || '')
@@ -2033,7 +1657,7 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
     if (anchor) {
         const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
         if (rect) {
-            const gap = expanded ? 34 : 28;
+            const gap = expanded ? 28 : 18;
             const placement = expanded
                 ? getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap)
                 : getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor);
@@ -2073,12 +1697,6 @@ function getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap) {
 function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    const protectedAnchorRect = inflateRect({
-        left: rect.left,
-        top: rect.top,
-        right: rect.right,
-        bottom: rect.bottom
-    }, 16);
     const mapRect = document.getElementById('map-svg-wrapper')?.getBoundingClientRect();
     const mapCenterY = mapRect ? mapRect.top + mapRect.height / 2 : window.innerHeight / 2;
     const clampX = value => Math.max(16, Math.min(value, window.innerWidth - cardWidth - 16));
@@ -2135,8 +1753,7 @@ function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
         const overlapPenalty = blockingRects.reduce((score, blocker) => (
             score + (rectsOverlap(cardRect, inflateRect(blocker, 6)) ? 120 : 0)
         ), 0);
-        const anchorOverlapPenalty = rectsOverlap(cardRect, protectedAnchorRect) ? 10000 : 0;
-        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty + anchorOverlapPenalty;
+        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty;
 
         if (!best || score < best.score) {
             best = { ...candidate, left, top, score };
