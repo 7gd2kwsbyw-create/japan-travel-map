@@ -1751,9 +1751,10 @@ function getPreviewCardPlacement(rect, cardWidth, cardHeight, gap, anchor) {
             score + (segmentIntersectsRect(anchorPoint, targetPoint, inflateRect(blocker, 10)) ? 1000 : 0)
         ), 0);
         const overlapPenalty = blockingRects.reduce((score, blocker) => (
-            score + (rectsOverlap(cardRect, inflateRect(blocker, 6)) ? 120 : 0)
+            score + getRectIntersectionArea(cardRect, inflateRect(blocker, 6))
         ), 0);
-        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapPenalty;
+        const overlapRatio = overlapPenalty / Math.max(1, cardWidth * cardHeight);
+        const score = candidate.bias + offscreenPenalty * 3 + distancePenalty + routePenalty + overlapRatio * 6000;
 
         if (!best || score < best.score) {
             best = { ...candidate, left, top, score };
@@ -1784,6 +1785,12 @@ function inflateRect(rect, amount) {
 
 function rectsOverlap(a, b) {
     return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+function getRectIntersectionArea(a, b) {
+    if (!rectsOverlap(a, b)) return 0;
+    return Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left))
+        * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
 }
 
 function segmentIntersectsRect(start, end, rect) {
