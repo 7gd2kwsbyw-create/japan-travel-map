@@ -167,6 +167,18 @@ const smallLights = [
             "images/shinji-yomegashima/02_yomegashima_sunset_wide.jpg",
             "images/shinji-yomegashima/03_lake_shinji_sunset_reflection.jpg"
         ]
+    },
+    {
+        title: "耕三寺的朱紅與洞窟微光",
+        location: "📍 廣島縣 ． 生口島耕三寺",
+        selector: ".hiroshima",
+        spotId: "spot-kosanji",
+        spotName: "耕三寺",
+        photos: [
+            "images/kosanji/01_vermilion_temple_and_tree.jpg",
+            "images/kosanji/02_cave_stone_buddhas.jpg",
+            "images/kosanji/03_kosanji_gate.jpg"
+        ]
     }
 ];
 
