@@ -181,7 +181,7 @@ const smallLights = [
         ]
     },
     {
-        title: "吉備津神社，長廊深處的冬日寂靜",
+        title: "吉備津神社",
         location: "📍 岡山縣 ． 吉備津神社",
         selector: ".okayama",
         spotId: "spot-kibitsu-shrine",

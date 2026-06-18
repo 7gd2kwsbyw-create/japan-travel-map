@@ -580,6 +580,33 @@ body {
 #small-light-hand.count-3 {
     grid-template-columns: repeat(3, 1fr);
 }
+#small-light-hand.count-4 {
+    top: clamp(190px, 25vh, 250px);
+    bottom: clamp(18px, 3vh, 32px);
+    width: min(82vw, 1000px);
+    max-height: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: clamp(12px, 1.6vw, 20px);
+    align-items: stretch;
+    transform: translateX(-50%);
+}
+#small-light-hand.count-4 .small-light-photo-card {
+    display: flex;
+    width: auto;
+    max-width: none;
+    padding: clamp(6px, 0.7vw, 9px) clamp(6px, 0.7vw, 9px) clamp(14px, 1.4vw, 22px);
+    transform: none;
+}
+#small-light-hand.count-4 .small-light-photo-card img {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+}
+#small-light-hand.count-4 .small-light-photo-card:hover {
+    transform: translateY(-6px) scale(1.015);
+}
 .small-light-photo-card {
     position: relative;
     margin: 0;
@@ -656,15 +683,27 @@ body.small-light-open #map-hover-label {
     #small-light-hand,
     #small-light-hand.count-1,
     #small-light-hand.count-2,
-    #small-light-hand.count-3 {
+    #small-light-hand.count-3,
+    #small-light-hand.count-4 {
         position: relative;
         left: auto;
         top: auto;
+        bottom: auto;
         width: calc(100vw - 32px);
         max-height: none;
         grid-template-columns: 1fr;
+        grid-template-rows: none;
         transform: none;
         margin: 0 auto 32px;
+    }
+    #small-light-hand.count-4 .small-light-photo-card {
+        display: block;
+        padding: clamp(7px, 0.9vw, 10px) clamp(7px, 0.9vw, 10px) clamp(20px, 2vw, 30px);
+    }
+    #small-light-hand.count-4 .small-light-photo-card img {
+        height: auto;
+        max-height: 62vh;
+        object-fit: contain;
     }
     .small-light-photo-card {
         transform: none;
