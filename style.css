@@ -233,19 +233,19 @@ body {
    ------------------------------------------ */
 #japan-map.map-layer-3 .prefecture path,
 #japan-map.map-layer-3 .prefecture polygon {
-    fill: #e7e5dd;
-    stroke: #f8f7f2;
-    stroke-width: 0.42px;
-    opacity: 0.32;
+    fill: #efede7;
+    stroke: #faf9f5;
+    stroke-width: 0.36px;
+    opacity: 0.26;
     pointer-events: none;
 }
 
 #japan-map.map-layer-3 .prefecture.active-prefecture path,
 #japan-map.map-layer-3 .prefecture.active-prefecture polygon {
-    fill: #e7e5dd;
-    stroke: #f4f3ef;
-    stroke-width: 0.35px;
-    opacity: 0.56;
+    fill: #cbc7bc;
+    stroke: #fffdf8;
+    stroke-width: 0.52px;
+    opacity: 0.9;
     pointer-events: auto;
 }
 
