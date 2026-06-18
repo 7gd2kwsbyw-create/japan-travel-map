@@ -1170,9 +1170,13 @@ function setActiveMapFocus(prefectureGroup = null, albumIndex = null) {
         el.classList.toggle('active-prefecture', el === prefectureGroup);
     });
 
+    const activePrefClass = prefectureGroup?.classList[0] || '';
     document.querySelectorAll('.spot-pin').forEach(pin => {
         const albumIndexes = (pin.getAttribute('data-album-indexes') || '').split(',');
-        pin.classList.toggle('active-spot', albumIndexes.includes(String(albumIndex)));
+        const belongsToPrefecture = activePrefClass
+            && pin.getAttribute('data-pref-class') === activePrefClass;
+        const isSelectedAlbum = Number.isFinite(albumIndex) && albumIndexes.includes(String(albumIndex));
+        pin.classList.toggle('active-spot', Boolean(belongsToPrefecture || isSelectedAlbum));
     });
 }
 
@@ -1189,14 +1193,14 @@ function updateSpotPinScale(viewBoxWidth) {
     const svgMap = document.getElementById('japan-map');
     const renderedWidth = svgMap?.clientWidth || 1000;
 
-    document.querySelectorAll('.pin-glyph').forEach(glyph => {
+    document.querySelectorAll('.map-marker-glyph').forEach(glyph => {
         const translateX = glyph.getAttribute('data-translate-x') || '0';
         const translateY = glyph.getAttribute('data-translate-y') || '0';
         const baseSize = parseFloat(glyph.getAttribute('data-base-size')) || 18;
         const targetSize = parseFloat(glyph.getAttribute('data-target-size')) || 22;
         const scale = clamp(
             targetSize * viewBoxWidth / (renderedWidth * baseSize),
-            0.28,
+            0.08,
             2.2
         );
         glyph.setAttribute('transform', `scale(${scale}) translate(${translateX}, ${translateY})`);
@@ -1430,6 +1434,8 @@ function loadAndInitMap() {
 
             const spotsLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             spotsLayer.setAttribute('id', 'spots-layer');
+            const prefectureClustersLayer = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            prefectureClustersLayer.setAttribute('id', 'prefecture-clusters-layer');
 
             Object.entries(getContentByPrefecture()).forEach(([prefClass, prefContent]) => {
                 const prefG = prefContainer.querySelector(`.${prefClass}`);
@@ -1466,7 +1472,7 @@ function loadAndInitMap() {
 
                     pin.innerHTML = pinData.pinType === 'small-light'
                         ? `
-                            <g class="pin-glyph" data-translate-x="-8" data-translate-y="-8"
+                            <g class="map-marker-glyph pin-glyph" data-translate-x="-8" data-translate-y="-8"
                                 data-base-size="16" data-target-size="18" transform="translate(-8, -8)">
                                 <circle cx="8" cy="8" r="7" class="pin-hit-area"/>
                                 <path d="M8,0.8 L10.4,5.6 L15.2,8 L10.4,10.4 L8,15.2 L5.6,10.4 L0.8,8 L5.6,5.6 Z"
@@ -1475,7 +1481,7 @@ function loadAndInitMap() {
                             </g>
                         `
                         : `
-                            <g class="pin-glyph" data-translate-x="-8" data-translate-y="-18"
+                            <g class="map-marker-glyph pin-glyph" data-translate-x="-8" data-translate-y="-18"
                                 data-base-size="18" data-target-size="23" transform="translate(-8, -18)">
                                 <circle cx="8" cy="8" r="5.5" class="pin-hit-area"/>
                                 <path d="M8,18 C6.7,15.7 1.5,11.3 1.5,7.6 A6.5,6.5 0 1 1 14.5,7.6 C14.5,11.3 9.3,15.7 8,18 Z"
@@ -1485,11 +1491,29 @@ function loadAndInitMap() {
                         `;
                     spotsLayer.appendChild(pin);
                 });
+
+                const cluster = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                cluster.setAttribute('class', `map-pin prefecture-cluster ${regionClass} ${prefClass}`.trim());
+                cluster.setAttribute('data-pref-class', prefClass);
+                cluster.setAttribute('data-album-indexes', prefAlbums.flatMap(pin => pin.albumIndexes).join(','));
+                cluster.setAttribute('data-small-light-indexes', prefSmallLights.flatMap(pin => pin.smallLightIndexes).join(','));
+                cluster.innerHTML = `
+                    <g class="map-marker-glyph cluster-glyph" data-translate-x="-10" data-translate-y="-10"
+                        data-base-size="20" data-target-size="24" transform="translate(-10, -10)">
+                        <circle cx="10" cy="10" r="11" class="cluster-hit-area"/>
+                        <circle cx="10" cy="10" r="8.5" class="cluster-halo"/>
+                        <circle cx="10" cy="10" r="6.3" class="cluster-body"/>
+                        <text x="10" y="10" class="cluster-count">${prefPins.length}</text>
+                    </g>
+                `;
+                prefectureClustersLayer.appendChild(cluster);
             });
             prefContainer.appendChild(spotsLayer);
+            prefContainer.appendChild(prefectureClustersLayer);
 
             markAlbumRegions();
             positionAlbumPins();
+            positionPrefectureClusters();
             positionRegionBadges();
 
             requestAnimationFrame(() => {
@@ -1499,6 +1523,7 @@ function loadAndInitMap() {
                     console.warn('地圖標記定位略過，保留基本相簿提示:', err);
                     markAlbumRegions();
                     positionAlbumPins();
+                    positionPrefectureClusters();
                     positionRegionBadges();
                 }
                 setupStageEvents();
@@ -1567,6 +1592,7 @@ function calculateGeometries() {
 
     markAlbumRegions();
     positionAlbumPins();
+    positionPrefectureClusters();
     positionRegionBadges();
 }
 
@@ -1609,6 +1635,69 @@ function positionAlbumPins() {
             });
         }
     });
+}
+
+function getContentItemsForPrefecture(prefClass) {
+    const content = getContentByPrefecture()[prefClass] || { albums: [], smallLights: [] };
+    return [...(content.albums || []), ...(content.smallLights || [])];
+}
+
+function positionPrefectureClusters() {
+    document.querySelectorAll('.prefecture-cluster').forEach(cluster => {
+        const prefClass = cluster.getAttribute('data-pref-class');
+        const feature = mapFeaturesByPrefecture.get(prefClass);
+        const primaryPolygon = getPrimaryGeoPolygon(feature);
+        const bounds = primaryPolygon ? getProjectedGeoBounds([primaryPolygon]) : null;
+        if (!bounds) return;
+
+        cluster.setAttribute(
+            'transform',
+            `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`
+        );
+    });
+}
+
+function getPrefectureContentBounds(prefClass) {
+    const points = getContentItemsForPrefecture(prefClass)
+        .filter(item => Number.isFinite(item.lat) && Number.isFinite(item.lng))
+        .map(item => mapProjection(item.lng, item.lat));
+    if (points.length === 0) return null;
+
+    const xs = points.map(point => point.x);
+    const ys = points.map(point => point.y);
+    const margin = 14;
+    const minX = Math.min(...xs) - margin;
+    const maxX = Math.max(...xs) + margin;
+    const minY = Math.min(...ys) - margin;
+    const maxY = Math.max(...ys) + margin;
+
+    return {
+        x: minX,
+        y: minY,
+        width: maxX - minX,
+        height: maxY - minY
+    };
+}
+
+function openPrefectureDetail(prefectureGroup) {
+    if (!prefectureGroup) return;
+    const prefClass = prefectureGroup.classList[0];
+    const content = getContentForPrefecture(prefectureGroup);
+    if (content.albums.length === 0 && content.smallLights.length === 0) return;
+
+    const bounds = getPrefectureContentBounds(prefClass) || getPrefectureBounds(prefectureGroup);
+    fitMapToBounds(bounds, {
+        padding: 1.7,
+        minWidth: 125,
+        duration: MAP_ANIMATION_FAST
+    });
+
+    currentLayer = 3;
+    activePrefectureGroup = prefectureGroup;
+    setActiveMapFocus(prefectureGroup);
+    setSvgMapClass(`map-layer-3 ${activeRegionClass} ${prefClass}`);
+    hidePreview(true);
+    hideMapHoverLabel();
 }
 
 function positionRegionBadges() {
@@ -1686,7 +1775,7 @@ function setupStageEvents() {
                 if (localRegion && g.classList.contains(activeRegionClass)) {
                     const prefContent = getContentForPrefecture(g);
                     if (prefContent.albums.length > 0 || prefContent.smallLights.length > 0) {
-                        showMapHoverLabel(`${getPrefectureTitle(g)} · 以圖釘選擇拾光`, g, true);
+                        showMapHoverLabel(`${getPrefectureTitle(g)} · ${prefContent.albums.length + prefContent.smallLights.length} 則拾光`, g, true);
                     } else {
                         showMapHoverLabel(getPrefectureTitle(g), g);
                     }
@@ -1721,7 +1810,7 @@ function setupStageEvents() {
 
             const prefContent = getContentForPrefecture(g);
             const labelText = prefContent.albums.length > 0 || prefContent.smallLights.length > 0
-                ? `${getPrefectureTitle(g)} · 以圖釘選擇拾光`
+                ? `${getPrefectureTitle(g)} · ${prefContent.albums.length + prefContent.smallLights.length} 則拾光`
                 : getPrefectureTitle(g);
             showMapHoverLabel(labelText, g, prefContent.albums.length > 0 || prefContent.smallLights.length > 0);
         });
@@ -1756,7 +1845,7 @@ function setupStageEvents() {
 
                 updateLocationHintText();
             } else if (currentLayer === 2) {
-                return;
+                openPrefectureDetail(g);
             }
         });
     });
@@ -1801,6 +1890,25 @@ function setupStageEvents() {
             }
         });
     }
+
+    document.querySelectorAll('.prefecture-cluster').forEach(cluster => {
+        const prefClass = cluster.getAttribute('data-pref-class');
+        const prefG = document.querySelector(`.prefectures g.prefecture.${prefClass}`);
+        const count = getContentItemsForPrefecture(prefClass).length;
+
+        cluster.addEventListener('mouseenter', () => {
+            if (isGalleryMode || currentLayer !== 2) return;
+            showMapHoverLabel(`${getPrefectureTitle(prefG)} · ${count} 則拾光`, cluster, true);
+        });
+        cluster.addEventListener('mouseleave', () => {
+            if (!isGalleryMode) hideMapHoverLabel();
+        });
+        cluster.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (isGalleryMode || currentLayer !== 2) return;
+            openPrefectureDetail(prefG);
+        });
+    });
 
     document.querySelectorAll('.spot-pin').forEach(pin => {
         const albumIndexes = (pin.getAttribute('data-album-indexes') || '')
