@@ -135,6 +135,23 @@ const albums = [
             "images/okunoshima/12_factory_archway_ruins.jpg",
             "images/okunoshima/13_blue_seto_sea_horizon.jpg"
         ]
+    },
+    {
+        title: "尾道坡道尋貓，走進港町的舊時光",
+        location: "📍 廣島縣 ． 尾道",
+        selector: ".hiroshima",
+        spotId: "spot-onomichi",
+        spotName: "尾道坡道與貓之細道",
+        photos: [
+            "images/onomichi/01_onomichi_harbor_panorama.jpg",
+            "images/onomichi/02_hillside_temple_alley.jpg",
+            "images/onomichi/03_cat_on_hillside_path.jpg",
+            "images/onomichi/04_cats_crossing_slope.jpg",
+            "images/onomichi/05_rainy_cat_sculpture.jpg",
+            "images/onomichi/06_painted_cat_stones.jpg",
+            "images/onomichi/07_maneki_neko_art_gate.jpg",
+            "images/onomichi/08_vintage_canon_camera.jpg"
+        ]
     }
 ];
 
