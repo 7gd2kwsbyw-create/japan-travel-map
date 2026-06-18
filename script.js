@@ -179,6 +179,19 @@ const smallLights = [
             "images/kosanji/02_cave_stone_buddhas.jpg",
             "images/kosanji/03_kosanji_gate.jpg"
         ]
+    },
+    {
+        title: "吉備津神社，長廊深處的冬日寂靜",
+        location: "📍 岡山縣 ． 吉備津神社",
+        selector: ".okayama",
+        spotId: "spot-kibitsu-shrine",
+        spotName: "吉備津神社",
+        photos: [
+            "images/kibitsu-shrine/01_lantern_stairway_entrance.jpg",
+            "images/kibitsu-shrine/02_hillside_corridor.jpg",
+            "images/kibitsu-shrine/03_long_wooden_corridor.jpg",
+            "images/kibitsu-shrine/04_quiet_shrine_hall.jpg"
+        ]
     }
 ];
 
