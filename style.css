@@ -305,7 +305,8 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(90, 82, 70, 0.22) transparent;
 }
-#map-preview-card.choice-mode { pointer-events: auto; }
+#map-preview-card.choice-mode { pointer-events: none; }
+#map-preview-card.choice-mode .preview-album-btn { pointer-events: auto; }
 #map-preview-card.expanded-light {
     width: min(680px, calc(100vw - 32px));
     padding: 18px;
@@ -319,9 +320,7 @@ body {
     pointer-events: none;
     background: transparent;
 }
-#map-preview-bridge.active {
-    pointer-events: auto;
-}
+#map-preview-bridge.active { pointer-events: none; }
 #map-preview-card::before {
     content: "";
     position: absolute;
