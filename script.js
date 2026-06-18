@@ -115,6 +115,27 @@ const albums = [
         ]
     },
     {
+        title: "牛窗神社，穿過雨霧森林的石階參道",
+        location: "📍 岡山縣 ． 牛窗神社",
+        selector: ".okayama",
+        spotId: "spot-ushimado-shrine",
+        spotName: "牛窗神社",
+        photos: [
+            "images/ushimado-shrine/01_forest_torii_stairway.jpg",
+            "images/ushimado-shrine/02_tree_tunnel_stairs.jpg",
+            "images/ushimado-shrine/03_misty_forest_path.jpg",
+            "images/ushimado-shrine/04_forest_approach.jpg",
+            "images/ushimado-shrine/05_itsuki_tree_sign.jpg",
+            "images/ushimado-shrine/06_ema_hall.jpg",
+            "images/ushimado-shrine/07_rainy_omikuji_branch.jpg",
+            "images/ushimado-shrine/08_crane_monument.jpg",
+            "images/ushimado-shrine/09_forest_subshrine.jpg",
+            "images/ushimado-shrine/10_inari_fox_shrine.jpg",
+            "images/ushimado-shrine/11_stone_torii_offerings.jpg",
+            "images/ushimado-shrine/12_ushimado_shrine_gate.jpg"
+        ]
+    },
+    {
         title: "大久野島，海風裡的兔影與廢墟",
         location: "📍 廣島縣 ． 大久野島",
         selector: ".hiroshima",
