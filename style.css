@@ -576,9 +576,10 @@ body {
 #small-light-hand.count-4 {
     top: clamp(190px, 25vh, 250px);
     display: grid;
-    width: min(84vw, 1040px, calc((100vh - 250px) * 1.42));
+    width: min(84vw, 1040px, calc((100vh - 250px) * 1.48));
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(22px, 3vw, 46px);
+    column-gap: clamp(42px, 5vw, 76px);
+    row-gap: clamp(38px, 4.5vh, 56px);
     align-items: center;
     transform: translateX(-50%);
 }
@@ -588,16 +589,49 @@ body {
     width: 100%;
     max-width: none;
     padding: clamp(6px, 0.7vw, 9px) clamp(6px, 0.7vw, 9px) clamp(14px, 1.4vw, 22px);
-    transform: translateY(var(--lift, 0)) rotate(var(--rotate, 0deg));
+    transform: translate(var(--shift-x, 0), var(--shift-y, 0)) rotate(var(--rotate, 0deg));
 }
 #small-light-hand.count-4 .small-light-photo-card img {
     width: 100%;
     height: auto;
     max-height: none;
 }
+#small-light-hand.count-4 .small-light-photo-card::before {
+    content: "";
+    position: absolute;
+    top: -9px;
+    left: 50%;
+    z-index: 2;
+    width: clamp(42px, 5vw, 70px);
+    height: clamp(13px, 1.5vw, 19px);
+    background: rgba(224, 214, 190, 0.72);
+    box-shadow: 0 1px 2px rgba(50, 42, 32, 0.16);
+    transform: translateX(-50%) rotate(var(--tape-rotate, -2deg));
+    backdrop-filter: blur(2px);
+}
+#small-light-hand.count-4 .small-light-photo-1 {
+    --shift-x: -12px;
+    --shift-y: 9px;
+    --tape-rotate: -3deg;
+}
+#small-light-hand.count-4 .small-light-photo-2 {
+    --shift-x: 14px;
+    --shift-y: -8px;
+    --tape-rotate: 2deg;
+}
+#small-light-hand.count-4 .small-light-photo-3 {
+    --shift-x: 9px;
+    --shift-y: -2px;
+    --tape-rotate: 3deg;
+}
+#small-light-hand.count-4 .small-light-photo-4 {
+    --shift-x: -10px;
+    --shift-y: 8px;
+    --tape-rotate: -1deg;
+}
 #small-light-hand.count-4 .small-light-photo-card:hover {
     z-index: 8;
-    transform: translateY(-10px) rotate(0deg) scale(1.025);
+    transform: translate(var(--shift-x, 0), calc(var(--shift-y, 0) - 10px)) rotate(0deg) scale(1.02);
 }
 .small-light-photo-card {
     position: relative;
@@ -695,6 +729,10 @@ body.small-light-open #map-hover-label {
         width: 100%;
         margin: 0;
         padding: clamp(7px, 0.9vw, 10px) clamp(7px, 0.9vw, 10px) clamp(20px, 2vw, 30px);
+        transform: none;
+    }
+    #small-light-hand.count-4 .small-light-photo-card::before {
+        display: none;
     }
     #small-light-hand.count-4 .small-light-photo-card img {
         height: auto;
