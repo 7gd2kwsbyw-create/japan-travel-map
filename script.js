@@ -51,6 +51,31 @@ const albums = [
         ]
     },
     {
+        title: "櫻花盛開的長野，從善光寺漫步城山公園",
+        location: "📍 長野縣 ． 長野市、善光寺與城山公園",
+        selector: ".nagano",
+        spotId: "spot-nagano-zenkoji-joyama",
+        spotName: "長野市、善光寺與城山公園",
+        photos: [
+            "images/nagano-zenkoji-joyama/01_joyama_cherry_avenue.jpg",
+            "images/nagano-zenkoji-joyama/02_nagano_city_morning_avenue.jpg",
+            "images/nagano-zenkoji-joyama/03_gondo_covered_arcade.jpg",
+            "images/nagano-zenkoji-joyama/04_weeping_cherry_streetscape.jpg",
+            "images/nagano-zenkoji-joyama/05_zenkoji_niomon_gate.jpg",
+            "images/nagano-zenkoji-joyama/06_rokujizo_sun_silhouettes.jpg",
+            "images/nagano-zenkoji-joyama/07_zenkoji_sanmon_gate.jpg",
+            "images/nagano-zenkoji-joyama/08_joyama_cherry_mountain_view.jpg",
+            "images/nagano-zenkoji-joyama/09_cherry_blossoms_and_lanterns.jpg",
+            "images/nagano-zenkoji-joyama/10_sunlit_cherry_blossoms.jpg",
+            "images/nagano-zenkoji-joyama/11_nagano_prefectural_art_museum.jpg",
+            "images/nagano-zenkoji-joyama/12_zenkoji_bell_tower.jpg",
+            "images/nagano-zenkoji-joyama/13_zenkoji_passage_light.jpg",
+            "images/nagano-zenkoji-joyama/14_temple_gate_and_bridge.jpg",
+            "images/nagano-zenkoji-joyama/15_joyama_cow_sculptures.jpg",
+            "images/nagano-zenkoji-joyama/16_joyama_cherry_park_path.jpg"
+        ]
+    },
+    {
         title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
         selector: ".shimane",
