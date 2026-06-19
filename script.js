@@ -239,6 +239,18 @@ const albums = [
 
 const smallLights = [
     {
+        title: "惠那峽，秋水映著遠山與遊船",
+        location: "📍 岐阜縣 ． 惠那峽",
+        selector: ".gifu",
+        spotId: "spot-enakyo",
+        spotName: "惠那峽",
+        photos: [
+            "images/enakyo/01_enakyo_lake_autumn_cruise.webp",
+            "images/enakyo/02_enakyo_reservoir_morning_path.webp",
+            "images/enakyo/03_enakyo_park_monument.webp"
+        ]
+    },
+    {
         title: "淺草寺的人潮與朱紅門影",
         location: "📍 東京都 ． 淺草寺",
         selector: ".tokyo",
