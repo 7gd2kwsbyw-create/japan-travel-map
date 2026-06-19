@@ -1,5 +1,21 @@
 const albums = [
     {
+        title: "櫻飛五稜廓，粉紅五月雪",
+        location: "📍 北海道 ． 五稜郭公園",
+        selector: ".hokkaido",
+        spotId: "spot-goryokaku-sakura",
+        spotName: "五稜郭公園",
+        photos: [
+            "images/goryokaku-sakura/01_goryokaku_tower_cherry_frame.webp",
+            "images/goryokaku-sakura/02_goryokaku_sakura_grove_blue_sky.webp",
+            "images/goryokaku-sakura/03_goryokaku_cherry_tree_path.webp",
+            "images/goryokaku-sakura/04_goryokaku_hanami_under_sakura.webp",
+            "images/goryokaku-sakura/05_goryokaku_moat_sakura_panorama.webp",
+            "images/goryokaku-sakura/06_goryokaku_tower_moat_reflection.webp",
+            "images/goryokaku-sakura/07_goryokaku_spring_puddle_reflection.webp"
+        ]
+    },
+    {
         title: "小樽運河，沿著石造倉庫走進港町時光",
         location: "📍 北海道 ． 小樽運河",
         selector: ".hokkaido",
