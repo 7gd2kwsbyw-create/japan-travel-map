@@ -420,15 +420,9 @@ function preloadImage(url, priority = 'auto') {
 
     const promise = new Promise(resolve => {
         img.onload = () => {
-            const finish = () => {
-                entry.loaded = true;
-                resolve(img);
-            };
-            if (typeof img.decode === 'function') {
-                img.decode().catch(() => {}).then(finish);
-            } else {
-                finish();
-            }
+            entry.loaded = true;
+            resolve(img);
+            if (typeof img.decode === 'function') img.decode().catch(() => {});
         };
         img.onerror = () => {
             entry.loaded = true;
