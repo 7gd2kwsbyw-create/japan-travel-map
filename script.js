@@ -52,7 +52,7 @@ const albums = [
     },
     {
         title: "郡上八幡，白城楓影與岸劍神社的秋日",
-        location: "📍 岐阜縣 ． 郡上八幡城與岸劍神社",
+        location: "📍 岐阜縣 ． 郡上八幡城",
         selector: ".gifu",
         spotId: "spot-gujo-hachiman-kishitsurugi",
         spotName: "郡上八幡城與岸劍神社",
