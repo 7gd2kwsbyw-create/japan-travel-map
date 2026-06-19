@@ -1570,7 +1570,9 @@ function loadAndInitMap() {
                 }
 
                 const rClass = getRegionClass(g);
-                const dirtyClasses = ['hokkaido', 'tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
+                // `hokkaido` is both the prefecture selector and the former
+                // region name, so removing it would orphan all Hokkaido content.
+                const dirtyClasses = ['tohoku', 'kanto', 'chubu', 'kinki', 'chugoku', 'shikoku', 'kyushu', 'okinawa', 'kyushu-okinawa'];
                 dirtyClasses.forEach(c => g.classList.remove(c));
 
                 if (rClass) {
