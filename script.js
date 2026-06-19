@@ -297,6 +297,7 @@ const MAP_REVEAL_START = 1;
 const MAP_REVEAL_LENGTH = 1;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
 const HOME_SCENE_SCROLL_LOCK_MS = 760;
+const HOME_WHEEL_QUIET_MS = 320;
 const REGION_CLASSES = Object.keys(regionNames);
 
 let homeAlbumIndex = 0;
@@ -306,6 +307,8 @@ let currentPhotoIndex = 0;
 let isGalleryMode = false;
 let isThrottled = false;
 let homeSceneScrollLockedUntil = 0;
+let isHomeWheelGestureActive = false;
+let homeWheelReleaseTimer = null;
 let homeTouchStartX = 0;
 let homeTouchStartY = 0;
 let homeTouchStartSceneIndex = 0;
@@ -902,6 +905,14 @@ function navigateHomeScene(direction, fromSceneIndex = getNearestHomeSceneIndex(
     });
 }
 
+function scheduleHomeWheelGestureRelease() {
+    window.clearTimeout(homeWheelReleaseTimer);
+    const remainingTransitionTime = Math.max(0, homeSceneScrollLockedUntil - Date.now());
+    homeWheelReleaseTimer = window.setTimeout(() => {
+        isHomeWheelGestureActive = false;
+    }, Math.max(HOME_WHEEL_QUIET_MS, remainingTransitionTime));
+}
+
 window.addEventListener('wheel', (e) => {
     if (isGalleryMode) {
         if (document.getElementById('gallery-index-panel').classList.contains('open') || isThrottled) return;
@@ -919,9 +930,18 @@ window.addEventListener('wheel', (e) => {
         return;
     }
 
-    if (document.getElementById('small-light-overlay')?.classList.contains('open') || Math.abs(e.deltaY) < 12) return;
+    if (document.getElementById('small-light-overlay')?.classList.contains('open')) return;
     e.preventDefault();
+
+    if (isHomeWheelGestureActive) {
+        scheduleHomeWheelGestureRelease();
+        return;
+    }
+    if (Math.abs(e.deltaY) < 12) return;
+
+    isHomeWheelGestureActive = true;
     navigateHomeScene(e.deltaY > 0 ? 1 : -1);
+    scheduleHomeWheelGestureRelease();
 }, { passive: false });
 
 document.addEventListener('keydown', (e) => {
