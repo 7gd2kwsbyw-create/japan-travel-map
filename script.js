@@ -2046,9 +2046,9 @@ function showSmallLightDetail(smallLightIndex, heading, anchor = null) {
 function getSmallLightCardRotation(index, count) {
     const rotations = {
         1: [0],
-        2: [-3, 3],
-        3: [-4, 1.8, 4],
-        4: [-4, 2, -2, 4]
+        2: [-1.8, 1.5],
+        3: [-2, 0.8, 1.8],
+        4: [-1.5, 1.2, 0.9, -1.1]
     };
     return (rotations[count] || rotations[4])[index] || 0;
 }
@@ -2056,9 +2056,9 @@ function getSmallLightCardRotation(index, count) {
 function getSmallLightCardLift(index, count) {
     const lifts = {
         1: [0],
-        2: [16, -10],
-        3: [18, -12, 14],
-        4: [18, -10, 8, 20]
+        2: [8, -5],
+        3: [9, -6, 7],
+        4: [7, -5, 2, 9]
     };
     return (lifts[count] || lifts[4])[index] || 0;
 }
