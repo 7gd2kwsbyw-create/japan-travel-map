@@ -56,6 +56,15 @@ body {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     background: rgba(0, 0, 0, 0.4); z-index: 3; pointer-events: none; will-change: opacity; transition: opacity 0.4s ease;
 }
+#dark-overlay.gallery-entry-veil {
+    background: #080808;
+    opacity: 1 !important;
+    transition: none;
+}
+#dark-overlay.gallery-entry-veil.reveal {
+    opacity: 0 !important;
+    transition: opacity 0.32s ease;
+}
 
 #main-title-container {
     position: fixed; top: 40%; left: 50%; transform: translate(-50%, -50%); width: min(92vw, 1280px); z-index: 4; display: flex; justify-content: center; transition: opacity 0.4s ease, transform 0.4s ease;
