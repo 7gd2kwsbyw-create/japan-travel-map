@@ -203,6 +203,19 @@ const albums = [
 
 const smallLights = [
     {
+        title: "淺草寺的人潮與朱紅門影",
+        location: "📍 東京都 ． 淺草寺",
+        selector: ".tokyo",
+        spotId: "spot-asakusa-sensoji",
+        spotName: "淺草寺",
+        photos: [
+            "images/asakusa-sensoji/01_asakusa_street_skytree.webp",
+            "images/asakusa-sensoji/02_sensoji_hozo_mon_gate.webp",
+            "images/asakusa-sensoji/03_sensoji_crowd_from_gate.webp",
+            "images/asakusa-sensoji/04_kaminarimon_lantern_closeup.webp"
+        ]
+    },
+    {
         title: "宍道湖的嫁島夕照",
         location: "📍 島根縣 ． 宍道湖嫁島",
         selector: ".shimane",
