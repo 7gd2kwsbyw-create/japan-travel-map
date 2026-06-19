@@ -67,6 +67,26 @@ const albums = [
         ]
     },
     {
+        title: "白川鄉秋日，合掌屋靜立在山色之間",
+        location: "📍 岐阜縣 ． 白川鄉合掌村",
+        selector: ".gifu",
+        spotId: "spot-shirakawago",
+        spotName: "白川鄉合掌村",
+        photos: [
+            "images/shirakawago-autumn/01_susuki_gassho_house_autumn.webp",
+            "images/shirakawago-autumn/02_gassho_roof_blue_sky.webp",
+            "images/shirakawago-autumn/03_gassho_house_mountain_village.webp",
+            "images/shirakawago-autumn/04_thatched_roof_facade.webp",
+            "images/shirakawago-autumn/05_village_carpenter_at_work.webp",
+            "images/shirakawago-autumn/06_gassho_house_framed_view.webp",
+            "images/shirakawago-autumn/07_three_gassho_houses_fields.webp",
+            "images/shirakawago-autumn/08_solitary_storehouse_field.webp",
+            "images/shirakawago-autumn/09_shokawa_river_autumn_valley.webp",
+            "images/shirakawago-autumn/10_shokawa_river_mountain_landscape.webp",
+            "images/shirakawago-autumn/11_shirakawago_overlook_autumn.webp"
+        ]
+    },
+    {
         title: "櫻花盛開的長野，從善光寺漫步城山公園",
         location: "📍 長野縣 ． 城山公園",
         selector: ".nagano",
