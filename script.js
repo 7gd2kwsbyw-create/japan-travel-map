@@ -293,8 +293,10 @@ const regionFitOptions = {
 };
 
 const MAP_ANIMATION_FAST = 520;
-const MAP_REVEAL_START = 2.75;
-const MAP_REVEAL_LENGTH = 1.25;
+const MAP_REVEAL_START = 1;
+const MAP_REVEAL_LENGTH = 1;
+const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
+const HOME_SCENE_SCROLL_LOCK_MS = 760;
 const REGION_CLASSES = Object.keys(regionNames);
 
 let homeAlbumIndex = 0;
@@ -303,6 +305,10 @@ let currentAlbumIndex = 0;
 let currentPhotoIndex = 0;
 let isGalleryMode = false;
 let isThrottled = false;
+let homeSceneScrollLockedUntil = 0;
+let homeTouchStartX = 0;
+let homeTouchStartY = 0;
+let homeTouchStartSceneIndex = 0;
 
 let currentLayer = 1;
 let activeRegionClass = null;
@@ -874,21 +880,77 @@ if (document.getElementById('close-index-btn')) {
     });
 }
 
-window.addEventListener('wheel', (e) => {
-    if (!isGalleryMode || document.getElementById('gallery-index-panel').classList.contains('open')) return;
-    if (isThrottled) return;
+function getNearestHomeSceneIndex() {
+    const currentProgress = window.scrollY / window.innerHeight;
+    return HOME_SCENE_PROGRESS.reduce((closestIndex, sceneProgress, index) => {
+        return Math.abs(sceneProgress - currentProgress) < Math.abs(HOME_SCENE_PROGRESS[closestIndex] - currentProgress)
+            ? index
+            : closestIndex;
+    }, 0);
+}
 
-    const album = albums[browsingAlbumIndex];
-    if (e.deltaY > 20) {
-        currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
-        updateGalleryPhoto(currentPhotoIndex);
-        throttleScroll();
-    } else if (e.deltaY < -20) {
-        currentPhotoIndex = (currentPhotoIndex - 1 + album.photos.length) % album.photos.length;
-        updateGalleryPhoto(currentPhotoIndex);
-        throttleScroll();
+function navigateHomeScene(direction, fromSceneIndex = getNearestHomeSceneIndex()) {
+    if (Date.now() < homeSceneScrollLockedUntil) return;
+
+    const targetSceneIndex = Math.max(0, Math.min(HOME_SCENE_PROGRESS.length - 1, fromSceneIndex + direction));
+    if (targetSceneIndex === fromSceneIndex) return;
+
+    homeSceneScrollLockedUntil = Date.now() + HOME_SCENE_SCROLL_LOCK_MS;
+    window.scrollTo({
+        top: HOME_SCENE_PROGRESS[targetSceneIndex] * window.innerHeight,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+    });
+}
+
+window.addEventListener('wheel', (e) => {
+    if (isGalleryMode) {
+        if (document.getElementById('gallery-index-panel').classList.contains('open') || isThrottled) return;
+
+        const album = albums[browsingAlbumIndex];
+        if (e.deltaY > 20) {
+            currentPhotoIndex = (currentPhotoIndex + 1) % album.photos.length;
+            updateGalleryPhoto(currentPhotoIndex);
+            throttleScroll();
+        } else if (e.deltaY < -20) {
+            currentPhotoIndex = (currentPhotoIndex - 1 + album.photos.length) % album.photos.length;
+            updateGalleryPhoto(currentPhotoIndex);
+            throttleScroll();
+        }
+        return;
     }
+
+    if (document.getElementById('small-light-overlay')?.classList.contains('open') || Math.abs(e.deltaY) < 12) return;
+    e.preventDefault();
+    navigateHomeScene(e.deltaY > 0 ? 1 : -1);
+}, { passive: false });
+
+document.addEventListener('keydown', (e) => {
+    if (isGalleryMode || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
+
+    const nextKeys = ['ArrowDown', 'PageDown', ' '];
+    const previousKeys = ['ArrowUp', 'PageUp'];
+    if (!nextKeys.includes(e.key) && !previousKeys.includes(e.key)) return;
+
+    e.preventDefault();
+    navigateHomeScene(nextKeys.includes(e.key) ? 1 : -1);
 });
+
+window.addEventListener('touchstart', (e) => {
+    if (isGalleryMode || e.touches.length !== 1 || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
+    homeTouchStartX = e.touches[0].clientX;
+    homeTouchStartY = e.touches[0].clientY;
+    homeTouchStartSceneIndex = getNearestHomeSceneIndex();
+}, { passive: true });
+
+window.addEventListener('touchend', (e) => {
+    if (isGalleryMode || e.changedTouches.length !== 1 || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
+
+    const deltaX = e.changedTouches[0].clientX - homeTouchStartX;
+    const deltaY = e.changedTouches[0].clientY - homeTouchStartY;
+    if (Math.abs(deltaY) < 50 || Math.abs(deltaY) <= Math.abs(deltaX) * 1.2) return;
+
+    navigateHomeScene(deltaY < 0 ? 1 : -1, homeTouchStartSceneIndex);
+}, { passive: true });
 
 function throttleScroll() {
     isThrottled = true;
@@ -969,6 +1031,10 @@ window.addEventListener('scroll', () => {
             }
         }
     }
+});
+
+window.addEventListener('load', () => {
+    if (!isGalleryMode) window.dispatchEvent(new Event('scroll'));
 });
 
 function updateLocationHintText() {
