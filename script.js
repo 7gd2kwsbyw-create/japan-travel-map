@@ -51,6 +51,22 @@ const albums = [
         ]
     },
     {
+        title: "郡上八幡，白城楓影與岸劍神社的秋日",
+        location: "📍 岐阜縣 ． 郡上八幡城與岸劍神社",
+        selector: ".gifu",
+        spotId: "spot-gujo-hachiman-kishitsurugi",
+        spotName: "郡上八幡城與岸劍神社",
+        photos: [
+            "images/gujo-hachiman-kishitsurugi/01_gujo_hachiman_castle_autumn.webp",
+            "images/gujo-hachiman-kishitsurugi/02_castle_wooden_corridor_light.webp",
+            "images/gujo-hachiman-kishitsurugi/03_gujo_hachiman_town_panorama.webp",
+            "images/gujo-hachiman-kishitsurugi/04_kishitsurugi_shrine_stone_marker.webp",
+            "images/gujo-hachiman-kishitsurugi/05_kishitsurugi_crimson_maple_tree.webp",
+            "images/gujo-hachiman-kishitsurugi/06_sunlit_red_maple_leaves.webp",
+            "images/gujo-hachiman-kishitsurugi/07_kishitsurugi_shrine_torii.webp"
+        ]
+    },
+    {
         title: "櫻花盛開的長野，從善光寺漫步城山公園",
         location: "📍 長野縣 ． 城山公園",
         selector: ".nagano",
@@ -240,7 +256,7 @@ const smallLights = [
         ]
     },
     {
-        title: "吉備津神社，長廊深處的冬日寂靜",
+        title: "吉備津神社，無盡的長廊",
         location: "📍 岡山縣 ． 吉備津神社",
         selector: ".okayama",
         spotId: "spot-kibitsu-shrine",
