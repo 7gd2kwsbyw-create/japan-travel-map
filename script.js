@@ -52,7 +52,7 @@ const albums = [
     },
     {
         title: "櫻花盛開的長野，從善光寺漫步城山公園",
-        location: "📍 長野縣 ． 長野市、善光寺與城山公園",
+        location: "📍 長野縣 ． 城山公園",
         selector: ".nagano",
         spotId: "spot-nagano-zenkoji-joyama",
         spotName: "長野市、善光寺與城山公園",
@@ -61,8 +61,8 @@ const albums = [
             "images/nagano-zenkoji-joyama/02_nagano_city_morning_avenue.jpg",
             "images/nagano-zenkoji-joyama/03_gondo_covered_arcade.jpg",
             "images/nagano-zenkoji-joyama/04_weeping_cherry_streetscape.jpg",
-            "images/nagano-zenkoji-joyama/05_zenkoji_niomon_gate.jpg",
             "images/nagano-zenkoji-joyama/06_rokujizo_sun_silhouettes.jpg",
+            "images/nagano-zenkoji-joyama/05_zenkoji_niomon_gate.jpg",
             "images/nagano-zenkoji-joyama/07_zenkoji_sanmon_gate.jpg",
             "images/nagano-zenkoji-joyama/08_joyama_cherry_mountain_view.jpg",
             "images/nagano-zenkoji-joyama/09_cherry_blossoms_and_lanterns.jpg",
