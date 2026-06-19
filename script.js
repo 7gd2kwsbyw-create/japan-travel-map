@@ -544,11 +544,29 @@ function changePhotoWithFade(newUrl, isInitial = false) {
         return;
     }
 
-    if (isImageReady(newUrl)) {
+    const transitionToPhoto = (img = null) => {
+        if (requestId !== photoTransitionId) return;
+
         bgPhotoEl.classList.remove('photo-loading');
-        bgPhotoEl.style.transition = 'none';
-        applyPhoto(imagePreloadCache.get(newUrl)?.img || null);
-        bgPhotoEl.style.opacity = 1;
+        bgPhotoEl.style.transition = 'opacity 0.14s ease-in';
+        bgPhotoEl.style.opacity = 0.18;
+
+        setTimeout(() => {
+            if (requestId !== photoTransitionId) return;
+            applyPhoto(img);
+            bgPhotoEl.style.transition = 'opacity 0.18s ease-out';
+            bgPhotoEl.style.opacity = 1;
+
+            setTimeout(() => {
+                if (requestId === photoTransitionId && !isGalleryMode) {
+                    bgPhotoEl.style.transition = 'none';
+                }
+            }, 190);
+        }, 140);
+    };
+
+    if (isImageReady(newUrl)) {
+        transitionToPhoto(imagePreloadCache.get(newUrl)?.img || null);
         return;
     }
 
@@ -556,17 +574,7 @@ function changePhotoWithFade(newUrl, isInitial = false) {
 
     preloadImage(newUrl, 'high').then(img => {
         if (requestId !== photoTransitionId) return;
-
-        bgPhotoEl.classList.remove('photo-loading');
-        bgPhotoEl.style.transition = 'opacity 0.08s ease-out';
-        bgPhotoEl.style.opacity = 0.9;
-        setTimeout(() => {
-            applyPhoto(img);
-            bgPhotoEl.style.opacity = 1;
-            setTimeout(() => {
-                if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
-            }, 90);
-        }, 80);
+        transitionToPhoto(img);
     });
 }
 
