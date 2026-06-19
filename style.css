@@ -593,7 +593,7 @@ body {
     width: 100%;
     height: 100%;
     max-height: none;
-    object-fit: cover;
+    object-fit: contain;
 }
 #small-light-hand.count-4 .small-light-photo-card:hover {
     transform: translateY(-6px) scale(1.015);
