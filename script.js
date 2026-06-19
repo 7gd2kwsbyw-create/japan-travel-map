@@ -296,8 +296,10 @@ const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 1;
 const MAP_REVEAL_LENGTH = 1;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
-const HOME_SCENE_SCROLL_LOCK_MS = 760;
-const HOME_WHEEL_QUIET_MS = 320;
+const HOME_SCENE_SCROLL_LOCK_MS = 520;
+const HOME_WHEEL_QUIET_MS = 110;
+const HOME_WHEEL_IMPULSE_MIN = 14;
+const HOME_WHEEL_IMPULSE_RATIO = 1.55;
 const REGION_CLASSES = Object.keys(regionNames);
 
 let homeAlbumIndex = 0;
@@ -309,6 +311,8 @@ let isThrottled = false;
 let homeSceneScrollLockedUntil = 0;
 let isHomeWheelGestureActive = false;
 let homeWheelReleaseTimer = null;
+let lastHomeWheelDelta = 0;
+let lastHomeWheelDirection = 0;
 let homeTouchStartX = 0;
 let homeTouchStartY = 0;
 let homeTouchStartSceneIndex = 0;
@@ -907,10 +911,11 @@ function navigateHomeScene(direction, fromSceneIndex = getNearestHomeSceneIndex(
 
 function scheduleHomeWheelGestureRelease() {
     window.clearTimeout(homeWheelReleaseTimer);
-    const remainingTransitionTime = Math.max(0, homeSceneScrollLockedUntil - Date.now());
     homeWheelReleaseTimer = window.setTimeout(() => {
         isHomeWheelGestureActive = false;
-    }, Math.max(HOME_WHEEL_QUIET_MS, remainingTransitionTime));
+        lastHomeWheelDelta = 0;
+        lastHomeWheelDirection = 0;
+    }, HOME_WHEEL_QUIET_MS);
 }
 
 window.addEventListener('wheel', (e) => {
@@ -933,14 +938,26 @@ window.addEventListener('wheel', (e) => {
     if (document.getElementById('small-light-overlay')?.classList.contains('open')) return;
     e.preventDefault();
 
+    const wheelDelta = Math.abs(e.deltaY);
+    const wheelDirection = e.deltaY > 0 ? 1 : -1;
+    const isFreshImpulse = wheelDirection !== lastHomeWheelDirection
+        || (wheelDelta >= HOME_WHEEL_IMPULSE_MIN && wheelDelta > lastHomeWheelDelta * HOME_WHEEL_IMPULSE_RATIO);
+
     if (isHomeWheelGestureActive) {
+        if (isFreshImpulse && Date.now() >= homeSceneScrollLockedUntil) {
+            navigateHomeScene(wheelDirection);
+        }
+        lastHomeWheelDelta = wheelDelta;
+        lastHomeWheelDirection = wheelDirection;
         scheduleHomeWheelGestureRelease();
         return;
     }
-    if (Math.abs(e.deltaY) < 12) return;
+    if (wheelDelta < 12) return;
 
     isHomeWheelGestureActive = true;
-    navigateHomeScene(e.deltaY > 0 ? 1 : -1);
+    lastHomeWheelDelta = wheelDelta;
+    lastHomeWheelDirection = wheelDirection;
+    navigateHomeScene(wheelDirection);
     scheduleHomeWheelGestureRelease();
 }, { passive: false });
 
