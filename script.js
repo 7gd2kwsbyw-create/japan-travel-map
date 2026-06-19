@@ -239,6 +239,18 @@ const albums = [
 
 const smallLights = [
     {
+        title: "熱田神宮，銀杏落滿秋日參道",
+        location: "📍 愛知縣 ． 熱田神宮",
+        selector: ".aichi",
+        spotId: "spot-atsuta-jingu",
+        spotName: "熱田神宮",
+        photos: [
+            "images/atsuta-jingu/01_golden_ginkgo_path.webp",
+            "images/atsuta-jingu/02_atsuta_jingu_main_shrine.webp",
+            "images/atsuta-jingu/03_kamichikama_shrine_prayer.webp"
+        ]
+    },
+    {
         title: "惠那峽，秋水映著遠山與遊船",
         location: "📍 岐阜縣 ． 惠那峽",
         selector: ".gifu",
