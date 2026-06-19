@@ -239,7 +239,7 @@ const albums = [
 
 const smallLights = [
     {
-        title: "熱田神宮，銀杏落滿秋日參道",
+        title: "在熱田神宮巧遇銀杏，上知我麻神社的散策時光",
         location: "📍 愛知縣 ． 熱田神宮",
         selector: ".aichi",
         spotId: "spot-atsuta-jingu",
