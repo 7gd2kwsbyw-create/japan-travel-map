@@ -815,7 +815,7 @@ if (closeGalleryBtnEl) {
         } else {
             document.getElementById('main-title-container').style.opacity = 1;
             document.getElementById('main-title-container').style.pointerEvents = 'auto';
-            document.getElementById('dark-overlay').style.opacity = 0.4;
+            document.getElementById('dark-overlay').style.opacity = 1;
             if (btnPrev) { btnPrev.style.opacity = '1'; btnPrev.style.pointerEvents = 'auto'; }
             if (btnNext) { btnNext.style.opacity = '1'; btnNext.style.pointerEvents = 'auto'; }
             updateAlbumCover(true);
@@ -924,7 +924,7 @@ window.addEventListener('scroll', () => {
             mainTitleContainer.style.transform = `translate(-50%, calc(-50% - ${progress * 50}px))`;
             mainTitleContainer.style.pointerEvents = (progress > 0.8) ? 'none' : 'auto';
         }
-        if (darkOverlay) darkOverlay.style.opacity = 0.4 * (1 - progress);
+        if (darkOverlay) darkOverlay.style.opacity = 1 - progress;
         if (locationHint) {
             locationHint.innerHTML = currentAlbum.location;
             locationHint.style.opacity = Math.min(progress * 1.5, 1);
