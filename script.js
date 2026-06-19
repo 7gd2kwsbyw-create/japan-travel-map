@@ -297,6 +297,7 @@ const MAP_REVEAL_START = 1;
 const MAP_REVEAL_LENGTH = 1;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
 const HOME_SCENE_SCROLL_LOCK_MS = 520;
+const HOME_MAP_TRANSITION_MS = 980;
 const HOME_WHEEL_QUIET_MS = 110;
 const HOME_WHEEL_IMPULSE_MIN = 14;
 const HOME_WHEEL_IMPULSE_RATIO = 1.55;
@@ -313,6 +314,7 @@ let isHomeWheelGestureActive = false;
 let homeWheelReleaseTimer = null;
 let lastHomeWheelDelta = 0;
 let lastHomeWheelDirection = 0;
+let homeSceneAnimationId = null;
 let homeTouchStartX = 0;
 let homeTouchStartY = 0;
 let homeTouchStartSceneIndex = 0;
@@ -902,11 +904,38 @@ function navigateHomeScene(direction, fromSceneIndex = getNearestHomeSceneIndex(
     const targetSceneIndex = Math.max(0, Math.min(HOME_SCENE_PROGRESS.length - 1, fromSceneIndex + direction));
     if (targetSceneIndex === fromSceneIndex) return;
 
-    homeSceneScrollLockedUntil = Date.now() + HOME_SCENE_SCROLL_LOCK_MS;
-    window.scrollTo({
-        top: HOME_SCENE_PROGRESS[targetSceneIndex] * window.innerHeight,
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-    });
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const transitionDuration = targetSceneIndex === HOME_SCENE_PROGRESS.length - 1
+        ? HOME_MAP_TRANSITION_MS
+        : HOME_SCENE_SCROLL_LOCK_MS;
+    const targetScrollY = HOME_SCENE_PROGRESS[targetSceneIndex] * window.innerHeight;
+
+    homeSceneScrollLockedUntil = Date.now() + transitionDuration;
+    if (prefersReducedMotion) {
+        window.scrollTo(0, targetScrollY);
+        return;
+    }
+
+    if (homeSceneAnimationId) window.cancelAnimationFrame(homeSceneAnimationId);
+    const startScrollY = window.scrollY;
+    const scrollDistance = targetScrollY - startScrollY;
+    const startTime = performance.now();
+
+    const animateSceneScroll = (currentTime) => {
+        const elapsed = Math.min((currentTime - startTime) / transitionDuration, 1);
+        const easedProgress = elapsed < 0.5
+            ? 4 * elapsed * elapsed * elapsed
+            : 1 - Math.pow(-2 * elapsed + 2, 3) / 2;
+        window.scrollTo(0, startScrollY + scrollDistance * easedProgress);
+
+        if (elapsed < 1) {
+            homeSceneAnimationId = window.requestAnimationFrame(animateSceneScroll);
+        } else {
+            homeSceneAnimationId = null;
+        }
+    };
+
+    homeSceneAnimationId = window.requestAnimationFrame(animateSceneScroll);
 }
 
 function scheduleHomeWheelGestureRelease() {
