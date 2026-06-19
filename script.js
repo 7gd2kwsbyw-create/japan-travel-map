@@ -57,22 +57,22 @@ const albums = [
         spotId: "spot-nagano-zenkoji-joyama",
         spotName: "長野市、善光寺與城山公園",
         photos: [
-            "images/nagano-zenkoji-joyama/01_joyama_cherry_avenue.jpg",
-            "images/nagano-zenkoji-joyama/02_nagano_city_morning_avenue.jpg",
-            "images/nagano-zenkoji-joyama/03_gondo_covered_arcade.jpg",
-            "images/nagano-zenkoji-joyama/04_weeping_cherry_streetscape.jpg",
-            "images/nagano-zenkoji-joyama/06_rokujizo_sun_silhouettes.jpg",
-            "images/nagano-zenkoji-joyama/05_zenkoji_niomon_gate.jpg",
-            "images/nagano-zenkoji-joyama/07_zenkoji_sanmon_gate.jpg",
-            "images/nagano-zenkoji-joyama/08_joyama_cherry_mountain_view.jpg",
-            "images/nagano-zenkoji-joyama/09_cherry_blossoms_and_lanterns.jpg",
-            "images/nagano-zenkoji-joyama/10_sunlit_cherry_blossoms.jpg",
-            "images/nagano-zenkoji-joyama/11_nagano_prefectural_art_museum.jpg",
-            "images/nagano-zenkoji-joyama/12_zenkoji_bell_tower.jpg",
-            "images/nagano-zenkoji-joyama/13_zenkoji_passage_light.jpg",
-            "images/nagano-zenkoji-joyama/14_temple_gate_and_bridge.jpg",
-            "images/nagano-zenkoji-joyama/15_joyama_cow_sculptures.jpg",
-            "images/nagano-zenkoji-joyama/16_joyama_cherry_park_path.jpg"
+            "images/nagano-zenkoji-joyama/01_joyama_cherry_avenue.webp",
+            "images/nagano-zenkoji-joyama/02_nagano_city_morning_avenue.webp",
+            "images/nagano-zenkoji-joyama/03_gondo_covered_arcade.webp",
+            "images/nagano-zenkoji-joyama/04_weeping_cherry_streetscape.webp",
+            "images/nagano-zenkoji-joyama/06_rokujizo_sun_silhouettes.webp",
+            "images/nagano-zenkoji-joyama/05_zenkoji_niomon_gate.webp",
+            "images/nagano-zenkoji-joyama/07_zenkoji_sanmon_gate.webp",
+            "images/nagano-zenkoji-joyama/08_joyama_cherry_mountain_view.webp",
+            "images/nagano-zenkoji-joyama/09_cherry_blossoms_and_lanterns.webp",
+            "images/nagano-zenkoji-joyama/10_sunlit_cherry_blossoms.webp",
+            "images/nagano-zenkoji-joyama/11_nagano_prefectural_art_museum.webp",
+            "images/nagano-zenkoji-joyama/12_zenkoji_bell_tower.webp",
+            "images/nagano-zenkoji-joyama/13_zenkoji_passage_light.webp",
+            "images/nagano-zenkoji-joyama/14_temple_gate_and_bridge.webp",
+            "images/nagano-zenkoji-joyama/15_joyama_cow_sculptures.webp",
+            "images/nagano-zenkoji-joyama/16_joyama_cherry_park_path.webp"
         ]
     },
     {
@@ -404,20 +404,31 @@ function getContentByPrefecture() {
     return byPref;
 }
 
-function preloadImage(url) {
+function preloadImage(url, priority = 'auto') {
     if (!url) return Promise.resolve(null);
 
     const cached = imagePreloadCache.get(url);
-    if (cached) return cached.promise;
+    if (cached) {
+        if (priority === 'high') cached.img.fetchPriority = 'high';
+        return cached.promise;
+    }
 
     const img = new Image();
     img.decoding = 'async';
+    img.fetchPriority = priority;
     const entry = { img, promise: null, loaded: false };
 
     const promise = new Promise(resolve => {
         img.onload = () => {
-            entry.loaded = true;
-            resolve(img);
+            const finish = () => {
+                entry.loaded = true;
+                resolve(img);
+            };
+            if (typeof img.decode === 'function') {
+                img.decode().catch(() => {}).then(finish);
+            } else {
+                finish();
+            }
         };
         img.onerror = () => {
             entry.loaded = true;
@@ -436,8 +447,8 @@ function isImageReady(url) {
     return Boolean(cached && cached.loaded);
 }
 
-function preloadPhotos(urls) {
-    urls.forEach(url => preloadImage(url));
+function preloadPhotos(urls, priority = 'auto') {
+    urls.forEach(url => preloadImage(url, priority));
 }
 
 function preloadAlbumPhotos(albumIndex, startIndex = 0) {
@@ -458,18 +469,19 @@ function preloadAlbumPhotos(albumIndex, startIndex = 0) {
         .filter((index, position, indexes) => indexes.indexOf(index) === position)
         .map(index => album.photos[index]);
 
-    preloadPhotos(ordered.slice(0, 3));
+    const nearbyCount = Math.min(5, ordered.length);
+    preloadPhotos(ordered.slice(0, nearbyCount), 'high');
 
-    let index = 3;
-    const loadNext = () => {
-        if (runId !== albumPreloadRunId || index >= ordered.length) return;
-        preloadImage(ordered[index]).then(() => {
-            index += 1;
-            setTimeout(loadNext, 90);
-        });
+    const warmRest = () => {
+        if (runId !== albumPreloadRunId) return;
+        preloadPhotos(ordered.slice(nearbyCount), 'low');
     };
 
-    setTimeout(loadNext, 180);
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(warmRest, { timeout: 700 });
+    } else {
+        setTimeout(warmRest, 180);
+    }
 }
 
 function preloadAlbumCovers() {
@@ -502,13 +514,14 @@ function warmSmallLightPhotos() {
 function preloadGalleryNeighbors(album, index) {
     if (!album || !album.photos.length) return;
 
-    const previousIndex = (index - 1 + album.photos.length) % album.photos.length;
-    const nextIndex = (index + 1) % album.photos.length;
+    const total = album.photos.length;
     preloadPhotos([
-        album.photos[previousIndex],
         album.photos[index],
-        album.photos[nextIndex]
-    ]);
+        album.photos[(index + 1) % total],
+        album.photos[(index + 2) % total],
+        album.photos[(index - 1 + total) % total],
+        album.photos[(index - 2 + total) % total]
+    ], 'high');
 }
 
 function changePhotoWithFade(newUrl, isInitial = false) {
@@ -537,26 +550,29 @@ function changePhotoWithFade(newUrl, isInitial = false) {
         return;
     }
 
-    const waitForImage = !isImageReady(newUrl);
-    if (waitForImage && isGalleryMode) {
-        bgPhotoEl.classList.add('photo-loading');
-        bgPhotoEl.style.transition = 'opacity 0.16s ease';
-        bgPhotoEl.style.opacity = 0.82;
+    if (isImageReady(newUrl)) {
+        bgPhotoEl.classList.remove('photo-loading');
+        bgPhotoEl.style.transition = 'none';
+        applyPhoto(imagePreloadCache.get(newUrl)?.img || null);
+        bgPhotoEl.style.opacity = 1;
+        return;
     }
 
-    preloadImage(newUrl).then(img => {
+    if (isGalleryMode) bgPhotoEl.classList.add('photo-loading');
+
+    preloadImage(newUrl, 'high').then(img => {
         if (requestId !== photoTransitionId) return;
 
         bgPhotoEl.classList.remove('photo-loading');
-        bgPhotoEl.style.transition = 'opacity 0.22s ease-in-out';
-        bgPhotoEl.style.opacity = 0;
+        bgPhotoEl.style.transition = 'opacity 0.08s ease-out';
+        bgPhotoEl.style.opacity = 0.9;
         setTimeout(() => {
             applyPhoto(img);
             bgPhotoEl.style.opacity = 1;
             setTimeout(() => {
                 if (!isGalleryMode) bgPhotoEl.style.transition = 'none';
-            }, 230);
-        }, 220);
+            }, 90);
+        }, 80);
     });
 }
 
@@ -565,8 +581,33 @@ function updateAlbumCover(isInitial = false) {
     const album = albums[homeAlbumIndex];
     if (!isGalleryMode) setMainTitle(album.title);
     changePhotoWithFade(album.photos[0], isInitial);
+    preloadAlbumPhotos(homeAlbumIndex, 0);
     currentPhotoIndex = 0;
     if (!isGalleryMode) restoreHomeHint();
+}
+
+function prepareDisplayFonts() {
+    const root = document.documentElement;
+    if (!document.fonts?.load) {
+        root.classList.remove('fonts-loading');
+        root.classList.add('fonts-fallback');
+        return Promise.resolve();
+    }
+
+    const titleText = albums.map(album => album.title).join('');
+    const supportingText = [...albums, ...smallLights]
+        .map(item => `${item.location}${item.spotName}`)
+        .join('');
+    const fontLoads = Promise.all([
+        document.fonts.load('400 56px "Iansui"', titleText),
+        document.fonts.load('300 16px "Noto Serif TC"', supportingText)
+    ]);
+    const timeout = new Promise(resolve => setTimeout(() => resolve('timeout'), 4000));
+
+    return Promise.race([fontLoads, timeout]).then(result => {
+        root.classList.remove('fonts-loading');
+        root.classList.add(result === 'timeout' ? 'fonts-fallback' : 'fonts-ready');
+    });
 }
 
 function restoreHomeHint() {
@@ -2067,10 +2108,11 @@ function hidePreview(force = false) {
 
 document.addEventListener('DOMContentLoaded', () => {
     homeAlbumIndex = Math.floor(Math.random() * albums.length);
+    prepareDisplayFonts();
+    updateAlbumCover(true);
     preloadAlbumCovers();
     preloadSmallLightCovers();
     warmSmallLightPhotos();
-    updateAlbumCover(true);
     loadAndInitMap();
 
     document.getElementById('small-light-close')?.addEventListener('click', closeSmallLightOverlay);
