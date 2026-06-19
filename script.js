@@ -1,5 +1,21 @@
 const albums = [
     {
+        title: "小樽運河，沿著石造倉庫走進港町時光",
+        location: "📍 北海道 ． 小樽運河",
+        selector: ".hokkaido",
+        spotId: "spot-otaru-canal",
+        spotName: "小樽運河",
+        photos: [
+            "images/otaru-canal/01_otaru_canal_warehouse_panorama.webp",
+            "images/otaru-canal/02_otaru_canal_cruise_boat.webp",
+            "images/otaru-canal/03_otaru_canal_stone_warehouse_walk.webp",
+            "images/otaru-canal/04_otaru_street_dog_walkers.webp",
+            "images/otaru-canal/05_otaru_times_crow.webp",
+            "images/otaru-canal/06_otaru_music_box_hall_street.webp",
+            "images/otaru-canal/07_otaru_music_box_clock.webp"
+        ]
+    },
+    {
         title: "深秋的香嵐溪，時間靜止在楓紅之中",
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
         selector: ".aichi",
