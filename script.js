@@ -2103,7 +2103,7 @@ function getPreviewAnchorRect(anchor) {
     // Hokkaido's SVG path also contains the long Kuril island chain.
     // Anchor the card to the main island so it stays visually connected.
     if (anchor.classList?.contains('hokkaido')) {
-        const left = rect.left;
+        const left = rect.left + rect.width * 0.125;
         const top = rect.top + rect.height * 0.1;
         const right = rect.left + rect.width * 0.72;
         const bottom = rect.bottom;
