@@ -178,7 +178,7 @@ body {
 
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 1.5s infinite ease-in-out;
+    animation: regionSolidBreathe 1.35s infinite ease-in-out;
 }
 
 #region-badges-layer {
@@ -240,15 +240,15 @@ body {
 
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 1.5s infinite ease-in-out;
+    animation: prefSolidBreathe 1.35s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 1.4s infinite ease-in-out;
+    animation: albumPrefBreathe 1.3s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse path,
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 1.4s infinite ease-in-out;
+    animation: albumPrefBreathe 1.3s infinite ease-in-out;
 }
 
 /* ------------------------------------------
