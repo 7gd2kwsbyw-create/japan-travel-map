@@ -170,14 +170,6 @@ body {
     pointer-events: all;
     transition: fill 0.3s ease;
 }
-#japan-map.map-layer-1 .hokkaido-base use {
-    fill: #dcdad2;
-    stroke: #f4f3ef;
-    stroke-width: 0.6px;
-}
-#japan-map.map-layer-1 .hokkaido-tourism polygon {
-    stroke: transparent;
-}
 
 #japan-map.map-layer-1 .album-region path,
 #japan-map.map-layer-1 .album-region polygon {
@@ -218,29 +210,6 @@ body {
     stroke-width: 0.42px;
     opacity: 0.42;
     pointer-events: all;
-}
-#japan-map.map-layer-2 .hokkaido-base use {
-    fill: #e7e5dd;
-    stroke: #f8f7f2;
-    stroke-width: 0.42px;
-}
-.hokkaido-zone-labels {
-    opacity: 0;
-    pointer-events: none;
-}
-#japan-map.map-layer-2.region-hokkaido .hokkaido-zone-labels {
-    opacity: 1;
-}
-.hokkaido-zone-labels text {
-    fill: rgba(68, 62, 53, 0.72);
-    font-family: 'Noto Serif TC', serif;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-anchor: middle;
-    paint-order: stroke;
-    stroke: rgba(244, 243, 239, 0.82);
-    stroke-width: 2.4px;
 }
 
 #japan-map.map-layer-2.region-hokkaido .region-hokkaido path, #japan-map.map-layer-2.region-hokkaido .region-hokkaido polygon,
