@@ -2070,7 +2070,7 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
     const clampY = value => Math.max(16, Math.min(value, window.innerHeight - cardHeight - 16));
 
     if (anchor) {
-        const rect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
+        const rect = getPreviewAnchorRect(anchor);
         if (rect) {
             const gap = expanded ? 28 : 18;
             const placement = expanded
@@ -2092,6 +2092,32 @@ function positionPreviewCard(card, anchor = null, expanded = false) {
         card.style.top = `${clampY(top)}px`;
         hidePreviewBridge();
     }
+}
+
+function getPreviewAnchorRect(anchor) {
+    const rect = typeof anchor?.getBoundingClientRect === 'function'
+        ? anchor.getBoundingClientRect()
+        : null;
+    if (!rect) return null;
+
+    // Hokkaido's SVG path also contains the long Kuril island chain.
+    // Anchor the card to the main island so it stays visually connected.
+    if (anchor.classList?.contains('hokkaido')) {
+        const left = rect.left;
+        const top = rect.top + rect.height * 0.1;
+        const right = rect.left + rect.width * 0.72;
+        const bottom = rect.bottom;
+        return {
+            left,
+            top,
+            right,
+            bottom,
+            width: right - left,
+            height: bottom - top
+        };
+    }
+
+    return rect;
 }
 
 function getExpandedPreviewPlacement(rect, cardWidth, cardHeight, gap) {
@@ -2240,7 +2266,7 @@ function positionPreviewBridge(anchor, card) {
         return;
     }
 
-    const anchorRect = typeof anchor.getBoundingClientRect === 'function' ? anchor.getBoundingClientRect() : null;
+    const anchorRect = getPreviewAnchorRect(anchor);
     const cardRect = card.getBoundingClientRect();
     if (!anchorRect || card.style.opacity === '0') {
         hidePreviewBridge();
