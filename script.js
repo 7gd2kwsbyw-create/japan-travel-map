@@ -2,7 +2,7 @@ const albums = [
     {
         title: "櫻飛五稜廓，粉紅五月雪",
         location: "📍 北海道 ． 五稜郭公園",
-        selector: ".hokkaido",
+        selector: ".hokkaido-donan",
         spotId: "spot-goryokaku-sakura",
         spotName: "五稜郭公園",
         photos: [
@@ -18,7 +18,7 @@ const albums = [
     {
         title: "小樽運河，沿著石造倉庫走進港町時光",
         location: "📍 北海道 ． 小樽運河",
-        selector: ".hokkaido",
+        selector: ".hokkaido-doo",
         spotId: "spot-otaru-canal",
         spotName: "小樽運河",
         photos: [
@@ -1456,6 +1456,78 @@ function getRegionBounds(regionClass) {
     return getBoundsInSvg(members);
 }
 
+function getRegionVisualCenter(regionClass) {
+    const svgMap = document.getElementById('japan-map');
+    if (!svgMap) return null;
+
+    // Hokkaido includes the long Kuril chain in the same compound path.
+    // Keep the badge over the main island instead of the full path bounds.
+    if (regionClass === 'region-hokkaido') {
+        const base = document.querySelector('.prefectures .hokkaido-base');
+        const bounds = base ? getBoundsInSvg([base]) : getRegionBounds(regionClass);
+        return bounds ? {
+            x: bounds.x + bounds.width * 0.32,
+            y: bounds.y + bounds.height * 0.52
+        } : null;
+    }
+
+    const svgScreenMatrix = svgMap.getScreenCTM();
+    if (!svgScreenMatrix) return null;
+    const screenToSvg = svgScreenMatrix.inverse();
+    const pieces = [];
+
+    document.querySelectorAll(`.prefectures g.prefecture.${regionClass}`).forEach(group => {
+        group.querySelectorAll('path, polygon').forEach(part => {
+            let box;
+            try {
+                box = part.getBBox();
+            } catch (err) {
+                return;
+            }
+            if (!box || box.width <= 0 || box.height <= 0) return;
+
+            const localToScreen = part.getScreenCTM();
+            if (!localToScreen) return;
+
+            const corners = [
+                { x: box.x, y: box.y },
+                { x: box.x + box.width, y: box.y },
+                { x: box.x, y: box.y + box.height },
+                { x: box.x + box.width, y: box.y + box.height }
+            ].map(corner => {
+                const point = svgMap.createSVGPoint();
+                point.x = corner.x;
+                point.y = corner.y;
+                return point.matrixTransform(localToScreen).matrixTransform(screenToSvg);
+            });
+
+            const minX = Math.min(...corners.map(point => point.x));
+            const maxX = Math.max(...corners.map(point => point.x));
+            const minY = Math.min(...corners.map(point => point.y));
+            const maxY = Math.max(...corners.map(point => point.y));
+            const area = (maxX - minX) * (maxY - minY);
+            if (area <= 0) return;
+
+            pieces.push({
+                area,
+                x: (minX + maxX) / 2,
+                y: (minY + maxY) / 2
+            });
+        });
+    });
+
+    if (pieces.length === 0) return null;
+    const largestArea = Math.max(...pieces.map(piece => piece.area));
+    const mainlandPieces = pieces.filter(piece => piece.area >= largestArea * 0.08);
+    const totalArea = mainlandPieces.reduce((sum, piece) => sum + piece.area, 0);
+    if (totalArea <= 0) return null;
+
+    return {
+        x: mainlandPieces.reduce((sum, piece) => sum + piece.x * piece.area, 0) / totalArea,
+        y: mainlandPieces.reduce((sum, piece) => sum + piece.y * piece.area, 0) / totalArea
+    };
+}
+
 function getPrefectureBounds(prefectureGroup) {
     return getBoundsInSvg([prefectureGroup]);
 }
@@ -1515,15 +1587,27 @@ function getCenterInsidePrefectureContainer(g) {
     }
 
     let matrix = svgMap.createSVGMatrix();
+    let hasTransformMatrix = false;
     if (g.transform && g.transform.baseVal && g.transform.baseVal.numItems > 0) {
         matrix = g.transform.baseVal.consolidate().matrix;
+        hasTransformMatrix = true;
     }
 
     const point = svgMap.createSVGPoint();
     point.x = box.x + box.width / 2;
     point.y = box.y + box.height / 2;
 
-    return point.matrixTransform(matrix);
+    const transformed = point.matrixTransform(matrix);
+    if (hasTransformMatrix) return transformed;
+
+    const translateMatch = (g.getAttribute('transform') || '')
+        .match(/translate\(\s*([-\d.]+)(?:[\s,]+([-\d.]+))?\s*\)/);
+    if (!translateMatch) return transformed;
+
+    return {
+        x: transformed.x + parseFloat(translateMatch[1] || '0'),
+        y: transformed.y + parseFloat(translateMatch[2] || '0')
+    };
 }
 
 function loadAndInitMap() {
@@ -1759,12 +1843,12 @@ function positionRegionBadges() {
         const regionContent = getContentForRegion(regionClass);
         if (regionContent.count === 0) return;
 
-        const bounds = getRegionBounds(regionClass);
-        if (!bounds) return;
+        const center = getRegionVisualCenter(regionClass);
+        if (!center) return;
 
         const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         badge.setAttribute('class', `region-album-badge ${regionClass}`);
-        badge.setAttribute('transform', `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`);
+        badge.setAttribute('transform', `translate(${center.x}, ${center.y})`);
         badge.innerHTML = `
             <circle r="19" class="region-badge-halo"></circle>
             <circle r="12" class="region-badge-dot"></circle>
