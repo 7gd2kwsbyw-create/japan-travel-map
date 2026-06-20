@@ -1456,6 +1456,47 @@ function getRegionBounds(regionClass) {
     return getBoundsInSvg(members);
 }
 
+function getRegionBadgeCenter(regionClass) {
+    const members = getRegionMembers(regionClass);
+    if (!members.length) return null;
+
+    // Hokkaido's single path includes the long Kuril island chain. Keep the
+    // badge centered on the main island instead of the complete path bounds.
+    if (regionClass === 'region-hokkaido') {
+        const bounds = getBoundsInSvg(members);
+        if (!bounds) return null;
+        return {
+            x: bounds.x + bounds.width * 0.37,
+            y: bounds.y + bounds.height * 0.55
+        };
+    }
+
+    const memberBounds = members
+        .map(member => getBoundsInSvg([member]))
+        .filter(Boolean);
+    if (!memberBounds.length) return null;
+
+    // Extremely long bounds usually mean a prefecture path also contains
+    // distant offshore islands (Tokyo is the clearest example). Ignore those
+    // outliers, then average the main prefecture centers so the badge sits in
+    // the visual middle of the region rather than the union bounding box.
+    const mainBounds = memberBounds.filter(bounds => {
+        const shortSide = Math.max(1, Math.min(bounds.width, bounds.height));
+        const longSide = Math.max(bounds.width, bounds.height);
+        return longSide / shortSide < 3;
+    });
+    const visualBounds = mainBounds.length ? mainBounds : memberBounds;
+
+    const total = visualBounds.reduce((center, bounds) => ({
+        x: center.x + bounds.x + bounds.width / 2,
+        y: center.y + bounds.y + bounds.height / 2
+    }), { x: 0, y: 0 });
+    return {
+        x: total.x / visualBounds.length,
+        y: total.y / visualBounds.length
+    };
+}
+
 function getPrefectureBounds(prefectureGroup) {
     return getBoundsInSvg([prefectureGroup]);
 }
@@ -1759,12 +1800,12 @@ function positionRegionBadges() {
         const regionContent = getContentForRegion(regionClass);
         if (regionContent.count === 0) return;
 
-        const bounds = getRegionBounds(regionClass);
-        if (!bounds) return;
+        const center = getRegionBadgeCenter(regionClass);
+        if (!center) return;
 
         const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         badge.setAttribute('class', `region-album-badge ${regionClass}`);
-        badge.setAttribute('transform', `translate(${bounds.x + bounds.width / 2}, ${bounds.y + bounds.height / 2})`);
+        badge.setAttribute('transform', `translate(${center.x}, ${center.y})`);
         badge.innerHTML = `
             <circle r="19" class="region-badge-halo"></circle>
             <circle r="12" class="region-badge-dot"></circle>
