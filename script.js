@@ -1471,6 +1471,18 @@ function getRegionBadgeCenter(regionClass) {
         };
     }
 
+    // Tokyo's SVG includes distant Pacific islands. For the national view,
+    // center Kanto on its contiguous Honshu footprint instead.
+    if (regionClass === 'region-kanto') {
+        const mainlandMembers = members.filter(member => !member.classList.contains('tokyo'));
+        const bounds = getBoundsInSvg(mainlandMembers);
+        if (!bounds) return null;
+        return {
+            x: bounds.x + bounds.width / 2,
+            y: bounds.y + bounds.height / 2
+        };
+    }
+
     const memberBounds = members
         .map(member => getBoundsInSvg([member]))
         .filter(Boolean);
