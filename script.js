@@ -1478,8 +1478,10 @@ function getRegionBadgeCenter(regionClass) {
         const bounds = getBoundsInSvg(mainlandMembers);
         if (!bounds) return null;
         return {
-            x: bounds.x + bounds.width / 2,
-            y: bounds.y + bounds.height / 2
+            // The Boso and Miura peninsulas make the geometric midpoint feel
+            // too low. Shift toward the visual mass of inland Kanto.
+            x: bounds.x + bounds.width * 0.46,
+            y: bounds.y + bounds.height * 0.4
         };
     }
 
