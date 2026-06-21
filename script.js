@@ -1194,27 +1194,29 @@ window.addEventListener('scroll', () => {
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
     } else if (progress > MAP_REVEAL_START) {
         const stage3Progress = Math.min((progress - MAP_REVEAL_START) / MAP_REVEAL_LENGTH, 1);
+        const mapOpacity = Math.min(stage3Progress * 2.5, 1);
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (locationHint) {
-            locationHint.innerHTML = '';
-            locationHint.style.opacity = 0;
+            locationHint.innerHTML = currentAlbum.location;
+            locationHint.style.opacity = Math.max(0, 1 - mapOpacity);
+            locationHint.classList.remove('light-mode');
         }
 
         if (mapContainer) {
             mapContainer.style.transition = 'none';
-            const mapOpacity = Math.min(stage3Progress * 2.5, 1);
             mapContainer.style.opacity = mapOpacity;
-            if (stage3Progress > 0.02) {
+            // Keep the still-transparent map from stealing hover events from
+            // the second scene and clearing its location hint too early.
+            if (mapOpacity > 0.72) {
                 mapContainer.style.pointerEvents = 'auto';
                 updateLocationHintText();
                 if (locationHint) {
-                    locationHint.classList.toggle('light-mode', mapOpacity > 0.72);
+                    locationHint.classList.add('light-mode');
                 }
             } else {
                 mapContainer.style.pointerEvents = 'none';
-                if (locationHint) locationHint.classList.remove('light-mode');
             }
         }
     }
