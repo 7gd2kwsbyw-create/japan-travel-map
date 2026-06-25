@@ -266,7 +266,118 @@ const albums = [
             "images/onomichi/07_maneki_neko_art_gate.jpg",
             "images/onomichi/08_vintage_canon_camera.jpg"
         ]
+    },
+
+    {
+        title: "函館山夜景，燈火沿著港灣醒來",
+        location: "📍 北海道 ． 函館山",
+        selector: ".hokkaido",
+        spotId: "spot-hakodate-san",
+        spotName: "函館山",
+        photos: [
+            "images/hakodate-san/R0002914.jpg",
+            "images/hakodate-san/R0002915.jpg"
+        ]
+    },
+    {
+        title: "春櫻大阪城，粉色倒影裡散步",
+        location: "📍 大阪府 ． 大阪城公園",
+        selector: ".osaka",
+        spotId: "spot-osaka-jyo",
+        spotName: "大阪城",
+        photos: [
+            "images/osaka-jyo/IMG_4903.jpg",
+            "images/osaka-jyo/IMG_4904.jpg",
+            "images/osaka-jyo/IMG_4914.jpg",
+            "images/osaka-jyo/IMG_4960.jpg",
+            "images/osaka-jyo/IMG_4970.jpg"
+        ]
+    },
+    {
+        title: "奈良春日，古都與鹿的午後",
+        location: "📍 奈良縣 ． 奈良公園",
+        selector: ".nara",
+        spotId: "spot-nara",
+        spotName: "奈良",
+        photos: [
+            "images/nara/IMG_4410.jpg",
+            "images/nara/IMG_4783.jpg",
+            "images/nara/IMG_4837.jpg",
+            "images/nara/IMG_4838.jpg",
+            "images/nara/IMG_4839.jpg"
+        ]
+    },
+    {
+        title: "宇治平等院，鳳凰堂前的靜光",
+        location: "📍 京都府 ． 宇治平等院",
+        selector: ".kyoto",
+        spotId: "spot-byodoin",
+        spotName: "平等院",
+        photos: [
+            "images/byodoin/IMG_4663.jpg",
+            "images/byodoin/IMG_4665.jpg",
+            "images/byodoin/IMG_4676.jpg",
+            "images/byodoin/IMG_4716.jpg"
+        ]
+    },
+    {
+        title: "金麟湖晨散，霧氣與水色之間",
+        location: "📍 大分縣 ． 由布院金麟湖",
+        selector: ".oita",
+        spotId: "spot-kinrinko",
+        spotName: "金麟湖",
+        photos: [
+            "images/kinrinko/DSC_0046.jpg",
+            "images/kinrinko/DSC_0056.jpg",
+            "images/kinrinko/DSC_0061.jpg",
+            "images/kinrinko/DSC_0077.jpg",
+            "images/kinrinko/DSC_0079.jpg",
+            "images/kinrinko/DSC_0099.jpg"
+        ]
+    },
+    {
+        title: "櫛田神社，博多街角的朱紅祈願",
+        location: "📍 福岡縣 ． 博多櫛田神社",
+        selector: ".fukuoka",
+        spotId: "spot-kushida-jinja",
+        spotName: "櫛田神社",
+        photos: [
+            "images/kushida-jinja/DSC_0218.jpg",
+            "images/kushida-jinja/DSC_0221.jpg",
+            "images/kushida-jinja/DSC_0230.jpg",
+            "images/kushida-jinja/DSC_0231.jpg"
+        ]
+    },
+    {
+        title: "熊本城，黑白天守的重生輪廓",
+        location: "📍 熊本縣 ． 熊本城",
+        selector: ".kumamoto",
+        spotId: "spot-kumamoto-jyo",
+        spotName: "熊本城",
+        photos: [
+            "images/kumamoto-jyo/DSC_0170.jpg",
+            "images/kumamoto-jyo/DSC_0172.jpg",
+            "images/kumamoto-jyo/DSC_0175.jpg"
+        ]
+    },
+    {
+        title: "九州 Safari，車窗外的野性日常",
+        location: "📍 大分縣 ． 九州自然動物公園",
+        selector: ".oita",
+        spotId: "spot-kyushu-safari",
+        spotName: "九州 Safari",
+        photos: [
+            "images/kyushu-safari/DSC_0129.jpg",
+            "images/kyushu-safari/DSC_0107.jpg",
+            "images/kyushu-safari/DSC_0114.jpg",
+            "images/kyushu-safari/DSC_0139.jpg",
+            "images/kyushu-safari/DSC_0144.jpg",
+            "images/kyushu-safari/DSC_0152.jpg",
+            "images/kyushu-safari/DSC_0157.jpg",
+            "images/kyushu-safari/DSC_0163.jpg"
+        ]
     }
+
 ];
 
 const smallLights = [
