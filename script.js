@@ -1,5 +1,5 @@
 const albums = [
-    {
+{
         title: "櫻飛五稜廓，粉紅五月雪",
         location: "📍 北海道 ． 五稜郭公園",
         selector: ".hokkaido",
@@ -15,7 +15,7 @@ const albums = [
             "images/goryokaku-sakura/07_goryokaku_spring_puddle_reflection.webp"
         ]
     },
-    {
+{
         title: "小樽運河，沿著石造倉庫走進港町時光",
         location: "📍 北海道 ． 小樽運河",
         selector: ".hokkaido",
@@ -31,7 +31,7 @@ const albums = [
             "images/otaru-canal/07_otaru_music_box_clock.webp"
         ]
     },
-    {
+{
         title: "深秋的香嵐溪，時間靜止在楓紅之中",
         location: "📍 愛知縣 ． 香嵐溪巴川畔",
         selector: ".aichi",
@@ -49,7 +49,7 @@ const albums = [
             "images/korankei/tomoegawa.JPG"
         ]
     },
-    {
+{
         title: "犬山城上望木曾川，午後光影裡的天守",
         location: "📍 愛知縣 ． 犬山城",
         selector: ".aichi",
@@ -63,7 +63,7 @@ const albums = [
             "images/inuyama-castle/05_kiso_river_city_panorama.jpg"
         ]
     },
-    {
+{
         title: "深秋楓紅的下呂街道，在加恵瑠神社祈求無事帰る",
         location: "📍 岐阜縣 ． 加恵瑠神社",
         selector: ".gifu",
@@ -82,7 +82,7 @@ const albums = [
             "images/gero-kaeru-shrine/10_autumn_river_maples.jpg"
         ]
     },
-    {
+{
         title: "郡上八幡，白城楓影與岸劍神社的秋日",
         location: "📍 岐阜縣 ． 郡上八幡城",
         selector: ".gifu",
@@ -98,7 +98,7 @@ const albums = [
             "images/gujo-hachiman-kishitsurugi/07_kishitsurugi_shrine_torii.webp"
         ]
     },
-    {
+{
         title: "白川鄉秋日，合掌屋靜立在山色之間",
         location: "📍 岐阜縣 ． 白川鄉合掌村",
         selector: ".gifu",
@@ -118,7 +118,7 @@ const albums = [
             "images/shirakawago-autumn/11_shirakawago_overlook_autumn.webp"
         ]
     },
-    {
+{
         title: "櫻花盛開的長野，從善光寺漫步城山公園",
         location: "📍 長野縣 ． 城山公園",
         selector: ".nagano",
@@ -143,7 +143,7 @@ const albums = [
             "images/nagano-zenkoji-joyama/16_joyama_cherry_park_path.webp"
         ]
     },
-    {
+{
         title: "寂靜美保關，漫步青石疊通", 
         location: "📍 島根縣 ． 美保神社",
         selector: ".shimane",
@@ -164,7 +164,7 @@ const albums = [
             "images/mihonoseki/umi_no_keisiki.JPG"
         ]
     },
-    {
+{
         title: "境港單車追日落，水木茂之道的日與夜",
         location: "📍 鳥取縣 ． 境港",
         selector: ".tottori",
@@ -187,7 +187,7 @@ const albums = [
             "images/sakaiminato-mizuki/14_sakaiminato_street_cat.jpg"
         ]
     },
-    {
+{
         title: "倉敷美觀地區，漫步在老街的悠閒",
         location: "📍 岡山縣 ． 倉敷美觀地區",
         selector: ".okayama",
@@ -207,7 +207,7 @@ const albums = [
             "images/kurashiki-bikan/11_bikan_night_street_bicycle_lamp.jpg"
         ]
     },
-    {
+{
         title: "牛窗神社，穿過雨霧森林的石階參道",
         location: "📍 岡山縣 ． 牛窗神社",
         selector: ".okayama",
@@ -228,7 +228,7 @@ const albums = [
             "images/ushimado-shrine/12_ushimado_shrine_gate.jpg"
         ]
     },
-    {
+{
         title: "大久野島，海風裡的兔影與廢墟",
         location: "📍 廣島縣 ． 大久野島",
         selector: ".hiroshima",
@@ -250,7 +250,7 @@ const albums = [
             "images/okunoshima/13_blue_seto_sea_horizon.jpg"
         ]
     },
-    {
+{
         title: "尾道坡道尋貓，走進港町的舊時光",
         location: "📍 廣島縣 ． 尾道",
         selector: ".hiroshima",
@@ -267,19 +267,7 @@ const albums = [
             "images/onomichi/08_vintage_canon_camera.jpg"
         ]
     },
-
-    {
-        title: "函館山夜景，燈火沿著港灣醒來",
-        location: "📍 北海道 ． 函館山",
-        selector: ".hokkaido",
-        spotId: "spot-hakodate-san",
-        spotName: "函館山",
-        photos: [
-            "images/hakodate-san/R0002914.jpg",
-            "images/hakodate-san/R0002915.jpg"
-        ]
-    },
-    {
+{
         title: "春櫻大阪城，粉色倒影裡散步",
         location: "📍 大阪府 ． 大阪城公園",
         selector: ".osaka",
@@ -293,7 +281,7 @@ const albums = [
             "images/osaka-jyo/IMG_4970.jpg"
         ]
     },
-    {
+{
         title: "奈良春日，古都與鹿的午後",
         location: "📍 奈良縣 ． 奈良公園",
         selector: ".nara",
@@ -307,20 +295,7 @@ const albums = [
             "images/nara/IMG_4839.jpg"
         ]
     },
-    {
-        title: "宇治平等院，鳳凰堂前的靜光",
-        location: "📍 京都府 ． 宇治平等院",
-        selector: ".kyoto",
-        spotId: "spot-byodoin",
-        spotName: "平等院",
-        photos: [
-            "images/byodoin/IMG_4663.jpg",
-            "images/byodoin/IMG_4665.jpg",
-            "images/byodoin/IMG_4676.jpg",
-            "images/byodoin/IMG_4716.jpg"
-        ]
-    },
-    {
+{
         title: "金麟湖晨散，霧氣與水色之間",
         location: "📍 大分縣 ． 由布院金麟湖",
         selector: ".oita",
@@ -335,32 +310,7 @@ const albums = [
             "images/kinrinko/DSC_0099.jpg"
         ]
     },
-    {
-        title: "櫛田神社，博多街角的朱紅祈願",
-        location: "📍 福岡縣 ． 博多櫛田神社",
-        selector: ".fukuoka",
-        spotId: "spot-kushida-jinja",
-        spotName: "櫛田神社",
-        photos: [
-            "images/kushida-jinja/DSC_0218.jpg",
-            "images/kushida-jinja/DSC_0221.jpg",
-            "images/kushida-jinja/DSC_0230.jpg",
-            "images/kushida-jinja/DSC_0231.jpg"
-        ]
-    },
-    {
-        title: "熊本城，黑白天守的重生輪廓",
-        location: "📍 熊本縣 ． 熊本城",
-        selector: ".kumamoto",
-        spotId: "spot-kumamoto-jyo",
-        spotName: "熊本城",
-        photos: [
-            "images/kumamoto-jyo/DSC_0170.jpg",
-            "images/kumamoto-jyo/DSC_0172.jpg",
-            "images/kumamoto-jyo/DSC_0175.jpg"
-        ]
-    },
-    {
+{
         title: "九州 Safari，車窗外的野性日常",
         location: "📍 大分縣 ． 九州自然動物公園",
         selector: ".oita",
@@ -377,11 +327,59 @@ const albums = [
             "images/kyushu-safari/DSC_0163.jpg"
         ]
     }
-
 ];
 
 const smallLights = [
-    {
+{
+        title: "函館山夜景，燈火沿著港灣醒來",
+        location: "📍 北海道 ． 函館山",
+        selector: ".hokkaido",
+        spotId: "spot-hakodate-san",
+        spotName: "函館山",
+        photos: [
+            "images/hakodate-san/R0002914.jpg",
+            "images/hakodate-san/R0002915.jpg"
+        ]
+    },
+{
+        title: "宇治平等院，鳳凰堂前的靜光",
+        location: "📍 京都府 ． 宇治平等院",
+        selector: ".kyoto",
+        spotId: "spot-byodoin",
+        spotName: "平等院",
+        photos: [
+            "images/byodoin/IMG_4663.jpg",
+            "images/byodoin/IMG_4665.jpg",
+            "images/byodoin/IMG_4676.jpg",
+            "images/byodoin/IMG_4716.jpg"
+        ]
+    },
+{
+        title: "櫛田神社，博多街角的朱紅祈願",
+        location: "📍 福岡縣 ． 博多櫛田神社",
+        selector: ".fukuoka",
+        spotId: "spot-kushida-jinja",
+        spotName: "櫛田神社",
+        photos: [
+            "images/kushida-jinja/DSC_0218.jpg",
+            "images/kushida-jinja/DSC_0221.jpg",
+            "images/kushida-jinja/DSC_0230.jpg",
+            "images/kushida-jinja/DSC_0231.jpg"
+        ]
+    },
+{
+        title: "熊本城，黑白天守的重生輪廓",
+        location: "📍 熊本縣 ． 熊本城",
+        selector: ".kumamoto",
+        spotId: "spot-kumamoto-jyo",
+        spotName: "熊本城",
+        photos: [
+            "images/kumamoto-jyo/DSC_0170.jpg",
+            "images/kumamoto-jyo/DSC_0172.jpg",
+            "images/kumamoto-jyo/DSC_0175.jpg"
+        ]
+    },
+{
         title: "在熱田神宮巧遇銀杏，上知我麻神社的散策時光",
         location: "📍 愛知縣 ． 熱田神宮",
         selector: ".aichi",
@@ -393,7 +391,7 @@ const smallLights = [
             "images/atsuta-jingu/03_kamichikama_shrine_prayer.webp"
         ]
     },
-    {
+{
         title: "惠那峽，秋水映著遠山與遊船",
         location: "📍 岐阜縣 ． 惠那峽",
         selector: ".gifu",
@@ -405,7 +403,7 @@ const smallLights = [
             "images/enakyo/03_enakyo_park_monument.webp"
         ]
     },
-    {
+{
         title: "淺草寺的人潮與朱紅門影",
         location: "📍 東京都 ． 淺草寺",
         selector: ".tokyo",
@@ -418,7 +416,7 @@ const smallLights = [
             "images/asakusa-sensoji/04_kaminarimon_lantern_closeup.webp"
         ]
     },
-    {
+{
         title: "宍道湖的嫁島夕照",
         location: "📍 島根縣 ． 宍道湖嫁島",
         selector: ".shimane",
@@ -430,7 +428,7 @@ const smallLights = [
             "images/shinji-yomegashima/03_lake_shinji_sunset_reflection.jpg"
         ]
     },
-    {
+{
         title: "耕三寺的朱紅與洞窟微光",
         location: "📍 廣島縣 ． 生口島耕三寺",
         selector: ".hiroshima",
@@ -442,7 +440,7 @@ const smallLights = [
             "images/kosanji/03_kosanji_gate.jpg"
         ]
     },
-    {
+{
         title: "吉備津神社，無盡的長廊",
         location: "📍 岡山縣 ． 吉備津神社",
         selector: ".okayama",
