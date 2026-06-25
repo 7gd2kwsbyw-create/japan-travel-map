@@ -9,7 +9,7 @@ html.fonts-fallback #main-title {
 }
 
 body {
-    margin: 0; padding: 0; height: 300vh; background-color: #f4f3ef;
+    margin: 0; padding: 0; height: 400vh; background-color: #f4f3ef;
     font-family: 'Noto Sans TC', 'Noto Serif TC', sans-serif; overflow-x: hidden; overscroll-behavior-y: none;
 }
 

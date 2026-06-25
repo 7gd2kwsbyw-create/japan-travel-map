@@ -1309,7 +1309,9 @@ window.addEventListener('scroll', () => {
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
         if (locationHint) {
             locationHint.innerHTML = currentAlbum.location;
-            locationHint.style.opacity = Math.max(0, 1 - mapOpacity);
+            // Keep the second-scene place label stable until the map is
+            // actually ready to take over with its own hover instructions.
+            locationHint.style.opacity = mapOpacity > 0.72 ? 0 : 1;
             locationHint.classList.remove('light-mode');
         }
 
