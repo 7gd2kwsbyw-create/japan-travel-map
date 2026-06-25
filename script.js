@@ -478,7 +478,7 @@ const regionFitOptions = {
 };
 
 const MAP_ANIMATION_FAST = 520;
-const MAP_REVEAL_START = 1;
+const MAP_REVEAL_START = 2;
 const MAP_REVEAL_LENGTH = 1;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
 const HOME_SCENE_SCROLL_LOCK_MS = 520;
@@ -1593,6 +1593,27 @@ function getRegionBadgeCenter(regionClass) {
             // too low. Shift toward the visual mass of inland Kanto.
             x: bounds.x + bounds.width * 0.46,
             y: bounds.y + bounds.height * 0.4
+        };
+    }
+
+    // Kyushu and Kinki have island/peninsula shapes that pull the arithmetic
+    // center toward the coast. Put the badge on the visual mass of the main
+    // landform so it reads as a regional marker instead of a prefecture pin.
+    if (regionClass === 'region-kyushu') {
+        const bounds = getBoundsInSvg(members);
+        if (!bounds) return null;
+        return {
+            x: bounds.x + bounds.width * 0.58,
+            y: bounds.y + bounds.height * 0.48
+        };
+    }
+
+    if (regionClass === 'region-kinki') {
+        const bounds = getBoundsInSvg(members);
+        if (!bounds) return null;
+        return {
+            x: bounds.x + bounds.width * 0.56,
+            y: bounds.y + bounds.height * 0.5
         };
     }
 
