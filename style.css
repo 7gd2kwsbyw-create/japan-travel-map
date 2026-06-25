@@ -148,24 +148,24 @@ body {
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
 @keyframes regionSolidBreathe {
-    0% { fill: #dcdad2; }
-    50% { fill: #b8b6ae; } 
-    100% { fill: #dcdad2; }
+    0% { fill: #dedbd2; animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.42); }
+    38% { fill: #b6b3aa; animation-timing-function: cubic-bezier(0.18, 0.72, 0.28, 1); }
+    100% { fill: #dedbd2; }
 }
 @keyframes prefSolidBreathe {
-    0% { fill: #c4c2ba; }
-    50% { fill: #9e9c94; } 
-    100% { fill: #c4c2ba; }
+    0% { fill: #c9c7bf; animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.42); }
+    38% { fill: #9b9991; animation-timing-function: cubic-bezier(0.18, 0.72, 0.28, 1); }
+    100% { fill: #c9c7bf; }
 }
 @keyframes albumPrefBreathe {
-    0% { fill: #bdb5a6; }
-    50% { fill: #a69d8f; }
-    100% { fill: #bdb5a6; }
+    0% { fill: #c0b7a7; animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.42); }
+    38% { fill: #a49a8b; animation-timing-function: cubic-bezier(0.18, 0.72, 0.28, 1); }
+    100% { fill: #c0b7a7; }
 }
 @keyframes pinBreathe {
-    0% { opacity: 0.92; }
-    50% { opacity: 1; }
-    100% { opacity: 0.92; }
+    0% { opacity: 0.84; animation-timing-function: cubic-bezier(0.55, 0, 0.95, 0.42); }
+    36% { opacity: 1; animation-timing-function: cubic-bezier(0.18, 0.72, 0.28, 1); }
+    100% { opacity: 0.84; }
 }
 
 /* ------------------------------------------
@@ -187,7 +187,7 @@ body {
 
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 1.35s infinite ease-in-out;
+    animation: regionSolidBreathe 1.55s infinite;
 }
 
 #region-badges-layer {
@@ -249,15 +249,15 @@ body {
 
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 1.35s infinite ease-in-out;
+    animation: prefSolidBreathe 1.55s infinite;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 1.3s infinite ease-in-out;
+    animation: albumPrefBreathe 1.5s infinite;
 }
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse path,
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 1.3s infinite ease-in-out;
+    animation: albumPrefBreathe 1.5s infinite;
 }
 
 /* ------------------------------------------
@@ -309,7 +309,7 @@ body {
 #japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
     opacity: 1;
     pointer-events: auto;
-    animation: pinBreathe 1.8s infinite ease-in-out;
+    animation: pinBreathe 1.75s infinite;
 }
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }

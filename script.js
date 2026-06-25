@@ -478,11 +478,11 @@ const regionFitOptions = {
 };
 
 const MAP_ANIMATION_FAST = 520;
-const MAP_REVEAL_START = 2;
-const MAP_REVEAL_LENGTH = 1;
+const MAP_REVEAL_START = 1.82;
+const MAP_REVEAL_LENGTH = 0.78;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
 const HOME_SCENE_SCROLL_LOCK_MS = 520;
-const HOME_MAP_TRANSITION_MS = 1180;
+const HOME_MAP_TRANSITION_MS = 760;
 const HOME_WHEEL_QUIET_MS = 110;
 const HOME_WHEEL_IMPULSE_MIN = 14;
 const HOME_WHEEL_IMPULSE_RATIO = 1.55;
@@ -1643,8 +1643,8 @@ function getRegionBadgeCenter(regionClass) {
         return {
             // The Boso and Miura peninsulas make the geometric midpoint feel
             // too low. Shift toward the visual mass of inland Kanto.
-            x: bounds.x + bounds.width * 0.46,
-            y: bounds.y + bounds.height * 0.4
+            x: bounds.x + bounds.width * 0.58,
+            y: bounds.y + bounds.height * 0.36
         };
     }
 
@@ -1655,8 +1655,8 @@ function getRegionBadgeCenter(regionClass) {
         const bounds = getBoundsInSvg(members);
         if (!bounds) return null;
         return {
-            x: bounds.x + bounds.width * 0.58,
-            y: bounds.y + bounds.height * 0.48
+            x: bounds.x + bounds.width * 0.68,
+            y: bounds.y + bounds.height * 0.5
         };
     }
 
@@ -1664,8 +1664,8 @@ function getRegionBadgeCenter(regionClass) {
         const bounds = getBoundsInSvg(members);
         if (!bounds) return null;
         return {
-            x: bounds.x + bounds.width * 0.56,
-            y: bounds.y + bounds.height * 0.5
+            x: bounds.x + bounds.width * 0.68,
+            y: bounds.y + bounds.height * 0.47
         };
     }
 
