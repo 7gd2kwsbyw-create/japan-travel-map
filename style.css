@@ -28,8 +28,12 @@ body {
 /* 第一幕 & 第二幕 */
 #bg-photo {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-size: cover; background-position: center; z-index: 2; will-change: opacity;
+    background-size: cover; background-position: center; z-index: 2; will-change: opacity, filter;
     transition: none; opacity: 1;
+}
+#bg-photo.photo-loading {
+    filter: brightness(0.82);
+    transition: filter 0.18s ease;
 }
 #bg-photo.gallery-layout {
     background-color: #080808;

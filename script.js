@@ -482,7 +482,7 @@ const MAP_REVEAL_START = 2;
 const MAP_REVEAL_LENGTH = 1;
 const HOME_SCENE_PROGRESS = [0, 1, MAP_REVEAL_START + MAP_REVEAL_LENGTH];
 const HOME_SCENE_SCROLL_LOCK_MS = 520;
-const HOME_MAP_TRANSITION_MS = 980;
+const HOME_MAP_TRANSITION_MS = 1180;
 const HOME_WHEEL_QUIET_MS = 110;
 const HOME_WHEEL_IMPULSE_MIN = 14;
 const HOME_WHEEL_IMPULSE_RATIO = 1.55;
@@ -675,6 +675,22 @@ function preloadPhotos(urls, priority = 'auto') {
     urls.forEach(url => preloadImage(url, priority));
 }
 
+function getWrappedAlbumIndex(index) {
+    return (index + albums.length) % albums.length;
+}
+
+function getHomeCoverPreloadOrder(centerIndex = homeAlbumIndex) {
+    const offsets = [0, 1, -1, 2, -2, 3, -3];
+    const ordered = offsets
+        .map(offset => getWrappedAlbumIndex(centerIndex + offset))
+        .filter((index, position, indexes) => indexes.indexOf(index) === position);
+    const rest = albums
+        .map((_, index) => index)
+        .filter(index => !ordered.includes(index));
+
+    return [...ordered, ...rest];
+}
+
 function preloadAlbumPhotos(albumIndex, startIndex = 0) {
     const album = albums[albumIndex];
     if (!album) return;
@@ -708,8 +724,20 @@ function preloadAlbumPhotos(albumIndex, startIndex = 0) {
     }
 }
 
-function preloadAlbumCovers() {
-    preloadPhotos(albums.map(album => album.photos[0]));
+function preloadAlbumCovers(centerIndex = homeAlbumIndex) {
+    const coverUrls = getHomeCoverPreloadOrder(centerIndex)
+        .map(index => albums[index]?.photos[0])
+        .filter(Boolean);
+    const eagerCount = Math.min(7, coverUrls.length);
+
+    preloadPhotos(coverUrls.slice(0, eagerCount), 'high');
+
+    const warmRest = () => preloadPhotos(coverUrls.slice(eagerCount), 'low');
+    if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(warmRest, { timeout: 900 });
+    } else {
+        setTimeout(warmRest, 240);
+    }
 }
 
 function preloadSmallLightCovers() {
@@ -800,7 +828,7 @@ function changePhotoWithFade(newUrl, isInitial = false) {
         return;
     }
 
-    if (isGalleryMode) bgPhotoEl.classList.add('photo-loading');
+    bgPhotoEl.classList.add('photo-loading');
 
     preloadImage(newUrl, 'high').then(img => {
         if (requestId !== photoTransitionId) return;
@@ -813,6 +841,7 @@ function updateAlbumCover(isInitial = false) {
     const album = albums[homeAlbumIndex];
     if (!isGalleryMode) setMainTitle(album.title);
     changePhotoWithFade(album.photos[0], isInitial);
+    preloadAlbumCovers(homeAlbumIndex);
     preloadAlbumPhotos(homeAlbumIndex, 0);
     currentPhotoIndex = 0;
     if (!isGalleryMode) restoreHomeHint();
@@ -907,7 +936,9 @@ if (btnPrev) {
     btnPrev.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!isGalleryMode) {
-            homeAlbumIndex = (homeAlbumIndex - 1 + albums.length) % albums.length;
+            const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex - 1);
+            preloadImage(albums[nextHomeAlbumIndex]?.photos[0], 'high');
+            homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
             const album = albums[browsingAlbumIndex];
@@ -921,7 +952,9 @@ if (btnNext) {
     btnNext.addEventListener('click', (e) => {
         e.stopPropagation();
         if (!isGalleryMode) {
-            homeAlbumIndex = (homeAlbumIndex + 1) % albums.length;
+            const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex + 1);
+            preloadImage(albums[nextHomeAlbumIndex]?.photos[0], 'high');
+            homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
             const album = albums[browsingAlbumIndex];
@@ -1302,16 +1335,18 @@ window.addEventListener('scroll', () => {
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
         if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; mapContainer.classList.remove('map-stage-active'); }
     } else if (progress > MAP_REVEAL_START) {
-        const stage3Progress = Math.min((progress - MAP_REVEAL_START) / MAP_REVEAL_LENGTH, 1);
-        const mapOpacity = Math.min(stage3Progress * 2.5, 1);
+        const stage3Progress = clamp01((progress - MAP_REVEAL_START) / MAP_REVEAL_LENGTH);
+        const revealProgress = smoothstep(stage3Progress);
+        const hintFadeProgress = smoothstep((stage3Progress - 0.58) / 0.28);
+        const mapOpacity = revealProgress;
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
         if (darkOverlay) darkOverlay.style.opacity = 0;
-        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = Math.max(0, 1 - stage3Progress * 2.5); }
+        if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1 - revealProgress; }
         if (locationHint) {
             locationHint.innerHTML = currentAlbum.location;
             // Keep the second-scene place label stable until the map is
             // actually ready to take over with its own hover instructions.
-            locationHint.style.opacity = mapOpacity > 0.72 ? 0 : 1;
+            locationHint.style.opacity = mapOpacity > 0.82 ? 0 : Math.max(0, 1 - hintFadeProgress);
             locationHint.classList.remove('light-mode');
         }
 
@@ -1320,7 +1355,7 @@ window.addEventListener('scroll', () => {
             mapContainer.style.opacity = mapOpacity;
             // Keep the still-transparent map from stealing hover events from
             // the second scene and clearing its location hint too early.
-            if (mapOpacity > 0.72) {
+            if (mapOpacity > 0.82) {
                 mapContainer.style.pointerEvents = 'auto';
                 mapContainer.classList.add('map-stage-active');
                 updateLocationHintText();
@@ -1476,6 +1511,15 @@ function setViewBox(box) {
 
 function easeOutCubic(t) {
     return 1 - Math.pow(1 - t, 3);
+}
+
+function clamp01(value) {
+    return Math.max(0, Math.min(value, 1));
+}
+
+function smoothstep(value) {
+    const t = clamp01(value);
+    return t * t * (3 - 2 * t);
 }
 
 function animateViewBox(targetBox, duration = 850) {
@@ -2625,7 +2669,6 @@ document.addEventListener('DOMContentLoaded', () => {
     homeAlbumIndex = Math.floor(Math.random() * albums.length);
     prepareDisplayFonts();
     updateAlbumCover(true);
-    preloadAlbumCovers();
     preloadSmallLightCovers();
     warmSmallLightPhotos();
     loadAndInitMap();
