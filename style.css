@@ -134,6 +134,11 @@ body {
     opacity: 0; pointer-events: none; transition: none; 
 }
 
+#map-container:not(.map-stage-active),
+#map-container:not(.map-stage-active) * {
+    pointer-events: none !important;
+}
+
 #map-svg-wrapper { width: 85vw; height: 85vh; display: flex; align-items: center; justify-content: center; }
 #japan-map { width: 100%; height: 100%; display: block; }
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }

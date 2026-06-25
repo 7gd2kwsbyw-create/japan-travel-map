@@ -1289,7 +1289,7 @@ window.addEventListener('scroll', () => {
             locationHint.classList.remove('light-mode');
         }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
-        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; mapContainer.classList.remove('map-stage-active'); }
     } else if (progress > 1 && progress <= MAP_REVEAL_START) {
         hideMapHoverLabel();
         if (mainTitleContainer) { mainTitleContainer.style.opacity = 0; mainTitleContainer.style.pointerEvents = 'none'; }
@@ -1300,7 +1300,7 @@ window.addEventListener('scroll', () => {
             locationHint.classList.remove('light-mode');
         }
         if (bgPhoto) { bgPhoto.style.transition = 'none'; bgPhoto.style.opacity = 1; }
-        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; }
+        if (mapContainer) { mapContainer.style.opacity = 0; mapContainer.style.pointerEvents = 'none'; mapContainer.classList.remove('map-stage-active'); }
     } else if (progress > MAP_REVEAL_START) {
         const stage3Progress = Math.min((progress - MAP_REVEAL_START) / MAP_REVEAL_LENGTH, 1);
         const mapOpacity = Math.min(stage3Progress * 2.5, 1);
@@ -1322,12 +1322,14 @@ window.addEventListener('scroll', () => {
             // the second scene and clearing its location hint too early.
             if (mapOpacity > 0.72) {
                 mapContainer.style.pointerEvents = 'auto';
+                mapContainer.classList.add('map-stage-active');
                 updateLocationHintText();
                 if (locationHint) {
                     locationHint.classList.add('light-mode');
                 }
             } else {
                 mapContainer.style.pointerEvents = 'none';
+                mapContainer.classList.remove('map-stage-active');
             }
         }
     }
@@ -1343,6 +1345,10 @@ function updateLocationHintText() {
 
     hint.innerHTML = '';
     hint.style.opacity = 0;
+}
+
+function isMapStageInteractive() {
+    return document.getElementById('map-container')?.classList.contains('map-stage-active') === true;
 }
 
 function getPrefectureTitle(g) {
@@ -1994,6 +2000,7 @@ function setupStageEvents() {
 
     document.querySelectorAll('.prefectures g.prefecture').forEach(g => {
         g.addEventListener('mouseenter', (e) => {
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             if (expandedSmallLightIndex !== null) return;
             if (shouldHoldPreviewFor(g)) return;
@@ -2024,6 +2031,7 @@ function setupStageEvents() {
         });
 
         g.addEventListener('mouseleave', () => {
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             const localRegion = getRegionClass(g);
 
@@ -2041,6 +2049,7 @@ function setupStageEvents() {
         });
 
         g.addEventListener('mousemove', () => {
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             if (expandedSmallLightIndex !== null) return;
             if (shouldHoldPreviewFor(g)) return;
@@ -2058,6 +2067,7 @@ function setupStageEvents() {
 
         g.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             if (g.style.display === 'none') return;
 
@@ -2151,20 +2161,24 @@ function setupStageEvents() {
         const pinSmallLights = smallLightIndexes.map(index => ({ ...smallLights[index], smallLightIndex: index })).filter(Boolean);
 
         pin.addEventListener('mouseenter', () => {
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             if (expandedSmallLightIndex !== null) return;
             if (currentLayer !== 2 && currentLayer !== 3) return;
             showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin);
         });
         pin.addEventListener('mousemove', () => {
+            if (!isMapStageInteractive()) return;
             if (!isGalleryMode && expandedSmallLightIndex === null) cancelPreviewHide();
         });
 
         pin.addEventListener('mouseleave', () => {
+            if (!isMapStageInteractive()) return;
             if (!isGalleryMode && expandedSmallLightIndex === null) schedulePreviewHide();
         });
         pin.addEventListener('click', (e) => {
             e.stopPropagation();
+            if (!isMapStageInteractive()) return;
             if (isGalleryMode) return;
             showContentPreview(pinAlbums, pinSmallLights, getPrefectureTitleForPin(pin), pin, { lock: true });
         });
