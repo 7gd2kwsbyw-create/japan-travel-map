@@ -487,6 +487,7 @@ const regionBadgeVisualCenters = {
 };
 
 const BADGE_EDITOR_PARAM = 'badgeEditor';
+const CONTENT_EDITOR_PARAM = 'contentEditor';
 
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 1.82;
@@ -686,6 +687,10 @@ function preloadPhotos(urls, priority = 'auto') {
     urls.forEach(url => preloadImage(url, priority));
 }
 
+function getCoverPhoto(item) {
+    return item?.coverPhoto || item?.photos?.[0] || '';
+}
+
 function getWrappedAlbumIndex(index) {
     return (index + albums.length) % albums.length;
 }
@@ -737,7 +742,7 @@ function preloadAlbumPhotos(albumIndex, startIndex = 0) {
 
 function preloadAlbumCovers(centerIndex = homeAlbumIndex) {
     const coverUrls = getHomeCoverPreloadOrder(centerIndex)
-        .map(index => albums[index]?.photos[0])
+        .map(index => getCoverPhoto(albums[index]))
         .filter(Boolean);
     const eagerCount = Math.min(7, coverUrls.length);
 
@@ -752,7 +757,7 @@ function preloadAlbumCovers(centerIndex = homeAlbumIndex) {
 }
 
 function preloadSmallLightCovers() {
-    preloadPhotos(smallLights.map(light => light.photos[0]));
+    preloadPhotos(smallLights.map(light => getCoverPhoto(light)));
 }
 
 function preloadSmallLightPhotos(smallLightIndex) {
@@ -851,7 +856,7 @@ function updateAlbumCover(isInitial = false) {
     currentAlbumIndex = homeAlbumIndex;
     const album = albums[homeAlbumIndex];
     if (!isGalleryMode) setMainTitle(album.title);
-    changePhotoWithFade(album.photos[0], isInitial);
+    changePhotoWithFade(getCoverPhoto(album), isInitial);
     preloadAlbumCovers(homeAlbumIndex);
     preloadAlbumPhotos(homeAlbumIndex, 0);
     currentPhotoIndex = 0;
@@ -948,7 +953,7 @@ if (btnPrev) {
         e.stopPropagation();
         if (!isGalleryMode) {
             const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex - 1);
-            preloadImage(albums[nextHomeAlbumIndex]?.photos[0], 'high');
+            preloadImage(getCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
             homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
@@ -964,7 +969,7 @@ if (btnNext) {
         e.stopPropagation();
         if (!isGalleryMode) {
             const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex + 1);
-            preloadImage(albums[nextHomeAlbumIndex]?.photos[0], 'high');
+            preloadImage(getCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
             homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
@@ -979,7 +984,7 @@ async function openGalleryDirectly(albumIndex, returnContext = 'home') {
     const album = albums[albumIndex];
     if (!album) return;
     const entryRequestId = ++galleryEntryRequestId;
-    const coverUrl = album.photos[0];
+    const coverUrl = getCoverPhoto(album);
     const darkOverlay = document.getElementById('dark-overlay');
 
     if (darkOverlay) {
@@ -2349,8 +2354,8 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
     previewInteractionLocked = previewInteractionLocked || Boolean(options.lock);
     const key = `content:${heading || ''}:a${safeAlbums.map(album => album.albumIndex).join(',')}:s${safeSmallLights.map(light => light.smallLightIndex).join(',')}`;
     const previewItems = [
-        ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: album.photos[0] })),
-        ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: light.photos[0] }))
+        ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: getCoverPhoto(album) })),
+        ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: getCoverPhoto(light) }))
     ];
 
     preloadSmallLights(safeSmallLights);
@@ -2364,7 +2369,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         `).join('');
         const albumItems = safeAlbums.map(album => `
             <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
-                <img src="${album.photos[0]}" alt="">
+                <img src="${getCoverPhoto(album)}" alt="">
                 <span>
                     <strong>${escapeHtml(album.spotName)}</strong>
                     <small>${escapeHtml(album.title)}</small>
@@ -2373,7 +2378,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         `).join('');
         const smallLightItems = safeSmallLights.map(light => `
             <button class="preview-album-btn preview-small-light-btn" type="button" data-small-light-index="${light.smallLightIndex}">
-                <img src="${light.photos[0]}" alt="" loading="eager" decoding="async">
+                <img src="${getCoverPhoto(light)}" alt="" loading="eager" decoding="async">
                 <span>
                     <strong>${escapeHtml(light.spotName)}</strong>
                     <small>${escapeHtml(light.title)}</small>
@@ -2770,6 +2775,153 @@ function hidePreview(force = false) {
     }
 }
 
+function isContentEditorEnabled() {
+    return new URLSearchParams(window.location.search).has(CONTENT_EDITOR_PARAM);
+}
+
+function getContentEditorPayload() {
+    return {
+        albums: albums.map((album, index) => ({
+            index,
+            title: album.title,
+            location: album.location,
+            spotName: album.spotName,
+            coverPhoto: getCoverPhoto(album)
+        })),
+        smallLights: smallLights.map((light, index) => ({
+            index,
+            title: light.title,
+            location: light.location,
+            spotName: light.spotName,
+            coverPhoto: getCoverPhoto(light)
+        }))
+    };
+}
+
+function formatContentEditorOutput() {
+    return JSON.stringify(getContentEditorPayload(), null, 2);
+}
+
+function refreshContentEditorOutput(panel) {
+    const output = panel.querySelector('.content-editor-output');
+    if (output) output.textContent = formatContentEditorOutput();
+}
+
+function syncContentEditorPreview(type, index) {
+    if (type !== 'albums') return;
+    if (index !== homeAlbumIndex || isGalleryMode) return;
+
+    setMainTitle(albums[index].title);
+    restoreHomeHint();
+    changePhotoWithFade(getCoverPhoto(albums[index]), false);
+}
+
+function renderContentEditorItem(type, item, index) {
+    const label = type === 'albums' ? `Album ${index + 1}` : `Small Light ${index + 1}`;
+    const coverPhoto = getCoverPhoto(item);
+    const photos = item.photos || [];
+    const photoButtons = photos.map((photo, photoIndex) => `
+        <button class="content-cover-option${photo === coverPhoto ? ' selected' : ''}" type="button" data-type="${type}" data-index="${index}" data-photo="${escapeHtml(photo)}">
+            <img src="${photo}" alt="${escapeHtml(`${label} cover ${photoIndex + 1}`)}" loading="lazy" decoding="async">
+            <span>${photoIndex + 1}</span>
+        </button>
+    `).join('');
+
+    return `
+        <details class="content-editor-item">
+            <summary>
+                <span>${label}</span>
+                <strong>${escapeHtml(item.spotName || item.title)}</strong>
+                <small>${photos.length} photos</small>
+            </summary>
+            <label>
+                <span>相簿名稱 title</span>
+                <textarea data-type="${type}" data-index="${index}" data-field="title" rows="2">${escapeHtml(item.title)}</textarea>
+            </label>
+            <label>
+                <span>地點列 location</span>
+                <input data-type="${type}" data-index="${index}" data-field="location" value="${escapeHtml(item.location)}">
+            </label>
+            <label>
+                <span>景點名 spotName</span>
+                <input data-type="${type}" data-index="${index}" data-field="spotName" value="${escapeHtml(item.spotName)}">
+            </label>
+            <div class="content-cover-grid" aria-label="${escapeHtml(label)} cover options">
+                ${photoButtons}
+            </div>
+        </details>
+    `;
+}
+
+function setupContentEditor() {
+    if (!isContentEditorEnabled()) return;
+
+    document.body.classList.add('content-editor-open');
+
+    const panel = document.createElement('aside');
+    panel.id = 'content-editor-panel';
+    panel.innerHTML = `
+        <div class="content-editor-header">
+            <div>
+                <div class="content-editor-title">Album content editor</div>
+                <div class="content-editor-note">Edit text, pick cover photos, then copy the result.</div>
+            </div>
+            <button class="content-editor-copy" type="button">Copy</button>
+        </div>
+        <div class="content-editor-section-title">Albums</div>
+        <div class="content-editor-list">${albums.map((album, index) => renderContentEditorItem('albums', album, index)).join('')}</div>
+        <div class="content-editor-section-title">Small Lights</div>
+        <div class="content-editor-list">${smallLights.map((light, index) => renderContentEditorItem('smallLights', light, index)).join('')}</div>
+        <pre class="content-editor-output"></pre>
+    `;
+    document.body.appendChild(panel);
+    refreshContentEditorOutput(panel);
+
+    panel.addEventListener('input', (event) => {
+        const target = event.target;
+        if (!target.matches('[data-field]')) return;
+
+        const list = target.dataset.type === 'albums' ? albums : smallLights;
+        const itemIndex = Number(target.dataset.index);
+        const field = target.dataset.field;
+        if (!list[itemIndex] || !field) return;
+
+        list[itemIndex][field] = target.value;
+        syncContentEditorPreview(target.dataset.type, itemIndex);
+        refreshContentEditorOutput(panel);
+    });
+
+    panel.addEventListener('click', (event) => {
+        const button = event.target.closest('.content-cover-option');
+        if (!button) return;
+
+        const type = button.dataset.type;
+        const list = type === 'albums' ? albums : smallLights;
+        const itemIndex = Number(button.dataset.index);
+        const photo = button.dataset.photo;
+        if (!list[itemIndex] || !photo) return;
+
+        list[itemIndex].coverPhoto = photo;
+        button.closest('.content-cover-grid')?.querySelectorAll('.content-cover-option').forEach(option => {
+            option.classList.toggle('selected', option === button);
+        });
+        preloadImage(photo, 'high');
+        syncContentEditorPreview(type, itemIndex);
+        refreshContentEditorOutput(panel);
+    });
+
+    panel.querySelector('.content-editor-copy')?.addEventListener('click', async () => {
+        const text = formatContentEditorOutput();
+        try {
+            await navigator.clipboard.writeText(text);
+            panel.classList.add('copied');
+            setTimeout(() => panel.classList.remove('copied'), 900);
+        } catch (err) {
+            console.warn('Content editor copy failed:', err);
+        }
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     homeAlbumIndex = Math.floor(Math.random() * albums.length);
     prepareDisplayFonts();
@@ -2777,6 +2929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     preloadSmallLightCovers();
     warmSmallLightPhotos();
     loadAndInitMap();
+    setupContentEditor();
 
     document.getElementById('small-light-close')?.addEventListener('click', closeSmallLightOverlay);
     document.getElementById('small-light-overlay')?.addEventListener('click', (e) => {

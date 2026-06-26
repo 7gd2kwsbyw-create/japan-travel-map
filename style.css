@@ -279,6 +279,170 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
     background: #3f6f52;
 }
 
+#content-editor-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 130;
+    width: min(560px, 100vw);
+    height: 100vh;
+    overflow: auto;
+    padding: 16px;
+    background: rgba(246, 245, 240, 0.96);
+    color: #352f27;
+    font-family: 'Noto Sans TC', sans-serif;
+    box-shadow: -18px 0 42px rgba(48, 42, 35, 0.16);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.content-editor-header {
+    position: sticky;
+    top: -16px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: -16px -16px 14px;
+    padding: 16px;
+    border-bottom: 1px solid rgba(82, 76, 66, 0.14);
+    background: rgba(246, 245, 240, 0.94);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.content-editor-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+.content-editor-note {
+    margin-top: 3px;
+    font-size: 0.72rem;
+    color: rgba(53, 47, 39, 0.62);
+}
+.content-editor-copy {
+    flex: 0 0 auto;
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 13px;
+    background: #5d554a;
+    color: #fff;
+    font: inherit;
+    font-size: 0.76rem;
+    cursor: pointer;
+}
+#content-editor-panel.copied .content-editor-copy {
+    background: #3f6f52;
+}
+.content-editor-section-title {
+    margin: 18px 0 9px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(53, 47, 39, 0.58);
+}
+.content-editor-item {
+    border: 1px solid rgba(82, 76, 66, 0.14);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.52);
+}
+.content-editor-item summary {
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr) auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 12px;
+    cursor: pointer;
+    list-style: none;
+}
+.content-editor-item summary::-webkit-details-marker { display: none; }
+.content-editor-item summary span,
+.content-editor-item summary small {
+    font-size: 0.68rem;
+    color: rgba(53, 47, 39, 0.54);
+}
+.content-editor-item summary strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+}
+.content-editor-item label {
+    display: block;
+    padding: 0 12px 10px;
+}
+.content-editor-item label span {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 0.68rem;
+    color: rgba(53, 47, 39, 0.58);
+}
+.content-editor-item input,
+.content-editor-item textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(82, 76, 66, 0.18);
+    border-radius: 6px;
+    padding: 8px 9px;
+    background: rgba(255, 255, 255, 0.76);
+    color: #352f27;
+    font: inherit;
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+.content-cover-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+    gap: 8px;
+    padding: 0 12px 12px;
+}
+.content-cover-option {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    border: 2px solid transparent;
+    border-radius: 7px;
+    padding: 0;
+    background: #ddd8ce;
+    cursor: pointer;
+}
+.content-cover-option.selected {
+    border-color: #5d554a;
+    box-shadow: 0 0 0 2px rgba(93, 85, 74, 0.18);
+}
+.content-cover-option img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.content-cover-option span {
+    position: absolute;
+    right: 5px;
+    bottom: 5px;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: rgba(44, 39, 33, 0.78);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+}
+.content-editor-output {
+    margin: 18px 0 8px;
+    padding: 12px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.66);
+    white-space: pre-wrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.55;
+}
+
 /* ------------------------------------------
    第二層：地方板塊聚焦舞台
    ------------------------------------------ */
