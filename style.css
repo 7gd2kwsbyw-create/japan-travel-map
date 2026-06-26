@@ -287,6 +287,8 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
     width: min(560px, 100vw);
     height: 100vh;
     overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     padding: 16px;
     background: rgba(246, 245, 240, 0.96);
     color: #352f27;

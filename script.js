@@ -1226,7 +1226,13 @@ function scheduleHomeWheelGestureRelease() {
     }, HOME_WHEEL_QUIET_MS);
 }
 
+function isEditorInteractionTarget(target) {
+    return Boolean(target?.closest?.('#content-editor-panel, #badge-editor-panel'));
+}
+
 window.addEventListener('wheel', (e) => {
+    if (isEditorInteractionTarget(e.target)) return;
+
     if (isGalleryMode) {
         if (document.getElementById('gallery-index-panel').classList.contains('open') || isThrottled) return;
 
@@ -1270,6 +1276,7 @@ window.addEventListener('wheel', (e) => {
 }, { passive: false });
 
 document.addEventListener('keydown', (e) => {
+    if (isEditorInteractionTarget(e.target)) return;
     if (isGalleryMode || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
 
     const nextKeys = ['ArrowDown', 'PageDown', ' '];
@@ -1281,6 +1288,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('touchstart', (e) => {
+    if (isEditorInteractionTarget(e.target)) return;
     if (isGalleryMode || e.touches.length !== 1 || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
     homeTouchStartX = e.touches[0].clientX;
     homeTouchStartY = e.touches[0].clientY;
@@ -1288,6 +1296,7 @@ window.addEventListener('touchstart', (e) => {
 }, { passive: true });
 
 window.addEventListener('touchend', (e) => {
+    if (isEditorInteractionTarget(e.target)) return;
     if (isGalleryMode || e.changedTouches.length !== 1 || document.getElementById('small-light-overlay')?.classList.contains('open')) return;
 
     const deltaX = e.changedTouches[0].clientX - homeTouchStartX;
