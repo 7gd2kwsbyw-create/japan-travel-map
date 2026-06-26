@@ -478,12 +478,12 @@ const regionFitOptions = {
 };
 
 const regionBadgeVisualCenters = {
-    'region-hokkaido': { x: 0.43, y: 0.52 },
-    'region-chubu': { x: 0.56, y: 0.48 },
-    'region-kanto': { x: 0.56, y: 0.44, exclude: ['tokyo'] },
-    'region-kinki': { x: 0.62, y: 0.35 },
-    'region-chugoku': { x: 0.56, y: 0.48 },
-    'region-kyushu': { x: 0.62, y: 0.38 }
+    'region-hokkaido': { x: 0.416, y: 0.562 },
+    'region-chubu': { x: 0.630, y: 0.667 },
+    'region-kanto': { x: 0.779, y: 0.369, exclude: ['tokyo'] },
+    'region-kinki': { x: 0.780, y: 0.431 },
+    'region-chugoku': { x: 0.748, y: 0.519 },
+    'region-kyushu': { x: 0.931, y: 0.417 }
 };
 
 const BADGE_EDITOR_PARAM = 'badgeEditor';
