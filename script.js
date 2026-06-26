@@ -477,6 +477,15 @@ const regionFitOptions = {
     'region-kyushu': { padding: 1.12, minWidth: 165 }
 };
 
+const regionBadgeVisualCenters = {
+    'region-hokkaido': { x: 0.43, y: 0.52 },
+    'region-chubu': { x: 0.56, y: 0.48 },
+    'region-kanto': { x: 0.56, y: 0.44, exclude: ['tokyo'] },
+    'region-kinki': { x: 0.62, y: 0.35 },
+    'region-chugoku': { x: 0.56, y: 0.48 },
+    'region-kyushu': { x: 0.62, y: 0.38 }
+};
+
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 1.82;
 const MAP_REVEAL_LENGTH = 0.78;
@@ -1623,49 +1632,16 @@ function getRegionBadgeCenter(regionClass) {
     const members = getRegionMembers(regionClass);
     if (!members.length) return null;
 
-    // Hokkaido's single path includes the long Kuril island chain. Keep the
-    // badge centered on the main island instead of the complete path bounds.
-    if (regionClass === 'region-hokkaido') {
-        const bounds = getBoundsInSvg(members);
+    const visualCenter = regionBadgeVisualCenters[regionClass];
+    if (visualCenter) {
+        const centerMembers = visualCenter.exclude
+            ? members.filter(member => !visualCenter.exclude.some(className => member.classList.contains(className)))
+            : members;
+        const bounds = getBoundsInSvg(centerMembers.length ? centerMembers : members);
         if (!bounds) return null;
         return {
-            x: bounds.x + bounds.width * 0.37,
-            y: bounds.y + bounds.height * 0.55
-        };
-    }
-
-    // Tokyo's SVG includes distant Pacific islands. For the national view,
-    // center Kanto on its contiguous Honshu footprint instead.
-    if (regionClass === 'region-kanto') {
-        const mainlandMembers = members.filter(member => !member.classList.contains('tokyo'));
-        const bounds = getBoundsInSvg(mainlandMembers);
-        if (!bounds) return null;
-        return {
-            // The Boso and Miura peninsulas make the geometric midpoint feel
-            // too low. Shift toward the visual mass of inland Kanto.
-            x: bounds.x + bounds.width * 0.58,
-            y: bounds.y + bounds.height * 0.36
-        };
-    }
-
-    // Kyushu and Kinki have island/peninsula shapes that pull the arithmetic
-    // center toward the coast. Put the badge on the visual mass of the main
-    // landform so it reads as a regional marker instead of a prefecture pin.
-    if (regionClass === 'region-kyushu') {
-        const bounds = getBoundsInSvg(members);
-        if (!bounds) return null;
-        return {
-            x: bounds.x + bounds.width * 0.68,
-            y: bounds.y + bounds.height * 0.5
-        };
-    }
-
-    if (regionClass === 'region-kinki') {
-        const bounds = getBoundsInSvg(members);
-        if (!bounds) return null;
-        return {
-            x: bounds.x + bounds.width * 0.68,
-            y: bounds.y + bounds.height * 0.47
+            x: bounds.x + bounds.width * visualCenter.x,
+            y: bounds.y + bounds.height * visualCenter.y
         };
     }
 
