@@ -148,36 +148,24 @@ body {
 #map-zoom-group { transition: transform 0.85s cubic-bezier(0.25, 1, 0.2, 1); }
 
 @keyframes regionSolidBreathe {
-    0% { fill: #dedbd2; animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
-    18% { fill: #dedbd2; animation-timing-function: cubic-bezier(0.16, 0.76, 0.22, 1); }
-    43% { fill: #b8b5ac; animation-timing-function: cubic-bezier(0.32, 0, 0.28, 1); }
-    55% { fill: #b3b0a7; animation-timing-function: cubic-bezier(0.48, 0, 0.34, 1); }
-    68% { fill: #bbb8af; animation-timing-function: cubic-bezier(0.62, 0, 0.36, 1); }
-    100% { fill: #dedbd2; }
+    0% { fill: #dcdad2; }
+    50% { fill: #b8b6ae; }
+    100% { fill: #dcdad2; }
 }
 @keyframes prefSolidBreathe {
-    0% { fill: #c9c7bf; animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
-    18% { fill: #c9c7bf; animation-timing-function: cubic-bezier(0.16, 0.76, 0.22, 1); }
-    43% { fill: #9f9d95; animation-timing-function: cubic-bezier(0.32, 0, 0.28, 1); }
-    55% { fill: #98968e; animation-timing-function: cubic-bezier(0.48, 0, 0.34, 1); }
-    68% { fill: #a5a39b; animation-timing-function: cubic-bezier(0.62, 0, 0.36, 1); }
-    100% { fill: #c9c7bf; }
+    0% { fill: #c4c2ba; }
+    50% { fill: #9e9c94; }
+    100% { fill: #c4c2ba; }
 }
 @keyframes albumPrefBreathe {
-    0% { fill: #c0b7a7; animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
-    18% { fill: #c0b7a7; animation-timing-function: cubic-bezier(0.16, 0.76, 0.22, 1); }
-    43% { fill: #a69d8e; animation-timing-function: cubic-bezier(0.32, 0, 0.28, 1); }
-    55% { fill: #9f9687; animation-timing-function: cubic-bezier(0.48, 0, 0.34, 1); }
-    68% { fill: #aaa191; animation-timing-function: cubic-bezier(0.62, 0, 0.36, 1); }
-    100% { fill: #c0b7a7; }
+    0% { fill: #bdb5a6; }
+    50% { fill: #a69d8f; }
+    100% { fill: #bdb5a6; }
 }
 @keyframes pinBreathe {
-    0% { opacity: 0.66; animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1); }
-    20% { opacity: 0.66; animation-timing-function: cubic-bezier(0.16, 0.76, 0.22, 1); }
-    44% { opacity: 0.96; animation-timing-function: cubic-bezier(0.28, 0, 0.22, 1); }
-    56% { opacity: 1; animation-timing-function: cubic-bezier(0.48, 0, 0.34, 1); }
-    70% { opacity: 0.94; animation-timing-function: cubic-bezier(0.62, 0, 0.36, 1); }
-    100% { opacity: 0.66; }
+    0% { opacity: 0.92; }
+    50% { opacity: 1; }
+    100% { opacity: 0.92; }
 }
 
 /* ------------------------------------------
@@ -199,7 +187,7 @@ body {
 
 #japan-map.map-layer-1 .region-hover-pulse path,
 #japan-map.map-layer-1 .region-hover-pulse polygon {
-    animation: regionSolidBreathe 2.75s infinite;
+    animation: regionSolidBreathe 1.35s infinite ease-in-out;
 }
 
 #region-badges-layer {
@@ -331,15 +319,15 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
 
 #japan-map.map-layer-2 .pref-hover-pulse path,
 #japan-map.map-layer-2 .pref-hover-pulse polygon {
-    animation: prefSolidBreathe 2.75s infinite;
+    animation: prefSolidBreathe 1.35s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .aichi.pref-hover-pulse path, #japan-map.map-layer-2 .aichi.pref-hover-pulse polygon,
 #japan-map.map-layer-2 .shimane.pref-hover-pulse path, #japan-map.map-layer-2 .shimane.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 2.65s infinite;
+    animation: albumPrefBreathe 1.3s infinite ease-in-out;
 }
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse path,
 #japan-map.map-layer-2 .prefecture.album-prefecture.pref-hover-pulse polygon {
-    animation: albumPrefBreathe 2.65s infinite;
+    animation: albumPrefBreathe 1.3s infinite ease-in-out;
 }
 
 /* ------------------------------------------
@@ -391,7 +379,7 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
 #japan-map.map-layer-2.region-kyushu .spot-pin.region-kyushu {
     opacity: 1;
     pointer-events: auto;
-    animation: pinBreathe 2.85s infinite;
+    animation: pinBreathe 1.8s infinite ease-in-out;
 }
 #japan-map.map-layer-3 .spot-pin { opacity: 0; pointer-events: none; }
 #japan-map.map-layer-3 .spot-pin.active-spot { opacity: 1; pointer-events: auto; }
