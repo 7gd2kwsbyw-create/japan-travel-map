@@ -807,25 +807,28 @@ function preloadAlbumCovers(centerIndex = homeAlbumIndex) {
 }
 
 function preloadSmallLightCovers() {
-    preloadPhotos(smallLights.map(light => getDisplayCoverPhoto(light)));
+    preloadPhotos(smallLights.map(light => getDisplayCoverPhoto(light)), 'high');
 }
 
-function preloadSmallLightPhotos(smallLightIndex) {
+function preloadSmallLightPhotos(smallLightIndex, priority = 'high') {
     const light = smallLights[smallLightIndex];
     if (!light) return;
-    preloadPhotos(light.photos);
+    const urls = [getDisplayCoverPhoto(light), ...light.photos]
+        .filter(Boolean)
+        .filter((url, index, list) => list.indexOf(url) === index);
+    preloadPhotos(urls, priority);
 }
 
-function preloadSmallLights(lightList = []) {
-    lightList.forEach(light => preloadSmallLightPhotos(light.smallLightIndex));
+function preloadSmallLights(lightList = [], priority = 'high') {
+    lightList.forEach(light => preloadSmallLightPhotos(light.smallLightIndex, priority));
 }
 
 function warmSmallLightPhotos() {
-    const warm = () => smallLights.forEach((_, index) => preloadSmallLightPhotos(index));
+    const warm = () => smallLights.forEach((_, index) => preloadSmallLightPhotos(index, 'high'));
     if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(warm, { timeout: 1600 });
+        window.requestIdleCallback(warm, { timeout: 500 });
     } else {
-        setTimeout(warm, 900);
+        setTimeout(warm, 220);
     }
 }
 
