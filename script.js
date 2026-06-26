@@ -14,7 +14,8 @@ const albums = [
             "images/goryokaku-sakura/06_goryokaku_tower_moat_reflection.webp",
             "images/goryokaku-sakura/07_goryokaku_spring_puddle_reflection.webp"
         ],
-        coverPhoto: "images/goryokaku-sakura/01_goryokaku_tower_cherry_frame.webp"
+        coverPhoto: "images/goryokaku-sakura/01_goryokaku_tower_cherry_frame.webp",
+        coverPreview: "images/cover-cache/goryokaku-sakura-01-goryokaku-tower-cherry-frame.webp"
     },
     {
         title: "小樽運河，沿著石造倉庫走進港町時光",
@@ -31,7 +32,8 @@ const albums = [
             "images/otaru-canal/06_otaru_music_box_hall_street.webp",
             "images/otaru-canal/07_otaru_music_box_clock.webp"
         ],
-        coverPhoto: "images/otaru-canal/01_otaru_canal_warehouse_panorama.webp"
+        coverPhoto: "images/otaru-canal/01_otaru_canal_warehouse_panorama.webp",
+        coverPreview: "images/cover-cache/otaru-canal-01-otaru-canal-warehouse-panorama.webp"
     },
     {
         title: "深秋的香嵐溪，時間靜止在楓紅之中",
@@ -50,7 +52,8 @@ const albums = [
             "images/korankei/obajyan.JPG",
             "images/korankei/tomoegawa.JPG"
         ],
-        coverPhoto: "images/korankei/maple_light_road_2.JPG"
+        coverPhoto: "images/korankei/maple_light_road_2.JPG",
+        coverPreview: "images/cover-cache/korankei-maple-light-road-2.webp"
     },
     {
         title: "犬山城上望木曾川，午後光影裡的天守",
@@ -65,7 +68,8 @@ const albums = [
             "images/inuyama-castle/04_inuyama_castle_town_riverside.jpg",
             "images/inuyama-castle/05_kiso_river_city_panorama.jpg"
         ],
-        coverPhoto: "images/inuyama-castle/01_inuyama_castle_keep.jpg"
+        coverPhoto: "images/inuyama-castle/01_inuyama_castle_keep.jpg",
+        coverPreview: "images/cover-cache/inuyama-castle-01-inuyama-castle-keep.webp"
     },
     {
         title: "深秋楓紅的下呂街道，在加恵瑠神社祈求無事帰る",
@@ -85,7 +89,8 @@ const albums = [
             "images/gero-kaeru-shrine/04_red_maple_closeup.jpg",
             "images/gero-kaeru-shrine/10_autumn_river_maples.jpg"
         ],
-        coverPhoto: "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg"
+        coverPhoto: "images/gero-kaeru-shrine/01_kaeru_shrine_frog_ema.jpg",
+        coverPreview: "images/cover-cache/gero-kaeru-shrine-01-kaeru-shrine-frog-ema.webp"
     },
     {
         title: "郡上八幡，白城楓影與岸劍神社的秋日",
@@ -102,7 +107,8 @@ const albums = [
             "images/gujo-hachiman-kishitsurugi/06_sunlit_red_maple_leaves.webp",
             "images/gujo-hachiman-kishitsurugi/07_kishitsurugi_shrine_torii.webp"
         ],
-        coverPhoto: "images/gujo-hachiman-kishitsurugi/01_gujo_hachiman_castle_autumn.webp"
+        coverPhoto: "images/gujo-hachiman-kishitsurugi/01_gujo_hachiman_castle_autumn.webp",
+        coverPreview: "images/cover-cache/gujo-hachiman-kishitsurugi-01-gujo-hachiman-castle-autumn.webp"
     },
     {
         title: "白川鄉之秋，合掌屋靜立在山色之間",
@@ -123,7 +129,8 @@ const albums = [
             "images/shirakawago-autumn/10_shokawa_river_mountain_landscape.webp",
             "images/shirakawago-autumn/11_shirakawago_overlook_autumn.webp"
         ],
-        coverPhoto: "images/shirakawago-autumn/01_susuki_gassho_house_autumn.webp"
+        coverPhoto: "images/shirakawago-autumn/01_susuki_gassho_house_autumn.webp",
+        coverPreview: "images/cover-cache/shirakawago-autumn-01-susuki-gassho-house-autumn.webp"
     },
     {
         title: "櫻花盛開的長野，從善光寺漫步城山公園",
@@ -149,7 +156,8 @@ const albums = [
             "images/nagano-zenkoji-joyama/15_joyama_cow_sculptures.webp",
             "images/nagano-zenkoji-joyama/16_joyama_cherry_park_path.webp"
         ],
-        coverPhoto: "images/nagano-zenkoji-joyama/01_joyama_cherry_avenue.webp"
+        coverPhoto: "images/nagano-zenkoji-joyama/01_joyama_cherry_avenue.webp",
+        coverPreview: "images/cover-cache/nagano-zenkoji-joyama-01-joyama-cherry-avenue.webp"
     },
     {
         title: "寂靜美保關，漫步青石疊通",
@@ -171,7 +179,8 @@ const albums = [
             "images/mihonoseki/semai_michi2.JPG",
             "images/mihonoseki/umi_no_keisiki.JPG"
         ],
-        coverPhoto: "images/mihonoseki/jinjyadoa.JPG"
+        coverPhoto: "images/mihonoseki/jinjyadoa.JPG",
+        coverPreview: "images/cover-cache/mihonoseki-jinjyadoa.webp"
     },
     {
         title: "境港單車追日落，水木茂之道的日與夜",
@@ -195,7 +204,8 @@ const albums = [
             "images/sakaiminato-mizuki/13_mitsubishi_battery_vending.jpg",
             "images/sakaiminato-mizuki/14_sakaiminato_street_cat.jpg"
         ],
-        coverPhoto: "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg"
+        coverPhoto: "images/sakaiminato-mizuki/03_bicycles_by_harbor_sunset.jpg",
+        coverPreview: "images/cover-cache/sakaiminato-mizuki-03-bicycles-by-harbor-sunset.webp"
     },
     {
         title: "倉敷美觀地區，漫步在老街的悠閒",
@@ -216,7 +226,8 @@ const albums = [
             "images/kurashiki-bikan/10_bicycle_and_woven_lamp_detail.jpg",
             "images/kurashiki-bikan/11_bikan_night_street_bicycle_lamp.jpg"
         ],
-        coverPhoto: "images/kurashiki-bikan/01_kurashiki_bikan_canal_twilight.jpg"
+        coverPhoto: "images/kurashiki-bikan/01_kurashiki_bikan_canal_twilight.jpg",
+        coverPreview: "images/cover-cache/kurashiki-bikan-01-kurashiki-bikan-canal-twilight.webp"
     },
     {
         title: "牛窗神社，穿過雨霧森林的石階參道",
@@ -238,7 +249,8 @@ const albums = [
             "images/ushimado-shrine/11_stone_torii_offerings.jpg",
             "images/ushimado-shrine/12_ushimado_shrine_gate.jpg"
         ],
-        coverPhoto: "images/ushimado-shrine/01_forest_torii_stairway.jpg"
+        coverPhoto: "images/ushimado-shrine/01_forest_torii_stairway.jpg",
+        coverPreview: "images/cover-cache/ushimado-shrine-01-forest-torii-stairway.webp"
     },
     {
         title: "大久野島乘船而至，沉浸在被兔群包圍的療癒時光",
@@ -261,7 +273,8 @@ const albums = [
             "images/okunoshima/12_factory_archway_ruins.jpg",
             "images/okunoshima/13_blue_seto_sea_horizon.jpg"
         ],
-        coverPhoto: "images/okunoshima/01_rabbit_gathering_feeding_time.jpg"
+        coverPhoto: "images/okunoshima/01_rabbit_gathering_feeding_time.jpg",
+        coverPreview: "images/cover-cache/okunoshima-01-rabbit-gathering-feeding-time.webp"
     },
     {
         title: "尾道坡道尋貓，走進港町的舊時光",
@@ -279,7 +292,8 @@ const albums = [
             "images/onomichi/07_maneki_neko_art_gate.jpg",
             "images/onomichi/08_vintage_canon_camera.jpg"
         ],
-        coverPhoto: "images/onomichi/01_onomichi_harbor_panorama.jpg"
+        coverPhoto: "images/onomichi/01_onomichi_harbor_panorama.jpg",
+        coverPreview: "images/cover-cache/onomichi-01-onomichi-harbor-panorama.webp"
     },
     {
         title: "春遊大阪城，映照在護城河下的連綿粉櫻",
@@ -294,7 +308,8 @@ const albums = [
             "images/osaka-jyo/IMG_4960.jpg",
             "images/osaka-jyo/IMG_4970.jpg"
         ],
-        coverPhoto: "images/osaka-jyo/IMG_4970.jpg"
+        coverPhoto: "images/osaka-jyo/IMG_4970.jpg",
+        coverPreview: "images/cover-cache/osaka-jyo-img-4970.webp"
     },
     {
         title: "由布院之森飛馳，享受金麟湖的森之寧靜",
@@ -310,7 +325,8 @@ const albums = [
             "images/kinrinko/DSC_0079.jpg",
             "images/kinrinko/DSC_0099.jpg"
         ],
-        coverPhoto: "images/kinrinko/DSC_0046.jpg"
+        coverPhoto: "images/kinrinko/DSC_0046.jpg",
+        coverPreview: "images/cover-cache/kinrinko-dsc-0046.webp"
     },
     {
         title: "走進九州自然動物公園，感受慵懶動物的瑣碎日常",
@@ -328,7 +344,8 @@ const albums = [
             "images/kyushu-safari/DSC_0157.jpg",
             "images/kyushu-safari/DSC_0163.jpg"
         ],
-        coverPhoto: "images/kyushu-safari/DSC_0144.jpg"
+        coverPhoto: "images/kyushu-safari/DSC_0144.jpg",
+        coverPreview: "images/cover-cache/kyushu-safari-dsc-0144.webp"
     }
 ];
 
@@ -343,7 +360,8 @@ const smallLights = [
             "images/hakodate-san/R0002914.jpg",
             "images/hakodate-san/R0002915.jpg"
         ],
-        coverPhoto: "images/hakodate-san/R0002914.jpg"
+        coverPhoto: "images/hakodate-san/R0002914.jpg",
+        coverPreview: "images/cover-cache/hakodate-san-r0002914.webp"
     },
     {
         title: "奈良公園小鹿亂撞",
@@ -357,7 +375,8 @@ const smallLights = [
             "images/nara/IMG_4837.jpg",
             "images/nara/IMG_4839.jpg"
         ],
-        coverPhoto: "images/nara/IMG_4410.jpg"
+        coverPhoto: "images/nara/IMG_4410.jpg",
+        coverPreview: "images/cover-cache/nara-img-4410.webp"
     },
     {
         title: "宇治平等院與春櫻",
@@ -371,7 +390,8 @@ const smallLights = [
             "images/byodoin/IMG_4676.jpg",
             "images/byodoin/IMG_4716.jpg"
         ],
-        coverPhoto: "images/byodoin/IMG_4663.jpg"
+        coverPhoto: "images/byodoin/IMG_4663.jpg",
+        coverPreview: "images/cover-cache/byodoin-img-4663.webp"
     },
     {
         title: "與秋杏比鄰的櫛田神社",
@@ -385,7 +405,8 @@ const smallLights = [
             "images/kushida-jinja/DSC_0230.jpg",
             "images/kushida-jinja/DSC_0231.jpg"
         ],
-        coverPhoto: "images/kushida-jinja/DSC_0218.jpg"
+        coverPhoto: "images/kushida-jinja/DSC_0218.jpg",
+        coverPreview: "images/cover-cache/kushida-jinja-dsc-0218.webp"
     },
     {
         title: "遇見重生中的熊本城",
@@ -398,7 +419,8 @@ const smallLights = [
             "images/kumamoto-jyo/DSC_0172.jpg",
             "images/kumamoto-jyo/DSC_0175.jpg"
         ],
-        coverPhoto: "images/kumamoto-jyo/DSC_0175.jpg"
+        coverPhoto: "images/kumamoto-jyo/DSC_0175.jpg",
+        coverPreview: "images/cover-cache/kumamoto-jyo-dsc-0175.webp"
     },
     {
         title: "在熱田神宮巧遇銀杏，上知我麻神社的散策時光",
@@ -411,7 +433,8 @@ const smallLights = [
             "images/atsuta-jingu/02_atsuta_jingu_main_shrine.webp",
             "images/atsuta-jingu/03_kamichikama_shrine_prayer.webp"
         ],
-        coverPhoto: "images/atsuta-jingu/01_golden_ginkgo_path.webp"
+        coverPhoto: "images/atsuta-jingu/01_golden_ginkgo_path.webp",
+        coverPreview: "images/cover-cache/atsuta-jingu-01-golden-ginkgo-path.webp"
     },
     {
         title: "惠那峽，秋水映著遠山與遊船",
@@ -424,7 +447,8 @@ const smallLights = [
             "images/enakyo/02_enakyo_reservoir_morning_path.webp",
             "images/enakyo/03_enakyo_park_monument.webp"
         ],
-        coverPhoto: "images/enakyo/01_enakyo_lake_autumn_cruise.webp"
+        coverPhoto: "images/enakyo/01_enakyo_lake_autumn_cruise.webp",
+        coverPreview: "images/cover-cache/enakyo-01-enakyo-lake-autumn-cruise.webp"
     },
     {
         title: "淺草寺人潮洶湧",
@@ -438,7 +462,8 @@ const smallLights = [
             "images/asakusa-sensoji/03_sensoji_crowd_from_gate.webp",
             "images/asakusa-sensoji/04_kaminarimon_lantern_closeup.webp"
         ],
-        coverPhoto: "images/asakusa-sensoji/01_asakusa_street_skytree.webp"
+        coverPhoto: "images/asakusa-sensoji/01_asakusa_street_skytree.webp",
+        coverPreview: "images/cover-cache/asakusa-sensoji-01-asakusa-street-skytree.webp"
     },
     {
         title: "宍道湖的嫁島夕照",
@@ -451,7 +476,8 @@ const smallLights = [
             "images/shinji-yomegashima/02_yomegashima_sunset_wide.jpg",
             "images/shinji-yomegashima/03_lake_shinji_sunset_reflection.jpg"
         ],
-        coverPhoto: "images/shinji-yomegashima/01_yomegashima_sunset_boat.jpg"
+        coverPhoto: "images/shinji-yomegashima/01_yomegashima_sunset_boat.jpg",
+        coverPreview: "images/cover-cache/shinji-yomegashima-01-yomegashima-sunset-boat.webp"
     },
     {
         title: "耕三寺的朱紅與地獄洞窟",
@@ -464,7 +490,8 @@ const smallLights = [
             "images/kosanji/02_cave_stone_buddhas.jpg",
             "images/kosanji/03_kosanji_gate.jpg"
         ],
-        coverPhoto: "images/kosanji/01_vermilion_temple_and_tree.jpg"
+        coverPhoto: "images/kosanji/01_vermilion_temple_and_tree.jpg",
+        coverPreview: "images/cover-cache/kosanji-01-vermilion-temple-and-tree.webp"
     },
     {
         title: "吉備津神社，無盡的長廊",
@@ -478,7 +505,8 @@ const smallLights = [
             "images/kibitsu-shrine/03_long_wooden_corridor.jpg",
             "images/kibitsu-shrine/04_quiet_shrine_hall.jpg"
         ],
-        coverPhoto: "images/kibitsu-shrine/01_lantern_stairway_entrance.jpg"
+        coverPhoto: "images/kibitsu-shrine/01_lantern_stairway_entrance.jpg",
+        coverPreview: "images/cover-cache/kibitsu-shrine-01-lantern-stairway-entrance.webp"
     }
 ];
 
@@ -718,6 +746,10 @@ function getCoverPhoto(item) {
     return item?.coverPhoto || item?.photos?.[0] || '';
 }
 
+function getDisplayCoverPhoto(item) {
+    return item?.coverPreview || getCoverPhoto(item);
+}
+
 function getWrappedAlbumIndex(index) {
     return (index + albums.length) % albums.length;
 }
@@ -769,22 +801,13 @@ function preloadAlbumPhotos(albumIndex, startIndex = 0) {
 
 function preloadAlbumCovers(centerIndex = homeAlbumIndex) {
     const coverUrls = getHomeCoverPreloadOrder(centerIndex)
-        .map(index => getCoverPhoto(albums[index]))
+        .map(index => getDisplayCoverPhoto(albums[index]))
         .filter(Boolean);
-    const eagerCount = Math.min(7, coverUrls.length);
-
-    preloadPhotos(coverUrls.slice(0, eagerCount), 'high');
-
-    const warmRest = () => preloadPhotos(coverUrls.slice(eagerCount), 'low');
-    if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(warmRest, { timeout: 900 });
-    } else {
-        setTimeout(warmRest, 240);
-    }
+    preloadPhotos(coverUrls, 'high');
 }
 
 function preloadSmallLightCovers() {
-    preloadPhotos(smallLights.map(light => getCoverPhoto(light)));
+    preloadPhotos(smallLights.map(light => getDisplayCoverPhoto(light)));
 }
 
 function preloadSmallLightPhotos(smallLightIndex) {
@@ -883,7 +906,7 @@ function updateAlbumCover(isInitial = false) {
     currentAlbumIndex = homeAlbumIndex;
     const album = albums[homeAlbumIndex];
     if (!isGalleryMode) setMainTitle(album.title);
-    changePhotoWithFade(getCoverPhoto(album), isInitial);
+    changePhotoWithFade(getDisplayCoverPhoto(album), isInitial);
     preloadAlbumCovers(homeAlbumIndex);
     preloadAlbumPhotos(homeAlbumIndex, 0);
     currentPhotoIndex = 0;
@@ -980,7 +1003,7 @@ if (btnPrev) {
         e.stopPropagation();
         if (!isGalleryMode) {
             const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex - 1);
-            preloadImage(getCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
+            preloadImage(getDisplayCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
             homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
@@ -996,7 +1019,7 @@ if (btnNext) {
         e.stopPropagation();
         if (!isGalleryMode) {
             const nextHomeAlbumIndex = getWrappedAlbumIndex(homeAlbumIndex + 1);
-            preloadImage(getCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
+            preloadImage(getDisplayCoverPhoto(albums[nextHomeAlbumIndex]), 'high');
             homeAlbumIndex = nextHomeAlbumIndex;
             updateAlbumCover(false);
         } else {
@@ -1011,7 +1034,7 @@ async function openGalleryDirectly(albumIndex, returnContext = 'home') {
     const album = albums[albumIndex];
     if (!album) return;
     const entryRequestId = ++galleryEntryRequestId;
-    const coverUrl = getCoverPhoto(album);
+    const coverUrl = getDisplayCoverPhoto(album);
     const darkOverlay = document.getElementById('dark-overlay');
 
     if (darkOverlay) {
@@ -2390,8 +2413,8 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
     previewInteractionLocked = previewInteractionLocked || Boolean(options.lock);
     const key = `content:${heading || ''}:a${safeAlbums.map(album => album.albumIndex).join(',')}:s${safeSmallLights.map(light => light.smallLightIndex).join(',')}`;
     const previewItems = [
-        ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: getCoverPhoto(album) })),
-        ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: getCoverPhoto(light) }))
+        ...safeAlbums.map(album => ({ type: 'album', title: album.spotName, image: getDisplayCoverPhoto(album) })),
+        ...safeSmallLights.map(light => ({ type: 'small-light', title: light.spotName, image: getDisplayCoverPhoto(light) }))
     ];
 
     preloadSmallLights(safeSmallLights);
@@ -2405,7 +2428,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         `).join('');
         const albumItems = safeAlbums.map(album => `
             <button class="preview-album-btn" type="button" data-album-index="${album.albumIndex}">
-                <img src="${getCoverPhoto(album)}" alt="">
+                <img src="${getDisplayCoverPhoto(album)}" alt="">
                 <span>
                     <strong>${escapeHtml(album.spotName)}</strong>
                     <small>${escapeHtml(album.title)}</small>
@@ -2414,7 +2437,7 @@ function showContentPreview(albumList = [], smallLightList = [], heading, anchor
         `).join('');
         const smallLightItems = safeSmallLights.map(light => `
             <button class="preview-album-btn preview-small-light-btn" type="button" data-small-light-index="${light.smallLightIndex}">
-                <img src="${getCoverPhoto(light)}" alt="" loading="eager" decoding="async">
+                <img src="${getDisplayCoverPhoto(light)}" alt="" loading="eager" decoding="async">
                 <span>
                     <strong>${escapeHtml(light.spotName)}</strong>
                     <small>${escapeHtml(light.title)}</small>
@@ -2849,7 +2872,7 @@ function syncContentEditorPreview(type, index) {
 
     setMainTitle(albums[index].title);
     restoreHomeHint();
-    changePhotoWithFade(getCoverPhoto(albums[index]), false);
+    changePhotoWithFade(getDisplayCoverPhoto(albums[index]), false);
 }
 
 function renderContentEditorItem(type, item, index) {
@@ -2938,6 +2961,7 @@ function setupContentEditor() {
         if (!list[itemIndex] || !photo) return;
 
         list[itemIndex].coverPhoto = photo;
+        list[itemIndex].coverPreview = photo;
         button.closest('.content-cover-grid')?.querySelectorAll('.content-cover-option').forEach(option => {
             option.classList.toggle('selected', option === button);
         });
