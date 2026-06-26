@@ -486,6 +486,8 @@ const regionBadgeVisualCenters = {
     'region-kyushu': { x: 0.62, y: 0.38 }
 };
 
+const BADGE_EDITOR_PARAM = 'badgeEditor';
+
 const MAP_ANIMATION_FAST = 520;
 const MAP_REVEAL_START = 1.82;
 const MAP_REVEAL_LENGTH = 0.78;
@@ -1628,16 +1630,26 @@ function getRegionBounds(regionClass) {
     return getBoundsInSvg(members);
 }
 
+function isBadgeEditorEnabled() {
+    return new URLSearchParams(window.location.search).has(BADGE_EDITOR_PARAM);
+}
+
+function getRegionBadgeCenterBounds(regionClass, members = getRegionMembers(regionClass)) {
+    const visualCenter = regionBadgeVisualCenters[regionClass];
+    const centerMembers = visualCenter?.exclude
+        ? members.filter(member => !visualCenter.exclude.some(className => member.classList.contains(className)))
+        : members;
+
+    return getBoundsInSvg(centerMembers.length ? centerMembers : members);
+}
+
 function getRegionBadgeCenter(regionClass) {
     const members = getRegionMembers(regionClass);
     if (!members.length) return null;
 
     const visualCenter = regionBadgeVisualCenters[regionClass];
     if (visualCenter) {
-        const centerMembers = visualCenter.exclude
-            ? members.filter(member => !visualCenter.exclude.some(className => member.classList.contains(className)))
-            : members;
-        const bounds = getBoundsInSvg(centerMembers.length ? centerMembers : members);
+        const bounds = getRegionBadgeCenterBounds(regionClass, members);
         if (!bounds) return null;
         return {
             x: bounds.x + bounds.width * visualCenter.x,
@@ -1850,6 +1862,7 @@ function loadAndInitMap() {
                     positionRegionBadges();
                 }
                 setupStageEvents();
+                setupBadgeEditor();
             });
         })
         .catch(err => console.error('地圖加載失敗:', err));
@@ -1979,6 +1992,7 @@ function positionRegionBadges() {
 
         const badge = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         badge.setAttribute('class', `region-album-badge ${regionClass}`);
+        badge.dataset.regionClass = regionClass;
         badge.setAttribute('transform', `translate(${center.x}, ${center.y})`);
         badge.innerHTML = `
             <circle r="19" class="region-badge-halo"></circle>
@@ -1986,6 +2000,121 @@ function positionRegionBadges() {
             <text y="0" class="region-badge-count">${regionContent.count}</text>
         `;
         layer.appendChild(badge);
+    });
+}
+
+function formatBadgeEditorOutput() {
+    const lines = Object.entries(regionBadgeVisualCenters)
+        .map(([regionClass, center]) => {
+            const exclude = center.exclude ? `, exclude: ${JSON.stringify(center.exclude)}` : '';
+            return `    '${regionClass}': { x: ${center.x.toFixed(3)}, y: ${center.y.toFixed(3)}${exclude} }`;
+        });
+
+    return `const regionBadgeVisualCenters = {\n${lines.join(',\n')}\n};`;
+}
+
+function updateBadgeEditorPanel(panel) {
+    const output = panel.querySelector('.badge-editor-output');
+    if (output) output.textContent = formatBadgeEditorOutput();
+}
+
+function setupBadgeEditor() {
+    if (!isBadgeEditorEnabled()) return;
+
+    const svgMap = document.getElementById('japan-map');
+    const layer = document.getElementById('region-badges-layer');
+    if (!svgMap || !layer) return;
+
+    document.body.classList.add('badge-editor-open');
+    layer.classList.add('badge-editor-active');
+
+    const panel = document.createElement('aside');
+    panel.id = 'badge-editor-panel';
+    panel.innerHTML = `
+        <div class="badge-editor-title">Badge editor</div>
+        <div class="badge-editor-note">Drag badges on the map, then copy these values.</div>
+        <pre class="badge-editor-output"></pre>
+        <button type="button" class="badge-editor-copy">Copy values</button>
+    `;
+    document.body.appendChild(panel);
+    updateBadgeEditorPanel(panel);
+
+    panel.querySelector('.badge-editor-copy')?.addEventListener('click', async () => {
+        const text = formatBadgeEditorOutput();
+        try {
+            await navigator.clipboard.writeText(text);
+            panel.classList.add('copied');
+            setTimeout(() => panel.classList.remove('copied'), 900);
+        } catch (err) {
+            console.warn('Badge values copy failed:', err);
+        }
+    });
+
+    let activeBadge = null;
+    let activeRegionClass = null;
+
+    const getSvgPoint = (event) => {
+        const matrix = svgMap.getScreenCTM();
+        if (!matrix) return null;
+        const point = svgMap.createSVGPoint();
+        point.x = event.clientX;
+        point.y = event.clientY;
+        return point.matrixTransform(matrix.inverse());
+    };
+
+    const moveActiveBadge = (event) => {
+        if (!activeBadge || !activeRegionClass) return;
+
+        const bounds = getRegionBadgeCenterBounds(activeRegionClass);
+        const point = getSvgPoint(event);
+        if (!bounds || !point) return;
+
+        const nextX = clamp01((point.x - bounds.x) / bounds.width);
+        const nextY = clamp01((point.y - bounds.y) / bounds.height);
+        const center = regionBadgeVisualCenters[activeRegionClass];
+        center.x = Number(nextX.toFixed(3));
+        center.y = Number(nextY.toFixed(3));
+
+        activeBadge.setAttribute('transform', `translate(${bounds.x + bounds.width * center.x}, ${bounds.y + bounds.height * center.y})`);
+        updateBadgeEditorPanel(panel);
+    };
+
+    layer.querySelectorAll('.region-album-badge').forEach(badge => {
+        badge.addEventListener('pointerdown', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            activeBadge = badge;
+            activeRegionClass = badge.dataset.regionClass;
+            badge.classList.add('badge-editor-dragging');
+            badge.setPointerCapture?.(event.pointerId);
+            moveActiveBadge(event);
+        });
+
+        badge.addEventListener('pointermove', (event) => {
+            if (activeBadge === badge) {
+                event.preventDefault();
+                event.stopPropagation();
+                moveActiveBadge(event);
+            }
+        });
+
+        const stopDrag = (event) => {
+            if (activeBadge !== badge) return;
+            event.preventDefault();
+            event.stopPropagation();
+            badge.classList.remove('badge-editor-dragging');
+            badge.releasePointerCapture?.(event.pointerId);
+            activeBadge = null;
+            activeRegionClass = null;
+        };
+
+        badge.addEventListener('pointerup', stopDrag);
+        badge.addEventListener('pointercancel', stopDrag);
+    });
+
+    requestAnimationFrame(() => {
+        window.scrollTo(0, HOME_SCENE_PROGRESS[HOME_SCENE_PROGRESS.length - 1] * window.innerHeight);
+        window.dispatchEvent(new Event('scroll'));
     });
 }
 
