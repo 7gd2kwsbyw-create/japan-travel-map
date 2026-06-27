@@ -839,26 +839,31 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
 }
 #small-light-hand.count-4 {
     top: 58%;
-    display: grid;
-    width: min(94vw, 1280px);
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(14px, 2vw, 26px);
+    display: flex;
+    width: min(94vw, 1500px);
+    gap: clamp(8px, 1.35vw, 18px);
     align-items: center;
+    justify-content: center;
     transform: translate(-50%, -32%);
 }
 #small-light-hand.count-4 .small-light-photo-card {
     position: relative;
     display: block;
-    width: 100%;
+    flex: 0 1 auto;
+    width: auto;
     max-width: none;
     padding: clamp(6px, 0.7vw, 9px) clamp(6px, 0.7vw, 9px) clamp(14px, 1.2vw, 20px);
     transform: translate(var(--shift-x, 0), var(--shift-y, 0)) rotate(var(--rotate, 0deg));
 }
 #small-light-hand.count-4 .small-light-photo-card img {
-    width: 100%;
-    height: auto;
-    max-height: min(34vh, 330px);
+    width: auto;
+    height: min(35vh, 350px);
+    max-width: min(24vw, 440px);
     object-fit: contain;
+}
+#small-light-hand.count-4 .small-light-photo-card.is-portrait img {
+    height: min(43vh, 460px);
+    max-width: min(17vw, 300px);
 }
 #small-light-hand.count-4 .small-light-photo-1 {
     --shift-x: -5px;
@@ -918,7 +923,7 @@ body.badge-editor-open .region-album-badge.badge-editor-dragging .region-badge-d
 .small-light-photo-card.is-portrait {
     justify-self: center;
     width: max-content;
-    max-width: 100%;
+    max-width: min(32vw, 360px);
 }
 body.small-light-open #map-preview-card,
 body.small-light-open #map-hover-label {
@@ -972,6 +977,7 @@ body.small-light-open #map-hover-label {
     #small-light-hand.count-3,
     #small-light-hand.count-4 {
         position: relative;
+        display: grid;
         left: auto;
         top: auto;
         bottom: auto;

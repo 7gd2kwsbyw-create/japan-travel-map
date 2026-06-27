@@ -716,10 +716,17 @@ function preloadImage(url, priority = 'auto') {
     const entry = { img, promise: null, loaded: false };
 
     const promise = new Promise(resolve => {
-        img.onload = () => {
+        img.onload = async () => {
+            if (typeof img.decode === 'function') {
+                try {
+                    await img.decode();
+                } catch (err) {
+                    // Some browsers reject decode for already-decoded images;
+                    // the loaded image is still safe to use as a fallback.
+                }
+            }
             entry.loaded = true;
             resolve(img);
-            if (typeof img.decode === 'function') img.decode().catch(() => {});
         };
         img.onerror = () => {
             entry.loaded = true;
@@ -766,7 +773,7 @@ function getHomeCoverPreloadOrder(centerIndex = homeAlbumIndex) {
     return [...ordered, ...rest];
 }
 
-function preloadAlbumPhotos(albumIndex, startIndex = 0) {
+function preloadAlbumPhotos(albumIndex, startIndex = 0, eagerAll = false) {
     const album = albums[albumIndex];
     if (!album) return;
 
@@ -784,8 +791,10 @@ function preloadAlbumPhotos(albumIndex, startIndex = 0) {
         .filter((index, position, indexes) => indexes.indexOf(index) === position)
         .map(index => album.photos[index]);
 
-    const nearbyCount = Math.min(5, ordered.length);
+    const nearbyCount = eagerAll ? ordered.length : Math.min(5, ordered.length);
     preloadPhotos(ordered.slice(0, nearbyCount), 'high');
+
+    if (eagerAll) return;
 
     const warmRest = () => {
         if (runId !== albumPreloadRunId) return;
@@ -964,7 +973,7 @@ function updateGalleryPhoto(index) {
     }
     if (counterEl) counterEl.textContent = `${String(index + 1).padStart(2, '0')} / ${String(album.photos.length).padStart(2, '0')}`;
 
-    preloadGalleryNeighbors(album, index);
+    preloadAlbumPhotos(browsingAlbumIndex, index, true);
     changePhotoWithFade(album.photos[index], false);
 }
 
@@ -1093,7 +1102,7 @@ async function openGalleryDirectly(albumIndex, returnContext = 'home') {
     }
 
     document.body.style.overflowY = 'hidden';
-    preloadAlbumPhotos(albumIndex, 0);
+    preloadAlbumPhotos(albumIndex, 0, true);
 
     const coverImage = await preloadImage(coverUrl, 'high');
     if (entryRequestId !== galleryEntryRequestId || !isGalleryMode || browsingAlbumIndex !== albumIndex) return;
@@ -1116,7 +1125,7 @@ async function openGalleryDirectly(albumIndex, returnContext = 'home') {
         closeGalleryBtn.style.pointerEvents = 'auto';
     }
 
-    preloadGalleryNeighbors(album, 0);
+    preloadAlbumPhotos(albumIndex, 0, true);
     window.requestAnimationFrame(() => {
         if (!darkOverlay || entryRequestId !== galleryEntryRequestId) return;
         darkOverlay.classList.add('reveal');
